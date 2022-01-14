@@ -1,0 +1,23 @@
+# Output files
+*.hdf5
+*.fits
+*.txt
+*.log
+*.png
+*.zip
+*#
+*~
+*.#*
+
+# Folders
+models/
+
+# Make exceptions
+#!name
+
+# Byte-compiled
+__pycache__/
+
+# Jupyter notebook
+.ipynb_checkpoints/
+python/.ipynb_checkpoints/

@@ -1,0 +1,140 @@
+# ########################################################### #
+# Pyxel detector simulation framework                         #
+#                                                             #
+# MARVEL CCD setup for PyEchelle simulations                  #
+#                                                             #
+# ########################################################### #
+
+#--------------------------------------------------------------
+exposure:
+#--------------------------------------------------------------
+  outputs:
+    output_folder: "test"
+    save_data_to_file:
+      - detector.image.array: ['fits']
+
+#--------------------------------------------------------------
+ccd_detector:
+#--------------------------------------------------------------
+
+  geometry:
+
+    row: 200                # pixel
+    col: 200                # pixel
+    total_thickness: 40.    # um
+    pixel_vert_size: 9.     # um
+    pixel_horz_size: 9.     # um
+
+  material:
+    material: 'silicon'
+
+  environment:
+    temperature: 200        # K
+
+  characteristics:
+    qe:   0.9               #
+    sv:   7.0e-6            # V/e
+    amp:  1                 # V/V
+    a1:   1                 # V/V
+    a2:   65536             # DN/V
+    fwc:  800000            # e
+    fwc_serial: 800000      # e
+    vg:   1.62e-10          # cm^2
+    svg:  1.62e-10          # cm^2
+    t:    9.4722e-04        # s
+    st:   9.4722e-04        # s
+
+#--------------------------------------------------------------
+pipeline:
+#--------------------------------------------------------------
+
+  # photon -> charge
+  charge_generation:
+
+    # Load in PyEchelle image
+    - name: load_charge
+      func: pyxel.models.charge_generation.load_charge
+      enabled: true
+      arguments:
+        filename: output/marvel_science.fits
+        position: [5000,5000]
+        align: 'center'
+        time_scale: 10    # NOTE will be overwritten
+
+    - name: dark_current
+      func: pyxel.models.charge_generation.dark_current
+      enabled: true
+      arguments: # TODO configure!
+        dark_rate: 10.0  # [e/pix/s] # TODO
+        gain: 3.0
+
+    # Cosmics from TARS model
+    - name: tars # NOTE probably good to use WC (solar max) scenario for input to pipeline
+      func: pyxel.models.charge_generation.run_tars
+      enabled: false
+      arguments: # TODO configure!
+        simulation_mode: cosmic_ray
+        running_mode: stepsize
+        particle_type: proton
+        initial_energy: 100.      # [MeV]
+        particle_number: 100      # TODO probably >1000 for a (10x10)k CCD. Should follow a Poisson distribution so every new exposure get assigned differnt values
+        incident_angles:
+        starting_position:
+        spectrum_file: 'data/proton_L2_solarMax_11mm_Shielding.txt'
+        seed: 4321
+
+  # charge -> pixel
+  charge_collection:
+
+    # NOTE this simple module is always needed!
+    - name: simple_collection
+      func: pyxel.models.charge_collection.simple_collection
+      enabled: true
+
+    - name: full_well
+      func: pyxel.models.charge_collection.simple_full_well
+      enabled: true
+
+    - name: simple_persistence
+      func: pyxel.models.charge_collection.simple_persistence
+      enabled: true
+      arguments: # TODO configure!
+        trap_timeconstants: [1., 10.]      # Two traps
+        trap_densities: [0.307, 0.175]
+
+  # pixel -> pixel
+  charge_transfer:
+
+    - name: cdm 
+      func: pyxel.models.charge_transfer.cdm
+      enabled: false # NOTE The CTI effect is too prominent with the current parameters 
+      arguments: # TODO configure!
+        parallel_cti: true
+        serial_cti: false
+        charge_injection: false
+        beta_p: 0.37
+        tr_p: [3.e-2]
+        nt_p: [20.]
+        sigma_p: [1.e-10]
+        beta_s: 0.
+        tr_s: []
+        nt_s: []
+        sigma_s: []
+
+  # pixel -> signal
+  charge_measurement:
+
+    - name: simple_measurement
+      func: pyxel.models.charge_measurement.simple_measurement
+      enabled: true
+
+  # signal -> image
+  readout_electronics:
+
+    - name: simple_amplifier
+      func: pyxel.models.readout_electronics.simple_amplifier
+      enabled: true
+
+    - name: simple_digitization
+      func: pyxel.models.readout_electronics.simple_digitization
+      enabled: true
