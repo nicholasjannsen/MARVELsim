@@ -11,6 +11,7 @@
 
 # Folders
 models/
+data/
 
 # Make exceptions
 #!name
