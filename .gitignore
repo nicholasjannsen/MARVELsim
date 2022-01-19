@@ -9,9 +9,12 @@
 *~
 *.#*
 
+# Binary files
+data/*.npy
+
 # Folders
 models/
-data/
+
 
 # Make exceptions
 #!name
