@@ -1,6 +1,8 @@
-# README for simulating realistic spectra for MARVEL
+README for simulating realistic spectra for MARVEL
+==================================================
 
-## Files from Julian Stuermer (2021-11-25)
+Files from Julian Stuermer (2021-11-25)
+---------------------------------------
 
 MARVEL_2021_11_22.hdf: MARVEL optical model incl. CCD efficiency
 examples.md:           command line examples to simulate various spectra with pyechelle
@@ -22,34 +24,46 @@ Transmission:          folder containing transmission reports
 |_ c??.txt:            transmission report of 12 configuration (echelle orders equally spaced in 'm' number). 
                        These break down the transmission for each of the 5 x 12 wavelengths into the loss at every surface.
 
-## MARVEL simulation examples
+MARVEL simulation examples
+--------------------------
 
 The commands shown below are supposed to be executed in the root directory of pyechelle.
 
-### Bias frame
+Bias frame
+..........
 
 The bias level and std read noise value is measured from HERMES data. The values are bias = 2170 ADU and read-noise-std = 5.5 ADU, respectively. Since we need the count in electrons we multiply with the gain of 9.4 e/ADU which gives 20398 e and 52 e. 
-```
-pyechelle --fiber 1-5 -s MARVEL_2021_11_22 --sources Constant -t 0.0 --bias 20398 --read_noise 52 -o marvel_bias.fits
-```
 
-### Flat frame
+.. code-block:: shell
 
-We need to investigate the flat exposure time
-```
-pyechelle --fiber 1-5 -s MARVEL_2021_11_22 --sources Constant Constant Constant Constant -t 10 --bias 20398 --read_noise 52 -o marvel_flat.fits
-```
+   pyechelle --fiber 1-5 -s MARVEL_2021_11_22 --sources Constant -t 0.0 --bias 20398 --read_noise 52 -o marvel_bias.fits
 
-### Etalon frame
+
+Flat frame
+..........
 
 We need to investigate the flat exposure time
-```
-pyechelle --fiber 1-5 -s MARVEL_2021_11_22 --sources Etalon --etalon_d=6 -t 10 --bias 20398 --read_noise 52 -o marvel_flat.fits
-```
 
-### Generate a science frame
+.. code-block:: shell
+		
+   pyechelle --fiber 1-5 -s MARVEL_2021_11_22 --sources Constant Constant Constant Constant -t 10 --bias 20398 --read_noise 52 -o marvel_flat.fits
 
-```
-pyechelle --fiber 1-5 -s MARVEL_2021_11_22 --sources Phoenix Phoenix Phoenix Phoenix Etalon --etalon_d=6 --d_primary 0.8 --d_secondary 0.1 --phoenix_t_eff 5800 --phoenix_log_g 4.5 --phoenix_z 0.0 --phoenix_alpha 0.0 --phoenix_magnitude 10.0 -t 1200 -o output/marvel_science_G2V_10mag_1200s.fits
-```
-# MARVELsim
+Etalon frame
+............
+
+We need to investigate the flat exposure time
+
+.. code-block:: shell
+
+   pyechelle --fiber 1-5 -s MARVEL_2021_11_22 --sources Etalon --etalon_d=6 -t 10 --bias 20398 --read_noise 52 -o marvel_flat.fits
+
+Generate a science frame
+
+.. code-block:: shell
+
+   pyechelle --fiber 1-5 -s MARVEL_2021_11_22 --sources Phoenix Phoenix Phoenix Phoenix Etalon --etalon_d=6 --d_primary 0.8 --d_secondary 0.1 --phoenix_t_eff 5800 --phoenix_log_g 4.5 --phoenix_z 0.0 --phoenix_alpha 0.0 --phoenix_magnitude 10.0 -t 1200 -o output/marvel_science_G2V_10mag_1200s.fits
+
+MARVELsim
+---------
+
+

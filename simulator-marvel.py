@@ -60,20 +60,20 @@ parser = argparse.ArgumentParser(epilog=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter,
                                  description=errorcode('software', software))
 
-parser.add_argument('outdir', type=str, help='Output directory to store simulations')
 parser.add_argument('-c', '--calibs', action='store_true', help='Flag to invoke a set of calibration data. Default: False')
+parser.add_argument('-o', '--outdir', metavar='OUTDIR', type=str, help='Output directory to store simulations')
 
 obs_group = parser.add_argument_group('OBSERVATION')
-obs_group.add_argument('-t', '--time', action='store_true', help='Exposure time of stellar observation [s]')
+obs_group.add_argument('-t', '--time', metavar='SEC', type=int, help='Exposure time of stellar observation [s]')
 
 star_group = parser.add_argument_group('STAR')
-star_group.add_argument('--mag',  action='store_true', help='Johnson-Cousin V passband magnitude')
-star_group.add_argument('--teff', action='store_true', help='Stellar effective temperature [K]')
-star_group.add_argument('--logg', action='store_true', help='Stellar surface gravity [relative log10]')
-star_group.add_argument('--z',    action='store_true', help='Stellar metallicity [Fe/H]')
+star_group.add_argument('--mag',  metavar='VMAG',   type=str, help='Johnson-Cousin V passband magnitude')
+star_group.add_argument('--teff', metavar='KELVIN', type=str, help='Stellar effective temperature [K]')
+star_group.add_argument('--logg', metavar='DEX',    type=str, help='Stellar surface gravity [relative log10]')
+star_group.add_argument('--z',    metavar='DEX',    type=str, help='Stellar metallicity [Fe/H]')
 
 planet_group = parser.add_argument_group('EXOPLANET')
-planet_group.add_argument('--rv', action='store_true', help='Radial Velocity shift of star due to exoplanet [m/s]')
+planet_group.add_argument('--rv', metavar='OUTDIR', type=str, help='Radial Velocity shift of star due to exoplanet [m/s]')
 
 args = parser.parse_args()
 
@@ -83,7 +83,9 @@ args = parser.parse_args()
 
 # Snippet command for pyechelle
 
-run_marvel = "pyechelle -s MARVEL_2021_11_22"
+bias_level = 2170  # 20398 e-
+read_noise = 5.5   # 52 e-
+run_marvel = f"pyechelle -s MARVEL_2021_11_22 --bias {bias_level} --read_noise {read_noise}"
 
 # Create an instance of the pyxel class from the MARVEL specific inputfile
 
@@ -94,7 +96,7 @@ pipeline = config.pipeline
 
 # Set output directory for pyxel
 
-exposure.outputs.output_dir = args.outdir + 'flat_pyxel.fits'
+exposure.outputs.output_dir = args.outdir
 
 #------------------------------------#
 #            RUN CALIBRATION         #
@@ -103,20 +105,36 @@ exposure.outputs.output_dir = args.outdir + 'flat_pyxel.fits'
 if args.calibs:  # TODO how many exposures do we need of each calibs?
 
     # Hard code exposure times
-    exptime_flat = 1
+    exptime_flat = 5
     exptime_thar = 5
-    exptime_thne = 5
-    exptime_bais = 0.001  # NOTE Typical clocking of CCD
 
-    # Generate a flat
+    # Generate bias with pyxel only:
+    # NOTE We here generate a bias from a shortened dark exposure
+    # This is done by multiplying the dark rate with the bias exposure time
+    for i in range(10):
+        errorcode('message', '\nSimulating bias')
+        # Run pyechelle
+        filename_bias = f'{args.outdir}bias_'+f'{i}'.zfill(4)+'.fits'
+        command_bias  = run_marvel + f" --sources Constant -t 0 -o {filename_bias}"
+        os.system(command_bias)
+
+        # TODO can we do it faster with Pyxel?
+        # pipeline.charge_generation.load_charge.enabled = False
+        # pipeline.charge_generation.tars.enabled = False
+        # pipeline.charge_generation.dark_current.arguments.dark_rate *= float(exptime_bais)
+        # pyxel.exposure_mode(exposure=exposure, detector=detector, pipeline=pipeline)
+    exit()
+
+    # Generate a flat - TODO testing
 
     errorcode('message', '\nSimulating spectral flat')
+    filename_flat = f'{args.outdir}flat_'+'0'.zfill(4)+'.fits'
     # Run pyechelle
-    command_flat = run_marvel + f" --fiber 2-5 --sources Constant -t {exptime_flat} -o {args.outdir}flat.fits"
+    command_flat = run_marvel + f" --fiber 1-5 --sources Constant -t {exptime_flat} -o {filename_flat}"
     os.system(command_flat)
     # Run pyxel
-    pipeline.charge_generation.load_charge.arguments.filename   = f'{args.outdir}flat.fits'
-    pipeline.charge_generation.load_charge.arguments.time_scale = exptime_flat  # TODO testing
+    pipeline.charge_generation.load_charge.arguments.filename   = filename_flat
+    pipeline.charge_generation.load_charge.arguments.time_scale = exptime_flat
     pyxel.exposure_mode(exposure=exposure, detector=detector, pipeline=pipeline)
     exit()
 
@@ -124,8 +142,8 @@ if args.calibs:  # TODO how many exposures do we need of each calibs?
 
     errorcode('message', '\nSimulating ThAr arc')
     # Run pyechelle
-    command_thar = run_marvel + f" --fiber 2-5 --sources ThAr -t {exptime_thar} -o {args.outdir}thar.fits"
-    #os.system(command_thar)
+    command_thar = run_marvel + f" --fiber 1-5 --sources ThAr -t {exptime_thar} -o {args.outdir}thar.fits"
+    os.system(command_thar)
     # Run pyxel
     pipeline.charge_generation.load_charge.arguments.filename   = f'{args.outdir}thar.fits'
     pipeline.charge_generation.load_charge.arguments.time_scale = float(exptime_thar)
@@ -148,16 +166,6 @@ if args.calibs:  # TODO how many exposures do we need of each calibs?
     #errorcode('message', 'Simulating spectral arc\n')
     #command_wave = run_marvel + " --sources Etalon --etalon_d=6 -t 10 -o marvel_etalon.fits"
     #os.syste,(command_wave)
-
-    # Generate bias with pyxel only:
-    # NOTE We here generate a bias from a shortened dark exposure
-    # This is done by multiplying the dark rate with the bias exposure time
-
-    errorcode('message', '\nSimulating bias')
-    pipeline.charge_generation.load_charge.enabled = False
-    pipeline.charge_generation.tars.enabled = False
-    pipeline.charge_generation.dark_current.arguments.dark_rate *= float(exptime_bais)
-    pyxel.exposure_mode(exposure=exposure, detector=detector, pipeline=pipeline)
 
 #------------------------------------#
 #           RUN RV SEQUENCE          #

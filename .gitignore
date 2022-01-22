@@ -5,6 +5,8 @@
 *.log
 *.png
 *.zip
+
+# Backup files
 *#
 *~
 *.#*
@@ -12,12 +14,12 @@
 # Folders
 models/
 
-# Make exceptions
-#!name
-
 # Byte-compiled
 __pycache__/
 
 # Jupyter notebook
 .ipynb_checkpoints/
 python/.ipynb_checkpoints/
+
+# Make exceptions
+#!name

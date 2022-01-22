@@ -3,7 +3,6 @@
 import pyxel
 import numpy as np
 import matplotlib.pyplot as plt
-from au.plots import FITS
 
 def scale_linear(inputArray, scale_min=None, scale_max=None):
     """
