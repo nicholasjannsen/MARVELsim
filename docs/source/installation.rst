@@ -46,6 +46,22 @@ At the root of the MARVELsim repository a installation script called ``install.s
    ./install.sh
 
 
-.. note::
+.. warning::
 
-   The install script automatically install Pyxel version 11.5, however, a newer version not yet well document and not supported by MARVELsim are available. Double check that your have the correct version of pyxel by ``pyxel --version``.
+   The install script automatically installs Pyxel version 11.5, however, a newer version not yet well document and not supported by MARVELsim are available. Thus, double check that your have the correct version of pyxel by ``pyxel --version``.
+
+
+Extra tools
+-----------
+
+Before starting investigating your output fits files we recomment to install `dfits <https://www.eso.org/sci/software/eclipse/eug/eug/node8.html>`_ which is an easy to to inspect fits headers (e.g. ``dfits <filename>.fits``). On Linux install this packge with:
+
+.. code-block:: shell
+
+   sudo apt-get install qfits-tools
+
+Likewise the astronomy image software `ds9 <https://sites.google.com/cfa.harvard.edu/saoimageds9>`_ is an indispensable tool to view your fits data (e.g. ``ds9 <filename>.fits``). Install this software with:
+
+.. code-block:: shell
+
+   sudo apt install saods9
