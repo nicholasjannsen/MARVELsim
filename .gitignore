@@ -11,9 +11,19 @@
 *~
 *.#*
 
+# Binary files
+data/*.npy
+
 # Folders
 models/
 
+<<<<<<< HEAD
+=======
+
+# Make exceptions
+#!name
+
+>>>>>>> f5e6047253d3c0b074c373e35a6a636fedb4d920
 # Byte-compiled
 __pycache__/
 
