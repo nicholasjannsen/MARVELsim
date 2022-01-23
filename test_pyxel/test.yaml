@@ -9,27 +9,31 @@
 exposure:
 #--------------------------------------------------------------
   outputs:
-    output_folder: "test"
+    output_folder: 'output'
     save_data_to_file:
       - detector.image.array: ['fits']
 
 #--------------------------------------------------------------
 ccd_detector:
 #--------------------------------------------------------------
+# NOTE the following value are from the STA-1600 CCD model, and
+# if not then otherwise stated below. Two read modes exist:
+# Fast readout: 65.8 muV/DN -> 15198 DN/V -> 9.4 e/DN
+# Slow readout: 21.9 muV/DN -> 45662 DN/V -> 3.0 e/DN
 
   geometry:
 
-    row: 200                # pixel
-    col: 200                # pixel
-    total_thickness: 40.    # um
-    pixel_vert_size: 9.     # um
-    pixel_horz_size: 9.     # um
+    row: 200 #10560              # [pixel]
+    col: 200 #10560              # [pixel]
+    total_thickness: 40.    # [um] -> pyxel default
+    pixel_vert_size: 9.     # [um]
+    pixel_horz_size: 9.     # [um]
 
   material:
     material: 'silicon'
 
   environment:
-    temperature: 200        # K
+    temperature: 200        # [K]
 
   characteristics:
     qe:   0.9               # QE approximation
@@ -56,32 +60,32 @@ pipeline:
       func: pyxel.models.charge_generation.load_charge
       enabled: true
       arguments:
-        filename: marvel_science_10s.fits
-        position: [5000,5000]
+        filename: flat_0000.fits
+        position: [6000,6000]
         align: 'center'
         time_scale: 10    # NOTE will be overwritten
 
     - name: dark_current
       func: pyxel.models.charge_generation.dark_current
       enabled: true
-      arguments: # TODO configure!
-        dark_rate: 10  # [e/pix/s] # TODO
-        gain: 3.0
+      arguments:
+        dark_rate: 0.1   # [e/pix/s] TODO this should be provided by manufacturer
+        gain: 9.4        # [E/ADU] TODO make low and high readout mode as arg parse 
 
     # Cosmics from TARS model
-    - name: tars # NOTE probably good to use WC (solar max) scenario for input to pipeline
+    - name: tars
       func: pyxel.models.charge_generation.run_tars
-      enabled: false
+      enabled: true
       arguments: # TODO configure!
         simulation_mode: cosmic_ray
         running_mode: stepsize
         particle_type: proton
-        initial_energy: 100.      # [MeV]
-        particle_number: 100      # TODO probably >1000 for a (10x10)k CCD. Should follow a Poisson distribution so every new exposure get assigned differnt values
+        initial_energy: 50.     # [MeV]
+        particle_number: 5      # TODO probably >1000 for a (10x10)k CCD. Should follow a Poisson distribution so every new exposure get assigned differnt values
         incident_angles:
         starting_position:
-        spectrum_file: 'data/proton_L2_solarMax_11mm_Shielding.txt'
-        seed: 4321
+        spectrum_file: '../data/proton_L2_solarMax_11mm_Shielding.txt'  # NOTE probably good to use WC (solar max) scenario for input to pipeline
+        seed: 5321   # NOTE will be overwritten!
 
   # charge -> pixel
   charge_collection:
@@ -99,7 +103,7 @@ pipeline:
       func: pyxel.models.charge_collection.simple_persistence
       enabled: true
       arguments: # TODO configure!
-        trap_timeconstants: [1., 10.]      # Two traps
+        trap_timeconstants: [1., 10.]    # Two traps
         trap_densities: [0.307, 0.175]
 
   # pixel -> pixel

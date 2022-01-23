@@ -9,7 +9,7 @@
 exposure:
 #--------------------------------------------------------------
   outputs:
-    output_folder: output
+    output_folder: "output"
     save_data_to_file:
       - detector.image.array: ['fits']
 
@@ -23,8 +23,8 @@ ccd_detector:
 
   geometry:
 
-    row: 200 #10560              # [pixel]
-    col: 200 #10560              # [pixel]
+    row: 10000 #10560              # [pixel]
+    col: 10000 #10560              # [pixel]
     total_thickness: 40.    # [um] -> pyxel default
     pixel_vert_size: 9.     # [um]
     pixel_horz_size: 9.     # [um]
@@ -68,19 +68,19 @@ pipeline:
       func: pyxel.models.charge_generation.dark_current
       enabled: true
       arguments:
-        dark_rate: 2.0   # [e/pix/s] TODO this should be provided by manufacturer
+        dark_rate: 0.1   # [e/pix/s] TODO this should be provided by manufacturer
         gain: 9.4        # [e/ADU] TODO make low and high readout mode as arg parse 
 
     # Cosmics from TARS model
     - name: tars
       func: pyxel.models.charge_generation.run_tars
-      enabled: true
+      enabled: false             # NOTE will be activated except for bias'
       arguments: # TODO configure!
         simulation_mode: cosmic_ray
         running_mode: stepsize
         particle_type: proton
-        initial_energy: 100.      # [MeV]
-        particle_number: 500      # TODO probably >1000 for a (10x10)k CCD. Should follow a Poisson distribution so every new exposure get assigned differnt values
+        initial_energy: 50        # [MeV]
+        particle_number: 1        # TODO probably >1000 for a (10x10)k CCD. Should follow a Poisson distribution so every new exposure get assigned differnt values
         incident_angles:
         starting_position:
         spectrum_file: 'data/proton_L2_solarMax_11mm_Shielding.txt'  # NOTE probably good to use WC (solar max) scenario for input to pipeline

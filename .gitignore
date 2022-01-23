@@ -16,20 +16,15 @@ data/*.npy
 
 # Folders
 models/
-
-<<<<<<< HEAD
-=======
+venv/
+marvelsim/
 
 # Make exceptions
 #!name
 
->>>>>>> f5e6047253d3c0b074c373e35a6a636fedb4d920
 # Byte-compiled
 __pycache__/
 
 # Jupyter notebook
 .ipynb_checkpoints/
 python/.ipynb_checkpoints/
-
-# Make exceptions
-#!name

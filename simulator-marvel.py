@@ -12,14 +12,15 @@ spectra including a RV signal. Used in combination with High Performance
 Computing (HPC) this makes it easy to simulate a time series of spectra.
 
 User examples:
-  $ python  
-  $ python 
-  $ python 
+  $ python simulator-marvel.py --calibs -o </path/to/outdir>
+  $ python simulator-marvel.py --time 300 --mag 10.0 --teff 5800 --logg 4.5 --z 0.0 -o </path/to/outdir>
+  $ python simulator-marvel.py --time 300 --mag 10.0 --teff 5800 --logg 4.5 --z 0.0 --rv 5.5 -o </path/to/outdir> 
 """
 
 import os
 import time
 import pyxel
+import pathlib
 import argparse
 import subprocess
 import numpy as np
@@ -73,30 +74,60 @@ star_group.add_argument('--logg', metavar='DEX',    type=str, help='Stellar surf
 star_group.add_argument('--z',    metavar='DEX',    type=str, help='Stellar metallicity [Fe/H]')
 
 planet_group = parser.add_argument_group('EXOPLANET')
-planet_group.add_argument('--rv', metavar='OUTDIR', type=str, help='Radial Velocity shift of star due to exoplanet [m/s]')
+planet_group.add_argument('--rv', metavar='M/S', type=str, help='Radial Velocity shift of star due to exoplanet [m/s]')
 
 args = parser.parse_args()
+
+#==============================================================#
+#                           UTILITIES                          #
+#==============================================================#
+
+def enable_cosmics(exptime):
+    """
+    Draw a random number distribution of cosmics scaled to the exposure time.
+    """
+    # Make sure cosmics are being added
+    pipeline.charge_generation.tars.enabled = True
+    # Set random seed for cosmic rays
+    pipeline.charge_generation.tars.arguments.seed = np.random.randint(1e9)
+    # Benchmark 100 cosmics to an exposure time of 300 seconds
+    #--------- testing
+    #r = 100/300  # Rate
+    #k = np.random.randint(100)
+    #l = r * exptime
+    #Ncosmics = l**k * np.exp(-l) / np.math.factorial(k)
+    #print(Ncosmics)
+    #exit()
+    rate = 100/300.
+    ncosmics = int(rate * exptime + np.random.randint(300) * rate)
+    pipeline.charge_generation.tars.arguments.particle_number = ncosmics
 
 #==============================================================#
 #                      PYECHELLE + PYXEL                       #
 #==============================================================#
 
-# Snippet command for pyechelle
+# Hard-coded parameters
+bias_level   = 20398  # [e-] -> 2170 ADU
+read_noise   = 52     # [e-] -> 5.5 ADU
+exptime_flat = 60
+exptime_thar = 60
+exptime_thne = 60
 
-bias_level = 2170  # 20398 e-
-read_noise = 5.5   # 52 e-
+# Snippet command for pyechelle
 run_marvel = f"pyechelle -s MARVEL_2021_11_22 --bias {bias_level} --read_noise {read_noise}"
 
 # Create an instance of the pyxel class from the MARVEL specific inputfile
-
 config = pyxel.load("inputfile_marvel.yaml")
 exposure = config.exposure
 detector = config.ccd_detector
 pipeline = config.pipeline
 
 # Set output directory for pyxel
-
-exposure.outputs.output_dir = args.outdir
+# NOTE the folder "pyxel_dir" cannot be avoided at the moment..
+# and nor is it possible to rename the pyxel output files..
+output_dir = str(exposure.outputs.output_dir)
+pyxel_dir  = output_dir.split('/')[-1]
+exposure.outputs.output_dir = pathlib.Path(args.outdir + pyxel_dir)
 
 #------------------------------------#
 #            RUN CALIBRATION         #
@@ -104,68 +135,77 @@ exposure.outputs.output_dir = args.outdir
 
 if args.calibs:  # TODO how many exposures do we need of each calibs?
 
-    # Hard code exposure times
-    exptime_flat = 5
-    exptime_thar = 5
+    # Generate bias (pyechelle)
 
-    # Generate bias with pyxel only:
-    # NOTE We here generate a bias from a shortened dark exposure
-    # This is done by multiplying the dark rate with the bias exposure time
-    for i in range(10):
-        errorcode('message', '\nSimulating bias')
-        # Run pyechelle
-        filename_bias = f'{args.outdir}bias_'+f'{i}'.zfill(4)+'.fits'
-        command_bias  = run_marvel + f" --sources Constant -t 0 -o {filename_bias}"
-        os.system(command_bias)
-
+    # for i in range(1,11):
+    #     errorcode('message', '\nSimulating bias')
+    #     # Run pyechelle
+    #     filename_bias = f'{args.outdir}bias_'+f'{i}'.zfill(4)+'.fits'
+    #     command_bias  = f"pyechelle -s MARVEL_2021_11_22 --bias 2170 --read_noise 5.5 --sources Constant -t 0 -o {filename_bias}"
+    #     os.system(command_bias)
         # TODO can we do it faster with Pyxel?
+        # NOTE We here generate a bias from a shortened dark exposure
+        # This is done by multiplying the dark rate with the bias exposure time
         # pipeline.charge_generation.load_charge.enabled = False
         # pipeline.charge_generation.tars.enabled = False
         # pipeline.charge_generation.dark_current.arguments.dark_rate *= float(exptime_bais)
         # pyxel.exposure_mode(exposure=exposure, detector=detector, pipeline=pipeline)
-    exit()
+    
+    # Generate a flat
 
-    # Generate a flat - TODO testing
-
-    errorcode('message', '\nSimulating spectral flat')
-    filename_flat = f'{args.outdir}flat_'+'0'.zfill(4)+'.fits'
-    # Run pyechelle
-    command_flat = run_marvel + f" --fiber 1-5 --sources Constant -t {exptime_flat} -o {filename_flat}"
-    os.system(command_flat)
-    # Run pyxel
-    pipeline.charge_generation.load_charge.arguments.filename   = filename_flat
-    pipeline.charge_generation.load_charge.arguments.time_scale = exptime_flat
-    pyxel.exposure_mode(exposure=exposure, detector=detector, pipeline=pipeline)
-    exit()
+    # for i in range(1,2):
+    #     errorcode('message', '\nSimulating spectral flat')
+    #     # Run pyechelle
+    #     filename_flat = f'{args.outdir}flat_'+f'{i}'.zfill(4)+'.fits'
+    #     command_flat  = run_marvel + f" --fiber 1-5 --sources Constant -t {exptime_flat} -o {filename_flat}"
+    #     os.system(command_flat)
+    #     # Run pyxel
+    #     enable_cosmics(exptime_flat)
+    #     pipeline.charge_generation.load_charge.arguments.filename   = filename_flat
+    #     pipeline.charge_generation.load_charge.arguments.time_scale = float(exptime_flat)
+    #     pyxel.exposure_mode(exposure=exposure, detector=detector, pipeline=pipeline)
 
     # Generate a ThAr arc
 
-    errorcode('message', '\nSimulating ThAr arc')
-    # Run pyechelle
-    command_thar = run_marvel + f" --fiber 1-5 --sources ThAr -t {exptime_thar} -o {args.outdir}thar.fits"
-    os.system(command_thar)
-    # Run pyxel
-    pipeline.charge_generation.load_charge.arguments.filename   = f'{args.outdir}thar.fits'
-    pipeline.charge_generation.load_charge.arguments.time_scale = float(exptime_thar)
-    pyxel.exposure_mode(exposure=exposure, detector=detector, pipeline=pipeline)
+    for i in range(1,2):
+        errorcode('message', '\nSimulating ThAr arc')
+        # Run pyechelle
+        filename_thar = f'{args.outdir}thar_'+f'{i}'.zfill(4)+'.fits'
+        command_thar  = run_marvel + f" --fiber 1-5 --sources ThAr -t {exptime_thar} -o {filename_thar}"
+        os.system(command_thar)
+        # Run pyxel
+        enable_cosmics(exptime_thar)
+        pipeline.charge_generation.load_charge.arguments.filename   = filename_thar
+        pipeline.charge_generation.load_charge.arguments.time_scale = float(exptime_thar)
+        pyxel.exposure_mode(exposure=exposure, detector=detector, pipeline=pipeline)
 
     # Generate a ThNe arc
 
-    errorcode('message', '\nSimulating ThNe')
-    # Run pyechelle
-    command_thne = run_marvel + f" --fiber 2-5 --sources ThNe -t {exptime_thne} -o {args.outdir}thne.fits"
-    os.system(command_thne)
-    # Run pyxel
-    pipeline.charge_generation.load_charge.arguments.filename   = f'{args.outdir}thne.fits'
-    pipeline.charge_generation.load_charge.arguments.time_scale = float(exptime_thne)
-    pyxel.exposure_mode(exposure=exposure, detector=detector, pipeline=pipeline)
+    for i in range(1,2):
+        errorcode('message', '\nSimulating ThNe arc')
+        # Run pyechelle
+        filename_thne = f'{args.outdir}thne_'+f'{i}'.zfill(4)+'.fits'
+        command_thne = run_marvel + f" --fiber 1-5 --sources ThNe -t {exptime_thne} -o {filename_thne}"
+        os.system(command_thne)
+        # Run pyxel
+        enable_cosmics(exptime_thne)
+        pipeline.charge_generation.load_charge.arguments.filename   = filename_thne
+        pipeline.charge_generation.load_charge.arguments.time_scale = float(exptime_thne)
+        pyxel.exposure_mode(exposure=exposure, detector=detector, pipeline=pipeline)
 
-    # Generate a arc frame
-    # TODO needed in real life but they are already included in science frames?
+    # Generate a Etalon & ThAr
 
-    #errorcode('message', 'Simulating spectral arc\n')
-    #command_wave = run_marvel + " --sources Etalon --etalon_d=6 -t 10 -o marvel_etalon.fits"
-    #os.syste,(command_wave)
+    for i in range(1,2):
+        errorcode('message', '\nSimulating Etalon & ThAr')
+        # Run pyechelle
+        filename_wave = f'{args.outdir}wave_'+f'{i}'.zfill(4)+'.fits'
+        command_wave  = run_marvel + f" --fiber 1-5 --sources Etalon ThAr ThAr ThAr ThAr --etalon_d=6 -t {exptime_thar} -o {filename_wave}"
+        os.system(command_wave)
+        # Run pyxel
+        enable_cosmics(exptime_thar)
+        pipeline.charge_generation.load_charge.arguments.filename   = filename_wave
+        pipeline.charge_generation.load_charge.arguments.time_scale = float(exptime_thar)
+        pyxel.exposure_mode(exposure=exposure, detector=detector, pipeline=pipeline)
 
 #------------------------------------#
 #           RUN RV SEQUENCE          #
@@ -193,4 +233,4 @@ else:
 # Final execution time
 
 toc = time.time()
-print(f"MARVEL simulations took {toc - tic} s")
+print(f"\nMARVEL simulations took {toc - tic} s")
