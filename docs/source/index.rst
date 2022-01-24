@@ -6,7 +6,7 @@
 Welcome to MARVELsim's documentation!
 =====================================
 
-.. image:: figures/marvel_setup.png
+.. image:: marvel_setup.png
    :align: center
    :width: 700
    :alt: Alternative text
