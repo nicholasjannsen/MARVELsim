@@ -18,9 +18,9 @@ User examples:
 """
 
 import os
-import time
 import pyxel
 import pathlib
+import datetime
 import argparse
 import subprocess
 import numpy as np
@@ -32,7 +32,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 # Monitor script speed
-tic = time.time()
+tic = datetime.datetime.now()
 
 #==============================================================#
 #                           UTILITIES                          #
@@ -137,12 +137,13 @@ if args.calibs:  # TODO how many exposures do we need of each calibs?
 
     # Generate bias (pyechelle)
 
-    # for i in range(1,11):
-    #     errorcode('message', '\nSimulating bias')
-    #     # Run pyechelle
-    #     filename_bias = f'{args.outdir}bias_'+f'{i}'.zfill(4)+'.fits'
-    #     command_bias  = f"pyechelle -s MARVEL_2021_11_22 --bias 2170 --read_noise 5.5 --sources Constant -t 0 -o {filename_bias}"
-    #     os.system(command_bias)
+    for i in range(1,11):
+        errorcode('message', '\nSimulating bias')
+        # Run pyechelle
+        filename_bias = f'{args.outdir}bias_'+f'{i}'.zfill(4)+'.fits'
+        command_bias  = f"pyechelle -s MARVEL_2021_11_22 --bias 2170 --read_noise 5.5 --sources Constant -t 0 -o {filename_bias}"
+        os.system(command_bias)
+
         # TODO can we do it faster with Pyxel?
         # NOTE We here generate a bias from a shortened dark exposure
         # This is done by multiplying the dark rate with the bias exposure time
@@ -153,21 +154,21 @@ if args.calibs:  # TODO how many exposures do we need of each calibs?
     
     # Generate a flat
 
-    # for i in range(1,2):
-    #     errorcode('message', '\nSimulating spectral flat')
-    #     # Run pyechelle
-    #     filename_flat = f'{args.outdir}flat_'+f'{i}'.zfill(4)+'.fits'
-    #     command_flat  = run_marvel + f" --fiber 1-5 --sources Constant -t {exptime_flat} -o {filename_flat}"
-    #     os.system(command_flat)
-    #     # Run pyxel
-    #     enable_cosmics(exptime_flat)
-    #     pipeline.charge_generation.load_charge.arguments.filename   = filename_flat
-    #     pipeline.charge_generation.load_charge.arguments.time_scale = float(exptime_flat)
-    #     pyxel.exposure_mode(exposure=exposure, detector=detector, pipeline=pipeline)
+    for i in range(1,4):
+        errorcode('message', '\nSimulating spectral flat')
+        # Run pyechelle
+        filename_flat = f'{args.outdir}flat_'+f'{i}'.zfill(4)+'.fits'
+        command_flat  = run_marvel + f" --fiber 1-5 --sources Constant -t {exptime_flat} -o {filename_flat}"
+        os.system(command_flat)
+        # Run pyxel
+        enable_cosmics(exptime_flat)
+        pipeline.charge_generation.load_charge.arguments.filename   = filename_flat
+        pipeline.charge_generation.load_charge.arguments.time_scale = float(exptime_flat)
+        pyxel.exposure_mode(exposure=exposure, detector=detector, pipeline=pipeline)
 
     # Generate a ThAr arc
 
-    for i in range(1,2):
+    for i in range(1,4):
         errorcode('message', '\nSimulating ThAr arc')
         # Run pyechelle
         filename_thar = f'{args.outdir}thar_'+f'{i}'.zfill(4)+'.fits'
@@ -181,7 +182,7 @@ if args.calibs:  # TODO how many exposures do we need of each calibs?
 
     # Generate a ThNe arc
 
-    for i in range(1,2):
+    for i in range(1,4):
         errorcode('message', '\nSimulating ThNe arc')
         # Run pyechelle
         filename_thne = f'{args.outdir}thne_'+f'{i}'.zfill(4)+'.fits'
@@ -195,7 +196,7 @@ if args.calibs:  # TODO how many exposures do we need of each calibs?
 
     # Generate a Etalon & ThAr
 
-    for i in range(1,2):
+    for i in range(1,4):
         errorcode('message', '\nSimulating Etalon & ThAr')
         # Run pyechelle
         filename_wave = f'{args.outdir}wave_'+f'{i}'.zfill(4)+'.fits'
@@ -232,5 +233,5 @@ else:
 
 # Final execution time
 
-toc = time.time()
-print(f"\nMARVEL simulations took {toc - tic} s")
+toc = datetime.datetime.now()
+print(f"\nMARVEL simulations took {toc - tic}")
