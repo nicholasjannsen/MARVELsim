@@ -199,7 +199,15 @@
 </div>
 <div class="section" id="marvelsim-rv-simulation">
 <h2>MARVELsim RV simulation<a class="headerlink" href="#marvelsim-rv-simulation" title="Permalink to this headline">¶</a></h2>
-<p>Within the base of the MARVELsim repository exist a script to generate synthetic RV amplitude time series.</p>
+<p>Within the base of the MARVELsim repository exist a script to generate synthetic RV amplitude time series. Again to get an overview of the parsed arguments simply type:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>python rv-generator.py -h
+</pre></div>
+</div>
+<p>This small utility explores the python library <a class="reference external" href="https://radvel.readthedocs.io/en/latest/">RadVel</a> for modelling the RV time series. For this reason the software can also create models of multiple planetary systmes. We here show an example of generating the RV time series for a single planet and 3 planets:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>python rv-generator.py <span class="m">0</span> <span class="m">50</span> <span class="m">0</span> <span class="m">0</span> output/rv_test0.txt
+python rv-generator.py <span class="m">10</span>.0 <span class="m">30</span>.0 <span class="m">0</span>.0 <span class="m">150</span>.0 output/rv_test0.txt
+</pre></div>
+</div>
 </div>
 <div class="section" id="pyechelle-examples">
 <h2>PyEchelle examples<a class="headerlink" href="#pyechelle-examples" title="Permalink to this headline">¶</a></h2>
