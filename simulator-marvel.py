@@ -26,6 +26,7 @@ import subprocess
 import numpy as np
 import matplotlib.pyplot as plt
 from colorama import Fore, Style
+from utilities import errorcode
 
 # Turn off warnings
 import warnings
@@ -33,25 +34,7 @@ warnings.filterwarnings("ignore")
 
 # Monitor script speed
 tic = datetime.datetime.now()
-
-#==============================================================#
-#                           UTILITIES                          #
-#==============================================================#
-
-def errorcode(API, message):
-    """
-    This function allows to colour code error messages within a code.
-    """
-    if API == 'software':
-        print(Style.BRIGHT + Fore.GREEN + message + Style.RESET_ALL)
-    if API == 'message':
-        print(Style.BRIGHT + message + Style.RESET_ALL)
-    if API == 'warning':
-        print(Style.BRIGHT + Fore.YELLOW + '[Warning]: ' + message + Style.RESET_ALL)
-    if API == 'error':
-        print(Style.BRIGHT + Fore.RED + '[Error]: ' + message + Style.RESET_ALL)
-        exit()
-
+<
 #==============================================================#
 #               PARSING COMMAND-LINE ARGUMENTS                 #
 #==============================================================#
