@@ -3,7 +3,6 @@
 *.fits
 *.txt
 *.log
-*.png
 *.zip
 
 # Backup files
