@@ -176,15 +176,16 @@
   <div class="section" id="tutorial">
 <h1>Tutorial<a class="headerlink" href="#tutorial" title="Permalink to this headline">¶</a></h1>
 <p>At the root of the MARVELsim repository two scripts called <code class="docutils literal notranslate"><span class="pre">simulator-marvel.py</span></code> and <code class="docutils literal notranslate"><span class="pre">rv-generator.py</span></code>. The former is the main script we will use to simulate the MARVEL spectra and we will in the following distinguish between the usage of a <strong>science mode</strong> and <strong>calibration mode</strong> of this software. Intuitively the science mode is for when we want to simulate a Radial Velocity (RV) time series by a RV cross-dispersion displacement in our simulated spectra due to the presence of a planet around the stellar host. We will ellaborate on how to perform such simulations in the following, but notice <code class="docutils literal notranslate"><span class="pre">rv-generator.py</span></code> is a small generic script to generate the RV time series as input for <code class="docutils literal notranslate"><span class="pre">simulator-marvel.py</span></code>. The calibration mode of <code class="docutils literal notranslate"><span class="pre">simulator-marvel.py</span></code> is what also is referred to the <em>afternoon calibrations</em> as these calibrated spectral images are usuaally conducted during the afternoon prior to the nighlt observations. We start explaining the generation of calibration spectra, then object spectra, and how to use PyEchelle and Pyxel independently.</p>
-<a class="reference internal image-reference" href="_images/marvel_spectrum.png"><img alt="_images/marvel_spectrum.png" class="align-center" src="_images/marvel_spectrum.png" style="width: 700px;" /></a>
 <div class="section" id="marvelsim-afternoon-calibration">
 <h2>MARVELsim afternoon calibration<a class="headerlink" href="#marvelsim-afternoon-calibration" title="Permalink to this headline">¶</a></h2>
 <p>The script <code class="docutils literal notranslate"><span class="pre">simulator-marvel.py</span></code> makes it very easy to produce a batch of calibration data similar to what in the future will be produced in afternoon, so-called afternoon calibration data. A batch of calibrated data consist of</p>
 <blockquote>
 <div><ul class="simple">
 <li><p>10 bias images</p></li>
-<li><p>5 spectral flats</p></li>
-<li><p>5 ThAr arc spectra</p></li>
+<li><p>5 spectral flats (fiber 1-5)</p></li>
+<li><p>5 ThAr arc spectra (fiber 1-5)</p></li>
+<li><p>5 ThNe arc spectra (fiber 1-5)</p></li>
+<li><p>5 Etalon (fiber 1) + ThAr (fiber 2-5)</p></li>
 </ul>
 </div></blockquote>
 <p>To acquire an overview of the module simply use:</p>
@@ -198,7 +199,7 @@
 </div>
 <div class="section" id="marvelsim-rv-simulation">
 <h2>MARVELsim RV simulation<a class="headerlink" href="#marvelsim-rv-simulation" title="Permalink to this headline">¶</a></h2>
-<p>Text..</p>
+<p>Within the base of the MARVELsim repository exist a script to generate synthetic RV amplitude time series.</p>
 </div>
 <div class="section" id="pyechelle-examples">
 <h2>PyEchelle examples<a class="headerlink" href="#pyechelle-examples" title="Permalink to this headline">¶</a></h2>
