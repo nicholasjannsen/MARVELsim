@@ -43,7 +43,20 @@ This small utility explores the python library `RadVel <https://radvel.readthedo
    python rv-generator.py 0 50 0 0 output/rv_test0.txt
    python rv-generator.py 10.0 30.0 0.0 150.0 output/rv_test0.txt
 
+.. image:: rv_model_circular.png
+   :align: center
+   :width: 700
 
+.. image:: rv_model_eccentric.png
+   :align: center
+   :width: 700
+
+
+
+
+
+
+	   
 PyEchelle examples
 ------------------
 
