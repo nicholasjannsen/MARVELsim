@@ -81,7 +81,6 @@ args = parser.parse_args()
 
 # Single entry parameters
 tdur = args.tdur
-tday = args.tday
 Rs = (args.rs * u.R_sun).to('m')
 Ms = (args.ms * u.M_sun).to('kg')
 
