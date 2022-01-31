@@ -36,15 +36,15 @@ plt.rcParams['text.usetex'] = True
 
 def rv_model(t, t0, Ms, Mp, P, a, e, i, w):
 
-    
+    # Time of periastron
     tp = t0.to('d').value - P.to('d').value[0] * (np.pi/2. - w.value[0])
 
+    # True anomaly with radvel
     nu = radvel.orbit.true_anomaly(t, tp, P.to('d').value[0], e[0]) * u.rad
 
     # RV signal as function of nu: Murray & Correia (2011) Eq. 61, 65 and 66
     # NOTE "astar" in the following is the reduced semimajor axies due to the common
     # center-of-mass and "K" is the relative RV semi-amplitude of the star.
-
     astar = Mp / (Mp + Ms) * a
     K     = 2.*np.pi/P * astar * np.sin(i)/np.sqrt(1. - np.power(e,2))
     RV    = K * (np.cos(nu + w) - e*np.cos(w))
@@ -62,7 +62,7 @@ parser = argparse.ArgumentParser(epilog=__doc__,
 parser.add_argument('-o', metavar='OUTFILE', type=str, help='Output file -> /path/to/filename.txt')
 
 obs_group = parser.add_argument_group('OBSERVATION')
-obs_group.add_argument('--tdur', metavar='DAY', type=int, help='Duration of observing campaign [days]')
+obs_group.add_argument('-tdur', metavar='DAY', type=int, help='Duration of observing campaign [days]')
 
 star_group = parser.add_argument_group('STAR')
 star_group.add_argument('-rs', metavar='RSUN', type=float, help='Stellar radius [Rsun]')
@@ -81,6 +81,7 @@ args = parser.parse_args()
 
 # Single entry parameters
 tdur = args.tdur
+tday = args.tday
 Rs = (args.rs * u.R_sun).to('m')
 Ms = (args.ms * u.M_sun).to('kg')
 
