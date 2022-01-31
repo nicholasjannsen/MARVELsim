@@ -25,7 +25,6 @@ import argparse
 import subprocess
 import numpy as np
 import matplotlib.pyplot as plt
-from colorama import Fore, Style
 from utilities import errorcode
 
 # Turn off warnings
@@ -34,7 +33,7 @@ warnings.filterwarnings("ignore")
 
 # Monitor script speed
 tic = datetime.datetime.now()
-<
+
 #==============================================================#
 #               PARSING COMMAND-LINE ARGUMENTS                 #
 #==============================================================#

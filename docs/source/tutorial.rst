@@ -51,6 +51,10 @@ This small utility explores the python library `RadVel <https://radvel.readthedo
    :align: center
    :width: 800
 
+.. note::
+
+   Notice that the current version of ``rv-generator.py`` simply schedule an observation for each consecutive night. The the future it should be possible to select the observational compaign through tighter constraints. 
+	   
 The script can also create models of multi-planet systems. As an example we here show how to model the K6V spectral type star `TOI-1260 <https://academic.oup.com/mnras/article-abstract/505/4/4684/6280967>`_ hosting two (transiting) mini-Neptunes on almost circular orbits:
 
 .. code-block:: shell
@@ -61,7 +65,22 @@ The script can also create models of multi-planet systems. As an example we here
    :align: center
    :width: 800
    
+.. warning::
 
+   Be warned that the current multi-planet model is very simplistic and do not take into account of the gravitational interactions between the planets. Indeed such interactions perturbes the reflex motion of the stellar host.
+   
+	   
 Science mode
 ------------
+
+Like the calibration mode of ``simulator-marvel.py`` the science mode also very user frindly. In following we show two usage examples (also promt by using the built-in help function) simulating a single spectrum of a Sun-like star, with and without a RV signal:
+
+.. code-block:: shell
+
+   python simulator-marvel.py --time 300 --mag 10.0 --teff 5800 --logg 4.5 --z 0.0 -o </path/to/outdir>
+   python simulator-marvel.py --time 300 --mag 10.0 --teff 5800 --logg 4.5 --z 0.0 --rv 5.5 -o </path/to/outdir> 
+
+
+Notice that it is also possible to simulate up to four different targets in each of the fibers 2-5. For more examples on how this works see section of :ref:`extra examples <extra examples>`.
+
 

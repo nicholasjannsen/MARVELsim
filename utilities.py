@@ -4,6 +4,8 @@
 Placeholder for all the small utilities in this repo.
 """
 
+from colorama import Fore, Style
+
 #==============================================================#
 #                           UTILITIES                          #
 #==============================================================#

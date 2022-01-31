@@ -1,12 +1,14 @@
+.. _extra examples:
+
 Extra examples
 ==============
 
 PyEchelle examples
 ------------------
 
-The commands shown below are supposed to be executed in the root directory of pyechelle.
+The commands shown below are supposed to be executed in the root directory of pyechelle. These examples shows the ease of using PyEchelle from bash:
 
-**Bias images:** The bias level and std read noise value is measured from HERMES data. The values are bias = 2170 ADU and read-noise-std = 5.5 ADU, respectively. Since we need the count in electrons we multiply with the gain of 9.4 e/ADU which gives 20398 e and 52 e. 
+**Bias images:**
 
 .. code-block:: shell
 

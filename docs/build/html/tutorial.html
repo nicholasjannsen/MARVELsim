@@ -43,7 +43,7 @@
     
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Troubleshooting" href="troubleshooting.html" />
+    <link rel="next" title="Performance" href="performance.html" />
     <link rel="prev" title="Installation" href="installation.html" /> 
 </head>
 
@@ -99,6 +99,8 @@
 <li class="toctree-l2"><a class="reference internal" href="#science-mode">Science mode</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="performance.html">Performance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="extra.html">Extra examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="troubleshooting.html">Troubleshooting</a></li>
 <li class="toctree-l1"><a class="reference internal" href="acknowledgements.html">Acknowledgements</a></li>
 </ul>
@@ -209,14 +211,28 @@ python rv-generator.py -tdur <span class="m">50</span> -rs <span class="m">1</sp
 </div>
 <a class="reference internal image-reference" href="_images/rv_model_circular.png"><img alt="_images/rv_model_circular.png" class="align-center" src="_images/rv_model_circular.png" style="width: 800px;" /></a>
 <a class="reference internal image-reference" href="_images/rv_model_eccentric.png"><img alt="_images/rv_model_eccentric.png" class="align-center" src="_images/rv_model_eccentric.png" style="width: 800px;" /></a>
-<p>The script can also create models of multiple planetary systmes. As an example we here show how to model the K6V stellar host <a class="reference external" href="https://academic.oup.com/mnras/article-abstract/505/4/4684/6280967">TOI-1260</a> that host two mini-Neptunes on almost circular orbits:</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Notice that the current version of <code class="docutils literal notranslate"><span class="pre">rv-generator.py</span></code> simply schedule an observation for each consecutive night. The the future it should be possible to select the observational compaign through tighter constraints.</p>
+</div>
+<p>The script can also create models of multi-planet systems. As an example we here show how to model the K6V spectral type star <a class="reference external" href="https://academic.oup.com/mnras/article-abstract/505/4/4684/6280967">TOI-1260</a> hosting two (transiting) mini-Neptunes on almost circular orbits:</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>python rv-generator.py -tdur <span class="m">50</span> -rs <span class="m">0</span>.67 -ms <span class="m">0</span>.69 -rp <span class="m">2</span>.33 <span class="m">2</span>.82 -mp <span class="m">8</span>.6 <span class="m">11</span>.8 -t0 <span class="m">10</span> <span class="m">20</span> -p <span class="m">3</span>.13 <span class="m">7</span>.49 -i <span class="m">90</span> <span class="m">90</span> -w <span class="m">0</span> <span class="m">90</span> -e <span class="m">0</span> <span class="m">0</span>
 </pre></div>
 </div>
 <a class="reference internal image-reference" href="_images/rv_model_multiple.png"><img alt="_images/rv_model_multiple.png" class="align-center" src="_images/rv_model_multiple.png" style="width: 800px;" /></a>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Be warned that the current multi-planet model is very simplistic and do not take into account of the gravitational interactions between the planets. Indeed such interactions perturbes the reflex motion of the stellar host.</p>
+</div>
 </div>
 <div class="section" id="science-mode">
 <h2>Science mode<a class="headerlink" href="#science-mode" title="Permalink to this headline">¶</a></h2>
+<p>Like the calibration mode of <code class="docutils literal notranslate"><span class="pre">simulator-marvel.py</span></code> the science mode also very user frindly. In following we show two usage examples (also promt by using the built-in help function) simulating a single spectrum of a Sun-like star, with and without a RV signal:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>python simulator-marvel.py --time <span class="m">300</span> --mag <span class="m">10</span>.0 --teff <span class="m">5800</span> --logg <span class="m">4</span>.5 --z <span class="m">0</span>.0 -o &lt;/path/to/outdir&gt;
+python simulator-marvel.py --time <span class="m">300</span> --mag <span class="m">10</span>.0 --teff <span class="m">5800</span> --logg <span class="m">4</span>.5 --z <span class="m">0</span>.0 --rv <span class="m">5</span>.5 -o &lt;/path/to/outdir&gt;
+</pre></div>
+</div>
+<p>Notice that it is also possible to simulate up to four different targets in each of the fibers 2-5. For more examples on how this works see section of <a class="reference internal" href="extra.html#extra-examples"><span class="std std-ref">extra examples</span></a>.</p>
 </div>
 </div>
 
@@ -226,7 +242,7 @@ python rv-generator.py -tdur <span class="m">50</span> -rs <span class="m">1</sp
           </div>
           <footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-        <a href="troubleshooting.html" class="btn btn-neutral float-right" title="Troubleshooting" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="performance.html" class="btn btn-neutral float-right" title="Performance" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
         <a href="installation.html" class="btn btn-neutral float-left" title="Installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
     </div>
 
