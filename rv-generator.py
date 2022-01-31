@@ -27,7 +27,7 @@ from astropy import units as u
 from utilities import errorcode
 
 import matplotlib
-matplotlib.rcParams.update({'font.size': 13})
+matplotlib.rcParams.update({'font.size': 16})
 plt.rcParams['text.usetex'] = True
 
 #==============================================================#
@@ -37,10 +37,10 @@ plt.rcParams['text.usetex'] = True
 def rv_model(t, t0, Ms, Mp, P, a, e, i, w):
 
     # Time of periastron
-    tp = t0.to('d').value - P.to('d').value[0] * (np.pi/2. - w.value[0])
+    tp = t0.to('d').value - P.to('d').value * (np.pi/2. - w.value)
 
     # True anomaly with radvel
-    nu = radvel.orbit.true_anomaly(t, tp, P.to('d').value[0], e[0]) * u.rad
+    nu = radvel.orbit.true_anomaly(t, tp, P.to('d').value, e) * u.rad
 
     # RV signal as function of nu: Murray & Correia (2011) Eq. 61, 65 and 66
     # NOTE "astar" in the following is the reduced semimajor axies due to the common
@@ -107,51 +107,72 @@ n_planets = len(t0)
 t  = np.linspace(0, tdur, tdur)
 tt = np.linspace(0, tdur, tdur*1000)
 
-# Make models
-rv0, K0 = rv_model(t,  t0, Ms, Mp, P, a, e, i, w)
-rv1, K1 = rv_model(tt, t0, Ms, Mp, P, a, e, i, w)
-    
-K = K0.value[0]
+RV0 = []
+RV1 = []
+K   = []
+
+for n in range(n_planets):
+
+    # Make models
+    rv0, K0 = rv_model(t,  t0[n], Ms, Mp[n], P[n], a[n], e[n], i[n], w[n])
+    rv1, _  = rv_model(tt, t0[n], Ms, Mp[n], P[n], a[n], e[n], i[n], w[n])
+
+    RV0.append(rv0)
+    RV1.append(rv1)
+    K.append(f'{K0.value:.2f} m/s')
+
+
+# Combine models
+RV = np.sum(np.array(RV0), axis=0)
+rv = np.sum(np.array(RV1), axis=0)
+K  = ', '.join(K) 
 
 #==============================================================#
 #                           MAKE PLOT                          #
 #==============================================================#
 
-# Revert parameters for plot
-Rs = Rs.to('R_sun').value
-Ms = Ms.to('M_sun').value
-Rp = Rp.to('R_earth').value[0]
-Mp = Mp.to('M_earth').value[0]
-t0 = t0.to('d').value[0]
-P  = P.to('d').value[0]
-a  = a.to('R_sun').value[0]
-i  = i.to('deg').value[0]
-w  = w.to('deg').value[0]
-e  = e[0]
+# Plot and save model
+plt.figure(figsize=(10,5))
 
 # Prepare title
+Rs = Rs.to('R_sun').value
+Ms = Ms.to('M_sun').value
+
 lab_star   = (r'\textbf{Star:}' +
-              r' $R_s$ = '+f'{Rs:.1f}'+r' $R_{\odot}$;' +
-              r' $M_s$ = '+f'{Ms:.1f}'+r' $M_{\odot}$')
+              r' $R_s$ = '+f'{Rs:.2f}'+r' $R_{\odot}$;' +
+              r' $M_s$ = '+f'{Ms:.2f}'+r' $M_{\odot}$')
 
-lab_planet = (r'\textbf{Planet:}' +
-              r' $R_p$ = '+f'{Rp:.1f}'+r' $R_{\oplus}$;' +
-              r' $M_p$ = '+f'{Mp:.1f}'+r' $M_{\oplus}$;' +
-              r' $t_0$ = '+f'{t0:.1f}'+r' days;' +
-              r' $P$ = '+f'{P:.1f}'+r' days;' +
-              r' $a$ = '+f'{a:.1f}'+r' $R_{\odot}$;' +
-              r' $i$ = '+f'{i:.1f}'+r'$^{\circ}$;' +
-              r' $w$ = '+f'{w:.1f}'+r'$^{\circ}$;' +
-              r' $e$ = '+f'{e:.1f}')
+if n_planets == 1:
+    
+    # Revert parameters for plot
+    Rp = Rp.to('R_earth').value[0]
+    Mp = Mp.to('M_earth').value[0]
+    t0 = t0.to('d').value[0]
+    P  = P.to('d').value[0]
+    a  = a.to('R_sun').value[0]
+    i  = i.to('deg').value[0]
+    w  = w.to('deg').value[0]
+    e  = e[0]
 
-# Plot and save model
-plt.figure(figsize=(12,5))
-plt.plot(t,  rv0, 'mo', alpha=0.5, label='Observations')
-plt.plot(tt, rv1, 'k:', alpha=0.5, label=r'$K_{RV}$ = '+f'{K:.2f} m/s')
-plt.title(lab_star + '\n' + lab_planet)
+    lab_planet = (r'\textbf{Planet:}' +
+                  r' $R_p$ = '+f'{Rp:.1f}'+r' $R_{\oplus}$;' +
+                  r' $M_p$ = '+f'{Mp:.1f}'+r' $M_{\oplus}$;' +
+                  r' $t_0$ = '+f'{t0:.1f}'+r' days;' +
+                  r' $P$ = '+f'{P:.1f}'+r' days;' +
+                  r' $a$ = '+f'{a:.1f}'+r' $R_{\odot}$;' +
+                  r' $i$ = '+f'{i:.1f}'+r'$^{\circ}$;' +
+                  r' $w$ = '+f'{w:.1f}'+r'$^{\circ}$;' +
+                  r' $e$ = '+f'{e:.1f}')
+
+    plt.title(lab_star + '\n' + lab_planet, fontsize=14)
+else:
+    plt.title(lab_star, fontsize=14)
+    
+plt.plot(t,  RV, 'mo', alpha=0.5, label='Observations')
+plt.plot(tt, rv, 'k:', alpha=0.5, label=r'$K_{RV}$ = ' + K)
 plt.xlabel('Time [d]')
 plt.ylabel('Radial Velocity [m/s]')
-plt.legend(loc='upper left')
+plt.legend(loc='best')
 plt.tight_layout()
 plt.show()
 

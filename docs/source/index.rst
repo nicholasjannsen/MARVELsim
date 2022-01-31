@@ -19,5 +19,6 @@ Since the first discovery of a planet outside of our Solar System in 1995, the e
    overview
    installation
    tutorial
+   extra
    troubleshooting
    acknowledgements
