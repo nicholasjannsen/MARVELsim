@@ -23,8 +23,8 @@ ccd_detector:
 
   geometry:
 
-    row: 5000 #10560              # [pixel]
-    col: 5000 #10560              # [pixel]
+    row: 300 #10560              # [pixel]
+    col: 300 #10560              # [pixel]
     total_thickness: 40.    # [um] -> pyxel default
     pixel_vert_size: 9.     # [um]
     pixel_horz_size: 9.     # [um]
@@ -38,7 +38,7 @@ ccd_detector:
   characteristics:
     qe:   0.9               # QE approximation
     sv:   7.0e-6            # [V/e] Charge readout sensitivity
-    amp:  1                 # [V/V] Gain of ouput amplifier
+    amp:  11                # [V/V] Gain of ouput amplifier
     a1:   1                 # [V/V] Gain of signal processor -> pyxel default TODO
     a2:   65536             # [DN/V] Gain of analog-to-digtital converter (16 bit)
     fwc:  800000            # [e] Full-well capacity TODO
@@ -75,16 +75,16 @@ pipeline:
     # Cosmics from TARS model
     - name: tars
       func: pyxel.models.charge_generation.run_tars
-      enabled: false             # NOTE will be activated except for bias'
+      enabled: true             # NOTE will be activated except for bias'
       arguments: # TODO configure!
         simulation_mode: cosmic_ray
         running_mode: stepsize
         particle_type: proton
-        initial_energy: 50        # [MeV]
-        particle_number: 1        # TODO probably >1000 for a (10x10)k CCD. Should follow a Poisson distribution so every new exposure get assigned differnt values
+        initial_energy: 1000        # [MeV]
+        particle_number: 100        # TODO probably >1000 for a (10x10)k CCD. Should follow a Poisson distribution so every new exposure get assigned differnt values
         incident_angles:
         starting_position:
-        spectrum_file: 'data/proton_L2_solarMax_11mm_Shielding.txt'  # NOTE probably good to use WC (solar max) scenario for input to pipeline
+        spectrum_file: '../inputfiles/proton_L2_solarMax_11mm_Shielding.txt'
         seed: 4321
 
   # charge -> pixel
@@ -111,8 +111,8 @@ pipeline:
 
     - name: cdm 
       func: pyxel.models.charge_transfer.cdm
-      enabled: false # NOTE The CTI effect is too prominent with the current parameters 
-      arguments: # TODO configure!
+      enabled: false
+      arguments:
         parallel_cti: true
         serial_cti: false
         charge_injection: false

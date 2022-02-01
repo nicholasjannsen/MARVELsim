@@ -198,11 +198,12 @@ def enable_cosmics(exptime):
 #==============================================================#
 
 # Hard-coded parameters
-bias_level   = 20398  # [e-] -> 2170 ADU
-read_noise   = 52     # [e-] -> 5.5 ADU
-exptime_flat = 5
-exptime_thar = 5
-exptime_thne = 5
+bias_level   = 2000   # [ADU]
+read_noise   = 5      # [ADU] RMS
+exptime_flat = 5      # [s]
+exptime_thar = 5      # [s]
+exptime_thne = 5      # [s]
+args.time    = 5
 
 # Snippet command for pyechelle
 run_marvel = f"pyechelle -s MARVEL_2021_11_22 --fiber 1-5 --bias {bias_level} --read_noise {read_noise}"
@@ -214,7 +215,7 @@ if args.cpu: run_marvel = run_marvel + f" --max_cpu {args.cpu}"
 if args.cuda: run_marvel = run_marvel + f" --cuda"
 
 # Create an instance of the pyxel class from the MARVEL specific inputfile
-config = pyxel.load("inputfile_marvel.yaml")
+config = pyxel.load("inputfiles/inputfile_marvel.yaml")
 exposure = config.exposure
 detector = config.ccd_detector
 pipeline = config.pipeline
@@ -238,9 +239,10 @@ if args.calibs:  # TODO how many exposures do we need of each calibs?
         errorcode('message', '\nSimulating bias')
         # Run pyechelle
         filename_bias = f'{args.outdir}bias_'+f'{i}'.zfill(4)+'.fits'
-        command_bias  = f"pyechelle -s MARVEL_2021_11_22 --bias 2000 --read_noise 5.5 --sources Constant -t 0 -o {filename_bias}"
+        command_bias  = (f'pyechelle -s MARVEL_2021_11_22 --sources Constant -t 0' +
+                         f' --bias {bias_level} --read_noise {read_noise} -o {filename_bias}')
         os.system(command_bias)
-        add_fitsheader(filename_bias, 'BIAS', 0)
+        add_fitsheader(filename_bias, 'BIAS', 0.001)
 
         # TODO can we do it faster with Pyxel?
         # NOTE We here generate a bias from a shortened dark exposure
@@ -325,7 +327,7 @@ else:
     filename_science = f'{args.outdir}science_'+f'{args.index}'.zfill(4)+'.fits'
     command_science = (f" --sources Phoenix Phoenix Phoenix Phoenix ThAr --etalon_d=6 --d_primary 0.8 --d_secondary 0.1" +
                        f" --phoenix_t_eff {args.teff} --phoenix_log_g {args.logg} --phoenix_z {args.z} --phoenix_alpha 0.0" +
-                       f" --phoenix_magnitude {args.mag} --rv {args.rv} --fiber 1-5 -t {args.time} -o {filename_science}")
+                       f" --phoenix_magnitude {args.mag} --rv {args.rv} -t {args.time} -o {filename_science}")
     os.system(run_marvel + command_science)
     add_fitsheader(filename_science, 'SCIENCE', exptime_thar)
     # Run pyxel

@@ -38,7 +38,7 @@ ccd_detector:
   characteristics:
     qe:   0.9               # QE approximation
     sv:   7.0e-6            # [V/e] Charge readout sensitivity
-    amp:  1                 # [V/V] Gain of ouput amplifier
+    amp:  11                # [V/V] Gain of ouput amplifier
     a1:   1                 # [V/V] Gain of signal processor -> pyxel default TODO
     a2:   65536             # [DN/V] Gain of analog-to-digtital converter (16 bit)
     fwc:  800000            # [e] Full-well capacity TODO

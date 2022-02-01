@@ -13,8 +13,8 @@ detector = config.ccd_detector    # class CCD
 pipeline = config.pipeline        # class DetectionPipeline
 
 # Run pyxel in exposure mode
-pipeline.charge_generation.load_charge.arguments.filename   = 'flat.fits'
-pipeline.charge_generation.load_charge.arguments.time_scale = 1
+pipeline.charge_generation.load_charge.arguments.filename   = 'science.fits'
+pipeline.charge_generation.load_charge.arguments.time_scale = 5
 pipeline.charge_generation.tars.arguments.seed              = np.random.randint(1e9)
 
 results = pyxel.exposure_mode(exposure=exposure, detector=detector, pipeline=pipeline)
