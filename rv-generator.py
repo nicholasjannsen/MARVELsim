@@ -59,7 +59,7 @@ def rv_model(t, t0, Ms, Mp, P, a, e, i, w):
 parser = argparse.ArgumentParser(epilog=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
 
-parser.add_argument('-o', metavar='OUTFILE', type=str, help='Output file -> /path/to/filename.txt')
+parser.add_argument('-o', '--outputfile', metavar='PATH', type=str, help='Output file -> /path/to/filename.txt')
 
 obs_group = parser.add_argument_group('OBSERVATION')
 obs_group.add_argument('-tdur', metavar='DAY', type=int, help='Duration of observing campaign [days]')
@@ -126,6 +126,19 @@ for n in range(n_planets):
 RV = np.sum(np.array(RV0), axis=0)
 rv = np.sum(np.array(RV1), axis=0)
 K  = ', '.join(K) 
+
+#==============================================================#
+#                          SAVE OUTPUT                         #
+#==============================================================#
+
+# We here save the output in a format that HPC worker can read
+
+if args.outputfile:
+    index  = np.arange(1, len(RV)+1, 1)
+    header = 'i,t,rv'
+    np.savetxt(args.outputfile, np.transpose([index, t, RV]),
+               fmt=['%i', '%0.6f', '%0.6f'], delimiter=',',
+               header=header)
 
 #==============================================================#
 #                           MAKE PLOT                          #

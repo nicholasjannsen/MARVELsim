@@ -4,14 +4,12 @@
 *.txt
 *.log
 *.zip
+*.npy
 
 # Backup files
 *#
 *~
 *.#*
-
-# Binary files
-data/*.npy
 
 # Folders
 models/
