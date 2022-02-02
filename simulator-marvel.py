@@ -25,7 +25,6 @@ import argparse
 import subprocess
 import numpy as np
 import matplotlib.pyplot as plt
-from astropy.io import fits
 from utilities import errorcode, add_fitsheader
 
 # Turn off warnings
