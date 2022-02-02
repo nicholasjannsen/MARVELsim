@@ -3,6 +3,10 @@ Installation
 
 In this tutorial we walk you through how to setup an Python environment that allows you quickly get going running simulation of MARVEL spectra.
 
+.. warning::
+
+   At the moment this software is only supported for Python 3.8.
+
 Downlod from source
 -------------------
 

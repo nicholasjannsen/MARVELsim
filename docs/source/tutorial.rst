@@ -55,7 +55,7 @@ This small utility explores the python library `RadVel <https://radvel.readthedo
 
    Notice that the current version of ``rv-generator.py`` simply schedule an observation for each consecutive night. The the future it should be possible to select the observational compaign through tighter constraints.
 	   
-The script can also create models of multi-planet systems. As an example we here show how to model the K6V spectral type star `TOI-1260 <https://academic.oup.com/mnras/article-abstract/505/4/4684/6280967>`_ hosting two (transiting) mini-Neptunes on almost circular orbits:
+The script can also create models of multi-planet systems. As an example we here show how to model the K6V spectral type star `TOI-1260 <https://academic.oup.com/mnras/article-abstract/505/4/4684/6280967>`_ hosting two (transiting) mini-Neptunes on (assumed) circular orbits:
 
 .. code-block:: shell
 
