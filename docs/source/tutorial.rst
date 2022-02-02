@@ -36,7 +36,7 @@ Within the base of the MARVELsim repository a script exists to generate noise-le
 
    python rv-generator.py -h
 
-This small utility explores the python library `RadVel <https://radvel.readthedocs.io/en/latest/>`_ for calculating the true anomaly for a given set of input time point over the observed duration. The modelling of the RV time series are then calculated using the expression for the observed RV signal (Eq. 65) given by `Murray & Correria (2010) <https://arxiv.org/pdf/1009.1738.pdf>`_. To be seen in the figure below, we here show an example of generating the RV time series for a single Earth-like planet on a short orbital circular and eccentric orbit, respectively:  
+This small utility explores the python library `RadVel <https://radvel.readthedocs.io/en/latest/>`_ for calculating the true anomaly for a given set of input time point over the observed duration. The modelling of the RV time series are then calculated using the expression for the observed RV signal (Eq. 65) given by `Murray & Correria (2010) <https://arxiv.org/pdf/1009.1738.pdf>`_. To be seen in the figure below, we here show an example of generating the RV time series for a single Earth-like planet with a short circular and eccentric orbital period, respectively:  
 
 .. code-block:: shell
 
@@ -53,7 +53,7 @@ This small utility explores the python library `RadVel <https://radvel.readthedo
 
 .. note::
 
-   Notice that the current version of ``rv-generator.py`` simply schedule an observation for each consecutive night. The the future it should be possible to select the observational compaign through tighter constraints. 
+   Notice that the current version of ``rv-generator.py`` simply schedule an observation for each consecutive night. The the future it should be possible to select the observational compaign through tighter constraints.
 	   
 The script can also create models of multi-planet systems. As an example we here show how to model the K6V spectral type star `TOI-1260 <https://academic.oup.com/mnras/article-abstract/505/4/4684/6280967>`_ hosting two (transiting) mini-Neptunes on almost circular orbits:
 

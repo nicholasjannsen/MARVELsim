@@ -22,11 +22,11 @@ The easiest way version control both PyEchelle, Pyxel, and their dependencies is
 
    sudo apt install python3-venv
 
-Next create a virtual environment called ``marvelsim`` within the cloned repositry
+Next create a virtual environment called ``marvelsim`` within the base of the cloned repositry
 
 .. code-block:: shell
 
-   python -m venv $PWD/lib/marvelsim
+   python -m venv marvelsim
 
 To activate and deactivate the environment simply use
 

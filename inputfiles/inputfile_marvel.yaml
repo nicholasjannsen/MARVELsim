@@ -83,7 +83,7 @@ pipeline:
         particle_number: 1        # TODO probably >1000 for a (10x10)k CCD. Should follow a Poisson distribution so every new exposure get assigned differnt values
         incident_angles:
         starting_position:
-        spectrum_file: 'data/proton_L2_solarMax_11mm_Shielding.txt'  # NOTE probably good to use WC (solar max) scenario for input to pipeline
+        spectrum_file: 'inputfiles/proton_L2_solarMax_11mm_Shielding.txt'  # NOTE probably good to use WC (solar max) scenario for input to pipeline
         seed: 4321
 
   # charge -> pixel
