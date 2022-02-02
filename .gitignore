@@ -17,7 +17,7 @@ venv/
 marvelsim/
 
 # Make exceptions
-#!name
+!inputfiles/proton_L2_solarMax_11mm_Shielding.txt
 
 # Byte-compiled
 __pycache__/
