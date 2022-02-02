@@ -95,8 +95,8 @@
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Tutorial</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#calibration-mode">Calibration mode</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#rv-time-series">RV time series</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#science-mode">Science mode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#rv-time-series">RV time series</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="performance.html">Performance</a></li>
@@ -198,6 +198,15 @@
 </pre></div>
 </div>
 </div>
+<div class="section" id="science-mode">
+<h2>Science mode<a class="headerlink" href="#science-mode" title="Permalink to this headline">¶</a></h2>
+<p>Like the calibration mode of <code class="docutils literal notranslate"><span class="pre">simulator-marvel.py</span></code> the science mode also very user frindly. In following we show two usage examples (also promt by using the built-in help function) simulating a single spectrum of a Sun-like star, with and without a RV signal:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>python simulator-marvel.py --time <span class="m">300</span> --mag <span class="m">10</span>.0 --teff <span class="m">5800</span> --logg <span class="m">4</span>.5 --z <span class="m">0</span>.0 -o &lt;/path/to/outdir&gt;
+python simulator-marvel.py --time <span class="m">300</span> --mag <span class="m">10</span>.0 --teff <span class="m">5800</span> --logg <span class="m">4</span>.5 --z <span class="m">0</span>.0 --rv <span class="m">5</span>.5 -o &lt;/path/to/outdir&gt;
+</pre></div>
+</div>
+<p>Notice that it is also possible to simulate up to four different targets in each of the fibers 2-5. For more examples on how this works see section of <a class="reference internal" href="extra.html#extra-examples"><span class="std std-ref">extra examples</span></a>.</p>
+</div>
 <div class="section" id="rv-time-series">
 <h2>RV time series<a class="headerlink" href="#rv-time-series" title="Permalink to this headline">¶</a></h2>
 <p>Within the base of the MARVELsim repository a script exists to generate noise-less RV amplitude time series. Again to get an overview of the parsed arguments simply type:</p>
@@ -224,15 +233,6 @@ python rv-generator.py -tdur <span class="m">50</span> -rs <span class="m">1</sp
 <p class="admonition-title">Warning</p>
 <p>Be warned that the current multi-planet model is very simplistic and do not take into account of the gravitational interactions between the planets. Indeed such interactions perturbes the reflex motion of the stellar host.</p>
 </div>
-</div>
-<div class="section" id="science-mode">
-<h2>Science mode<a class="headerlink" href="#science-mode" title="Permalink to this headline">¶</a></h2>
-<p>Like the calibration mode of <code class="docutils literal notranslate"><span class="pre">simulator-marvel.py</span></code> the science mode also very user frindly. In following we show two usage examples (also promt by using the built-in help function) simulating a single spectrum of a Sun-like star, with and without a RV signal:</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>python simulator-marvel.py --time <span class="m">300</span> --mag <span class="m">10</span>.0 --teff <span class="m">5800</span> --logg <span class="m">4</span>.5 --z <span class="m">0</span>.0 -o &lt;/path/to/outdir&gt;
-python simulator-marvel.py --time <span class="m">300</span> --mag <span class="m">10</span>.0 --teff <span class="m">5800</span> --logg <span class="m">4</span>.5 --z <span class="m">0</span>.0 --rv <span class="m">5</span>.5 -o &lt;/path/to/outdir&gt;
-</pre></div>
-</div>
-<p>Notice that it is also possible to simulate up to four different targets in each of the fibers 2-5. For more examples on how this works see section of <a class="reference internal" href="extra.html#extra-examples"><span class="std std-ref">extra examples</span></a>.</p>
 </div>
 </div>
 
