@@ -141,7 +141,7 @@ if args.calibs:  # TODO how many exposures do we need of each calibs?
     for i in range(1,11):
         errorcode('message', '\nSimulating bias')
         # Run pyechelle
-        filename_bias = f'{args.outdir}bias_'+f'{i}'.zfill(4)+'.fits'
+        filename_bias = f'{args.outdir}/bias_'+f'{i}'.zfill(4)+'.fits'
         command_bias  = (f'pyechelle -s MARVEL_2021_11_22 --sources Constant -t 0' +
                          f' --bias {bias_level} --read_noise {read_noise} -o {filename_bias}')
         os.system(command_bias)
@@ -160,7 +160,7 @@ if args.calibs:  # TODO how many exposures do we need of each calibs?
     for i in num_calibs:
         errorcode('message', '\nSimulating ThAr arc')
         # Run pyechelle
-        filename_thar = f'{args.outdir}thar_'+f'{i}'.zfill(4)+'.fits'
+        filename_thar = f'{args.outdir}/thar_'+f'{i}'.zfill(4)+'.fits'
         command_thar  = run_marvel + f" --sources ThAr -t {exptime_thar} -o {filename_thar}"
         os.system(command_thar)
         # Run pyxel
@@ -179,7 +179,7 @@ if args.calibs:  # TODO how many exposures do we need of each calibs?
     for i in num_calibs:
         errorcode('message', '\nSimulating ThNe arc')
         # Run pyechelle
-        filename_thne = f'{args.outdir}thne_'+f'{i}'.zfill(4)+'.fits'
+        filename_thne = f'{args.outdir}/thne_'+f'{i}'.zfill(4)+'.fits'
         command_thne = run_marvel + f" --sources ThNe -t {exptime_thne} -o {filename_thne}"
         os.system(command_thne)
         # Run pyxel
@@ -198,7 +198,7 @@ if args.calibs:  # TODO how many exposures do we need of each calibs?
     for i in num_calibs:
         errorcode('message', '\nSimulating Etalon & ThAr')
         # Run pyechelle
-        filename_wave = f'{args.outdir}wave_'+f'{i}'.zfill(4)+'.fits'
+        filename_wave = f'{args.outdir}/wave_'+f'{i}'.zfill(4)+'.fits'
         command_wave  = run_marvel + f" --sources Etalon ThAr ThAr ThAr ThAr --etalon_d=6 -t {exptime_thar} -o {filename_wave}"
         os.system(command_wave)
         # Run pyxel
