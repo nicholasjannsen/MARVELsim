@@ -173,6 +173,17 @@ class marvelsim(object):
             os.system(command_bias)
             add_fitsheader(filename_bias, 'BIAS', 0)
 
+            
+        # Generate a flat
+
+        for i in range(1,self.nflat+1):
+            errorcode('message', '\nSimulating spectral flat')
+            # Run pyechelle
+            filename_flat = f'{args.outdir}/flat_'+f'{i}'.zfill(4)+'.fits'
+            command_flat  = self.run_marvel + f" --sources Constant --constant_intensity 0.01 -t {self.exptime_flat} -o {filename_flat}"
+            os.system(command_flat)
+
+            
         # Generate a ThAr arc
 
         for i in range(1,self.nthar+1):
@@ -198,18 +209,8 @@ class marvelsim(object):
             # Run pyechelle
             filename_wave = f'{args.outdir}/wave_'+f'{i}'.zfill(4)+'.fits'
             command_wave  = (self.run_marvel + f' --sources Etalon ThAr ThAr ThAr ThAr --etalon_d=6 ' + 
-                             '-t {self.exptime_thar} -o {filename_wave}')
-            os.system(command_wave)
-
-        # Generate a flat
-
-        for i in range(1,self.nflat+1):
-            errorcode('message', '\nSimulating spectral flat')
-            # Run pyechelle
-            filename_flat = f'{args.outdir}/flat_'+f'{i}'.zfill(4)+'.fits'
-            command_flat  = self.run_marvel + f" --sources Constant --constant_intensity 0.01 -t {self.exptime_flat} -o {filename_flat}"
-            os.system(command_flat)
-        
+                             f'-t {self.exptime_thar} -o {filename_wave}')
+            os.system(command_wave)        
 
 
             
@@ -226,8 +227,26 @@ class marvelsim(object):
         # pipeline.charge_generation.tars.enabled = False
         # pipeline.charge_generation.dark_current.arguments.dark_rate *= float(exptime_bais)
         # pyxel.exposure_mode(exposure=exposure, detector=detector, pipeline=pipeline)
+
+
+        # Generate a flat
+
+        for i in range(1,self.nflat):
+            errorcode('message', '\nSimulating spectral flat')
+            # Run pyxel
+            self.enable_cosmics(exptime_flat)
+            filename_flat = f'{args.outdir}/flat_'+f'{i}'.zfill(4)+'.fits'
+            pipeline.charge_generation.load_charge.arguments.filename   = filename_flat
+            pipeline.charge_generation.load_charge.arguments.time_scale = 5.0 #float(exptime_flat)
+            pyxel.exposure_mode(exposure=exposure, detector=detector, pipeline=pipeline)
+            # Swap files
+            os.remove(filename_flat)
+            os.system(f'mv {pyxel_file} {filename_flat}')
+            # Add header
+            add_fitsheader(filename_flat, 'FLAT', exptime_flat)
         
         # Generate a ThAr arc
+        
         errorcode('message', '\n[pyxel]: Simulating ThAr arc')
         for i in range(1,self.nbias+1):
             # Run pyxel
@@ -273,23 +292,6 @@ class marvelsim(object):
             os.system(f'mv {pyxel_file} {filename_wave}')
             # Add header
             add_fitsheader(filename_wave, 'WAVE', exptime_wave)
-
-        # Generate a flat
-
-        for i in range(1,self.nflat):
-            errorcode('message', '\nSimulating spectral flat')
-            # Run pyxel
-            self.enable_cosmics(exptime_flat)
-            filename_flat = f'{args.outdir}/flat_'+f'{i}'.zfill(4)+'.fits'
-            pipeline.charge_generation.load_charge.arguments.filename   = filename_flat
-            pipeline.charge_generation.load_charge.arguments.time_scale = 5.0 #float(exptime_flat)
-            pyxel.exposure_mode(exposure=exposure, detector=detector, pipeline=pipeline)
-            # Swap files
-            os.remove(filename_flat)
-            os.system(f'mv {pyxel_file} {filename_flat}')
-            # Add header
-            add_fitsheader(filename_flat, 'FLAT', exptime_flat)
-
 
 
 
