@@ -103,11 +103,11 @@ class marvelsim(object):
 
         # Run with GPUs:
         if args.cpu:
-            self.run_marvel = run_marvel + f" --max_cpu {args.cpu}"
+            self.run_marvel = self.run_marvel + f" --max_cpu {args.cpu}"
 
         # Run with CUDA requiring NVIDIA cores:
         if args.cuda:
-            self.run_marvel = run_marvel + f" --cuda"
+            self.run_marvel = self.run_marvel + f" --cuda"
 
 
 
