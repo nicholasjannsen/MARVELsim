@@ -307,13 +307,7 @@ class marvelsim(object):
             errorcode('error', 'One or more star parameters are missing!')
 
         # Check for inputfile
-        if args.rv:
-            index = [1]
-            rv    = [args.rv]
-        elif args.rv is None:
-            index = [1]
-            rv    = [0]
-        else:
+        if args.data:
             try:
                 data = np.loadtxt(args.data)
             except:
@@ -321,6 +315,14 @@ class marvelsim(object):
             else:
                 index = data[:,0]
                 rv    = data[:,1]
+        elif args.rv:
+            index = [1]
+            rv    = [args.rv]
+        else:
+            index = [1]
+            rv    = [0]
+
+        print(len(rv)); exit()
             
         errorcode('message', '\nSimulating stellar spectrum with PyEchelle\n')
         for i in range(len(rv)):
