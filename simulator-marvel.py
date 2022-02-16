@@ -405,6 +405,7 @@ if args.calibs:
 else:
     
     if args.hpc == 'pyechelle':
+        args.cuda = True
         m.init_pyechelle(args)
         m.run_science_pyechelle(args)
         
