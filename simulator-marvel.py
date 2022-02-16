@@ -305,18 +305,32 @@ class marvelsim(object):
         star = [args.teff, args.logg, args.z, args.alpha]
         if None in star:
             errorcode('error', 'One or more star parameters are missing!')
-        
-        # Generate a science frame
-        
+
+        # Check for inputfile
+        if args.rv is not None:
+            nspec = 1
+        else:
+            if args.data is None:
+                try:
+                    data = np.loadtxt(args.data)
+                except:
+                    errorcode('error', 'File do not exist!')
+                else:
+                    index = data[:,0]
+                    rv    = data[:,1]
+                    nspec = len(rv)
+            
         errorcode('message', '\nSimulating stellar spectrum with PyEchelle\n')
-        # Run pyechelle
-        if args.rv is None: args.rv = 0
-        if args.index is None: args.index = 1
-        filename_science = f'{args.outdir}/science_'+f'{args.index}'.zfill(4)+'.fits'
-        command_science = (f" --sources Phoenix Phoenix Phoenix Phoenix ThAr --etalon_d=6 --d_primary 0.8 --d_secondary 0.1" +
-                           f" --phoenix_t_eff {args.teff} --phoenix_log_g {args.logg} --phoenix_z {args.z} --phoenix_alpha {args.alpha}" +
-                           f" --phoenix_magnitude {args.mag} --rv {args.rv} -t {args.time} -o {filename_science}")
-        os.system(self.run_marvel + command_science)
+        for i in range(1,nspec):
+            # Run pyechelle
+            if args.rv is None: args.rv = 0
+            if args.index is None: args.index = 1
+            filename_science = f'{args.outdir}/science_'+f'{args.index}'.zfill(4)+'.fits'
+            command_science = (f' --sources Phoenix Phoenix Phoenix Phoenix ThAr --etalon_d=6 --d_primary 0.8 --d_secondary 0.1' +
+                               f' --phoenix_t_eff {args.teff} --phoenix_log_g {args.logg} --phoenix_z {args.z}' +
+                               f' --phoenix_alpha {args.alpha} --phoenix_magnitude {args.mag}' +
+                               f' --rv {args.rv} -t {args.time} -o {filename_science}')
+            os.system(self.run_marvel + command_science)
 
 
 
@@ -326,7 +340,7 @@ class marvelsim(object):
         """
         Module to run PyEchelle for star spectra.
         """
-                
+        
         errorcode('message', '\nSimulating stellar spectrum with PyEchelle\n')
         # Run pyxel
         self.enable_cosmics(args.time)
