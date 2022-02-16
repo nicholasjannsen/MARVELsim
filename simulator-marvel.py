@@ -309,25 +309,21 @@ class marvelsim(object):
         # Check for inputfile
         if args.data:
             try:
-                data = np.loadtxt(args.data)
+                data = np.loadtxt(os.getcwd()+f'/{args.data}')
             except:
                 errorcode('error', 'File do not exist!')
             else:
-                index = data[:,0]
-                rv    = data[:,1]
+                t  = data[:,0]
+                rv = data[:,1]
         elif args.rv:
-            index = [1]
-            rv    = [args.rv]
+            rv = [int(args.rv)]
         else:
-            index = [1]
-            rv    = [0]
+            rv = [0]
 
-        print(len(rv)); exit()
-            
         errorcode('message', '\nSimulating stellar spectrum with PyEchelle\n')
         for i in range(len(rv)):
             # Run pyechelle
-            filename_science = f'{args.outdir}/science_'+f'{index[i]}'.zfill(4)+'.fits'
+            filename_science = f'{args.outdir}/science_'+f'{i+1}'.zfill(4)+'.fits'
             command_science = (f' --sources Phoenix Phoenix Phoenix Phoenix ThAr --etalon_d=6 --d_primary 0.8 --d_secondary 0.1' +
                                f' --phoenix_t_eff {args.teff} --phoenix_log_g {args.logg} --phoenix_z {args.z}' +
                                f' --phoenix_alpha {args.alpha} --phoenix_magnitude {args.mag}' +
