@@ -370,38 +370,43 @@ cal_group.add_argument('--tthar', metavar='NUM', type=int, help='Exposure time o
 cal_group.add_argument('--twave', metavar='NUM', type=int, help='Exptime Etalon+ThAr   (default:  30 s)')
 
 hpc_group = parser.add_argument_group('PERFORMANCE')
-hpc_group.add_argument('--index', metavar='INT', type=str, help='Integer index used for parallel computations')
-hpc_group.add_argument('--cpu',   metavar='INT', type=str, help='Maximum number of CPU cores used order-wise parallel computing')
+hpc_group.add_argument('--hpc',   metavar='NAME', type=str, help='Flag to tell software when running on the hpc')
+hpc_group.add_argument('--index', metavar='INT',  type=str, help='Integer index used for parallel computations')
+hpc_group.add_argument('--cpu',   metavar='INT',  type=str, help='Maximum number of CPU cores used order-wise parallel computing')
 hpc_group.add_argument('--cuda',  action='store_true', help='NVIDIA hardware using CUDA used for raytracing (makes cpu flag obsolete')
-hpc_group.add_argument('--hpc',   action='store_true', help='Flag to tell software when running on the hpc')
 
 args = parser.parse_args()
 
 # Run software
 m = marvelsim(args)
 
-# Calibration
 if args.calibs:
-    if args.cuda and args.hpc:
+    
+    if args.hpc == 'pyechelle':
+        args.cuda = True
         m.init_pyechelle(args)
         m.run_calibs_pyechelle(args)
-    elif args.hpc:
+        
+    elif args.hpc == 'pyxel':
         m.init_pyxel(args)
         m.run_calibs_pyxel(args)
+        
     else:
         m.init_pyechelle(args)
         m.run_calibs_pyechelle(args)
-        #m.init_pyxel(args)
-        #m.run_calibs_pyxel(args)
+        m.init_pyxel(args)
+        m.run_calibs_pyxel(args)
 
-# Science spectra
 else:
-    if args.cuda and args.hpc:
+    
+    if args.hpc == 'pyechelle':
         m.init_pyechelle(args)
         m.run_science_pyechelle(args)
-    elif args.hpc:
+        
+    elif args.hpc == 'pyxel':
         m.init_pyxel(args)
         m.run_science_pyxel(args)
+        
     else:
         m.init_pyechelle(args)
         m.run_science_pyechelle(args)
@@ -409,7 +414,7 @@ else:
         m.run_science_pyxel(args)
 
 # Remove pyxel output folder
-if args.cuda is None:
+if args.hpc == 'pyxel':
     os.rmdir(args.outdir + '/' + pyxel_dir)
 
 # Final execution time
