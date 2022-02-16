@@ -77,23 +77,21 @@ class marvelsim(object):
         else: self.nwave = args.nwave
 
         # Control exposure time of calibration images [s]
-        if args.tdark is None: self.tdark = 300
-        else: self.ndark = args.ndark
-        if args.tflat is None: self.tflat = 5
-        else: self.tflat = args.tflat
-        if args.tthar is None: self.tthar = 30
-        else: self.tthar = args.tthar
-        #if args.tthne is None: self.tthne = 30
-        #else: self.thne = args.tthne
-        if args.twave is None: self.twave = 5
-        else: self.twave = args.twave
+        if args.tdark is None: self.exptime_dark = 300
+        else: self.exptime_dark = args.ndark
+        if args.tflat is None: self.exptime_flat = 5
+        else: self.exptime_flat = args.tflat
+        if args.tthar is None: self.exptime_thar = 30
+        else: self.exptime_thar = args.tthar
+        #if args.tthne is None: self.exptime_thne = 30
+        #else: self.exptime_thne = args.tthne
+        if args.twave is None: self.exptime_wave = 5
+        else: self.exptime_wave = args.twave
 
         
+                
+
         
-
-
-        
-
     def init_pyechelle(self, args):
         """
         Module to initialise PyEchelle
@@ -111,6 +109,8 @@ class marvelsim(object):
 
 
 
+
+            
     def init_pyxel(self, args):
         """
         Module to initialise Pyxel.
@@ -131,6 +131,8 @@ class marvelsim(object):
 
 
 
+
+        
     def enable_cosmics(self, exptime):
         """
         Module to draw a random number distribution of cosmics scaled to the exposure time.
@@ -154,6 +156,7 @@ class marvelsim(object):
 
         
 
+        
     def run_calibs_pyechelle(self, args):
         """
         Module to run generate calibration data with PyEchelle.
