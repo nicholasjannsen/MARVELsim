@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+>#!/usr/bin/env python3
 
 """
 This simulation tool is designed specifically for the upcoming MARVEL
@@ -292,7 +292,10 @@ class marvelsim(object):
 
             
     def run_science_pyechelle(self, args):
-
+        """
+        Module to run PyEchelle for star spectra.
+        """
+        
         # Check if all stellar parameters are present
         star = [args.teff, args.logg, args.z, args.alpha]
         if None in star:
@@ -315,7 +318,10 @@ class marvelsim(object):
         
 
     def run_science_pyxel(self, args):
-
+        """
+        Module to run PyEchelle for star spectra.
+        """
+                
         errorcode('message', '\nSimulating stellar spectrum with PyEchelle\n')
         # Run pyxel
         self.enable_cosmics(args.time)
@@ -374,8 +380,7 @@ args = parser.parse_args()
 # Run software
 m = marvelsim(args)
 
-# Run Pychelle first
-
+# Calibration
 if args.calibs:
     if args.cuda and args.hpc:
         m.init_pyechelle(args)
@@ -389,6 +394,7 @@ if args.calibs:
         m.init_pyxel(args)
         m.run_calibs_pyxel(args)
 
+# Science spectra
 else:
     if args.cuda and args.hpc:
         m.init_pyechelle(args)
@@ -403,7 +409,8 @@ else:
         m.run_science_pyxel(args)
 
 # Remove pyxel output folder
-os.rmdir(args.outdir + '/' + pyxel_dir)
+if args.cuda is None:
+    os.rmdir(args.outdir + '/' + pyxel_dir)
 
 # Final execution time
 toc = datetime.datetime.now()

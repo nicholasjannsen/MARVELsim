@@ -22,7 +22,10 @@ cd $SIMDIR
 source marvelsim/bin/activate
 
 # Run calibration
-python simulator-marvel.py --calibs --cuda -o output/
+#python simulator-marvel.py --calibs --cuda -o output/
 
 # Run star spectrum
-#python simulator-marvel.py --time 900 --mag 10.0 --teff 5800 --logg 4.5 --z 0.0 --alpha 0.0 --rv 1000 --cuda -o output/
+python simulator-marvel.py --time 1200 --mag 10.0 --teff 5800 --logg 4.5 --z 0.0 --alpha 0.0 --rv 1000 --cuda -o output/
+
+# Example of running PyEchelle alone
+#pyechelle --fiber 1-5 -s MARVEL_2021_11_22 --sources Phoenix Phoenix Phoenix Phoenix Etalon --etalon_d=6 --d_primary 0.8 --d_secondary 0.1 --phoenix_t_eff 5800 --phoenix_log_g 4.5 --phoenix_z 0.0 --phoenix_alpha 0.0 --phoenix_magnitude 10.0 -t 1200 -o marvel_science.fits
