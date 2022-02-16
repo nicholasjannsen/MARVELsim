@@ -1,4 +1,4 @@
->#!/usr/bin/env python3
+#!/usr/bin/env python3
 
 """
 This simulation tool is designed specifically for the upcoming MARVEL
@@ -161,7 +161,7 @@ class marvelsim(object):
         
         # Generate bias (pyechelle)
 
-        for i in range(1,self.nbias):
+        for i in range(1,self.nbias+1):
             errorcode('message', '\nSimulating bias')
             # Run pyechelle
             filename_bias = f'{args.outdir}/bias_'+f'{i}'.zfill(4)+'.fits'
@@ -172,7 +172,7 @@ class marvelsim(object):
 
         # Generate a ThAr arc
 
-        for i in range(1,self.nthar):
+        for i in range(1,self.nthar+1):
             errorcode('message', '\nSimulating ThAr arc')
             # Run pyechelle
             filename_thar = f'{args.outdir}/thar_'+f'{i}'.zfill(4)+'.fits'
@@ -190,7 +190,7 @@ class marvelsim(object):
 
         # Generate a Etalon & ThAr
 
-        for i in range(1,self.nwave):
+        for i in range(1,self.nwave+1):
             errorcode('message', '\nSimulating Etalon & ThAr')
             # Run pyechelle
             filename_wave = f'{args.outdir}/wave_'+f'{i}'.zfill(4)+'.fits'
@@ -200,7 +200,7 @@ class marvelsim(object):
 
         # Generate a flat
 
-        for i in range(1,self.nflat):
+        for i in range(1,self.nflat+1):
             errorcode('message', '\nSimulating spectral flat')
             # Run pyechelle
             filename_flat = f'{args.outdir}/flat_'+f'{i}'.zfill(4)+'.fits'
@@ -226,7 +226,7 @@ class marvelsim(object):
         
         # Generate a ThAr arc
         errorcode('message', '\n[pyxel]: Simulating ThAr arc')
-        for i in range(1,self.nbias):
+        for i in range(1,self.nbias+1):
             # Run pyxel
             self.enable_cosmics(self.exptime_thar)
             filename_thar = f'{args.outdir}/thar_'+f'{i}'.zfill(4)+'.fits'
@@ -391,8 +391,8 @@ if args.calibs:
     else:
         m.init_pyechelle(args)
         m.run_calibs_pyechelle(args)
-        m.init_pyxel(args)
-        m.run_calibs_pyxel(args)
+        #m.init_pyxel(args)
+        #m.run_calibs_pyxel(args)
 
 # Science spectra
 else:
