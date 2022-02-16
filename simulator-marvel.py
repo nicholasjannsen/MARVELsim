@@ -133,7 +133,7 @@ class marvelsim(object):
 
 
         
-    def enable_cosmics(self, exptime):
+    def enable_cosmics(self, exptime, pipeline):
         """
         Module to draw a random number distribution of cosmics scaled to the exposure time.
         """
@@ -307,8 +307,12 @@ class marvelsim(object):
             errorcode('error', 'One or more star parameters are missing!')
 
         # Check for inputfile
+        elif args.rv is None:
+            index = [1]
+            rv    = [0]
         if args.rv is not None:
-            nspec = 1
+            index = [1]
+            rv    = [args.rv]
         else:
             if args.data is None:
                 try:
@@ -318,18 +322,15 @@ class marvelsim(object):
                 else:
                     index = data[:,0]
                     rv    = data[:,1]
-                    nspec = len(rv)
             
         errorcode('message', '\nSimulating stellar spectrum with PyEchelle\n')
-        for i in range(1,nspec):
+        for i in range(len(rv)):
             # Run pyechelle
-            if args.rv is None: args.rv = 0
-            if args.index is None: args.index = 1
-            filename_science = f'{args.outdir}/science_'+f'{args.index}'.zfill(4)+'.fits'
+            filename_science = f'{args.outdir}/science_'+f'{index[i]}'.zfill(4)+'.fits'
             command_science = (f' --sources Phoenix Phoenix Phoenix Phoenix ThAr --etalon_d=6 --d_primary 0.8 --d_secondary 0.1' +
                                f' --phoenix_t_eff {args.teff} --phoenix_log_g {args.logg} --phoenix_z {args.z}' +
                                f' --phoenix_alpha {args.alpha} --phoenix_magnitude {args.mag}' +
-                               f' --rv {args.rv} -t {args.time} -o {filename_science}')
+                               f' --rv {rv[i]} -t {args.time} -o {filename_science}')
             os.system(self.run_marvel + command_science)
 
 
@@ -389,8 +390,8 @@ cal_group.add_argument('--tthar', metavar='NUM', type=int, help='Exposure time o
 cal_group.add_argument('--twave', metavar='NUM', type=int, help='Exptime Etalon+ThAr   (default:  30 s)')
 
 hpc_group = parser.add_argument_group('PERFORMANCE')
-hpc_group.add_argument('--hpc',   metavar='NAME', type=str, help='Flag to tell software when running on the hpc')
-hpc_group.add_argument('--index', metavar='INT',  type=str, help='Integer index used for parallel computations')
+hpc_group.add_argument('--hpc',   metavar='NAME', type=str, help='Name to run either PyEchelle or Pyxel alone on the HPC')
+hpc_group.add_argument('--data',  metavar='PATH', type=str, help='Path to include RV file')
 hpc_group.add_argument('--cpu',   metavar='INT',  type=str, help='Maximum number of CPU cores used order-wise parallel computing')
 hpc_group.add_argument('--cuda',  action='store_true', help='NVIDIA hardware using CUDA used for raytracing (makes cpu flag obsolete')
 
