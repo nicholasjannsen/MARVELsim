@@ -221,23 +221,6 @@ class marvelsim(object):
                              f'-t {self.exptime_thar} -o {filename_wave}')
             os.system(command_wave)        
 
-
-            
-    def run_science_pyechelle(self, args):
-        """
-        Module to run PyEchelle for star spectra.
-        """
-        
-        errorcode('message', '\nSimulating stellar spectrum with PyEchelle\n')
-        for i in range(len(self.rv)):
-            # Run pyechelle
-            filename_science = f'{args.outdir}/science_'+f'{i+1}'.zfill(4)+'.fits'
-            command_science = (f' --sources Phoenix Phoenix Phoenix Phoenix ThAr --etalon_d=6 --d_primary 0.8 --d_secondary 0.1' +
-                               f' --phoenix_t_eff {args.teff} --phoenix_log_g {args.logg} --phoenix_z {args.z}' +
-                               f' --phoenix_alpha {args.alpha} --phoenix_magnitude {args.mag}' +
-                               f' --rv {self.rv[i]} -t {args.time} -o {filename_science}')
-            os.system(self.run_marvel + command_science)
-
             
     #--------------------------------------------#
     #                   PYXEL                    #  
@@ -326,18 +309,24 @@ class marvelsim(object):
 
 
             
-    def run_science_pyxel(self, args):
+    def run_science(self, args):
         """
         Module to run PyEchelle for star spectra.
         """
-        
-        errorcode('message', '\nSimulating stellar spectrum with PyEchelle\n')
+
+        errorcode('message', '\nSimulating stellar spectrum\n')
         for i in range(len(self.rv)):
-            # Add cosmics
-            self.enable_cosmics(args.time)
-            # Run pyxel
+            # Files
             filename = f'science_'+f'{i+1}'.zfill(4)+'.fits'
             filename_science = f'{args.outdir}/{filename}'
+            # Run pyechelle
+            command_science = (f' --sources Phoenix Phoenix Phoenix Phoenix ThAr --etalon_d=6 --d_primary 0.8 --d_secondary 0.1' +
+                               f' --phoenix_t_eff {args.teff} --phoenix_log_g {args.logg} --phoenix_z {args.z}' +
+                               f' --phoenix_alpha {args.alpha} --phoenix_magnitude {args.mag}' +
+                               f' --rv {self.rv[i]} -t {args.time} -o {filename_science}')
+            os.system(self.run_marvel + command_science)
+            # Run pyxel
+            self.enable_cosmics(args.time)
             self.pipeline.charge_generation.load_charge.arguments.filename   = filename_science
             self.pipeline.charge_generation.load_charge.arguments.time_scale = 5 #float(args.time)
             pyxel.exposure_mode(exposure=self.exposure, detector=self.detector, pipeline=self.pipeline)
@@ -348,7 +337,9 @@ class marvelsim(object):
             add_fitsheader(filename_science, 'SCIENCE', args.time)
             # Compress file
             if args.zip:
-                os.system(f'zip {filename[:-5]}.zip {filename_science}')
+                os.chdir(args.output)
+                os.system(f'zip {filename[:-5]}.zip {filename}')
+                os.chdir(f'{args.output}/../')
                 os.remove(filename_science)
         # Remove pyxel folder
         os.rmdir(self.pyxel_path)
@@ -402,8 +393,7 @@ if args.calibs:
     m.run_calibs_pyechelle(args)
     m.run_calibs_pyxel(args)
 else:
-    m.run_science_pyechelle(args)
-    m.run_science_pyxel(args)
+    m.run_science(args)
     
 # Final execution time
 toc = datetime.datetime.now()
