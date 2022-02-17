@@ -13,8 +13,8 @@ Computing (HPC) this makes it easy to simulate a time series of spectra.
 
 User examples:
   $ python simulator-marvel.py --calibs -o </path/to/outdir>
-  $ python simulator-marvel.py --time 300 --mag 10.0 --teff 5800 --logg 4.5 --z 0.0 --rv 5.5 -o </path/to/outdir>
-  $ python simulator-marvel.py --time 300 --mag 10.0 --teff 5800 --logg 4.5 --z 0.0 --rv $rv --index $i -o </path/to/outdir> 
+  $ python simulator-marvel.py --time 300 --mag 10.0 --teff 5800 --logg 4.5 --z 0.0 --alpha 0.0 --rv 5.5 -o </path/to/outdir>
+  $ python simulator-marvel.py --time 300 --mag 10.0 --teff 5800 --logg 4.5 --z 0.0 --alpha 0.0 --data <rv_data.txt> --cuda -o </path/to/outdir> 
 """
 
 import os
@@ -61,7 +61,7 @@ class marvelsim(object):
             self.outdir = os.getcwd()
         else:
             self.outdir = args.outdir
-            
+
         # Control number of calibration images
         if args.nbias is None: self.nbias = 10
         else: self.nbias = args.nbias
@@ -178,7 +178,7 @@ class marvelsim(object):
         Module to run generate calibration data with PyEchelle.
         """
         
-        # Generate bias (pyechelle)
+        # Generate bias (pyechelle`)
         for i in range(1,self.nbias+1):
             errorcode('message', '\nSimulating bias')
             # Run pyechelle
@@ -197,7 +197,7 @@ class marvelsim(object):
             os.system(command_flat)
             
         # Generate a ThAr arc
-        for i in range(1,self.nthar+1):
+        for i in range(1, self.nthar+1):
             errorcode('message', '\nSimulating ThAr arc')
             # Run pyechelle
             filename_thar = f'{args.outdir}/thar_'+f'{i}'.zfill(4)+'.fits'
@@ -213,7 +213,7 @@ class marvelsim(object):
         #     os.system(command_thne)
 
         # Generate a Etalon & ThAr
-        for i in range(1,self.nwave+1):
+        for i in range(1, self.nwave+1):
             errorcode('message', '\nSimulating Etalon & ThAr')
             # Run pyechelle
             filename_wave = f'{args.outdir}/wave_'+f'{i}'.zfill(4)+'.fits'
@@ -243,7 +243,7 @@ class marvelsim(object):
     #                   PYXEL                    #  
     #--------------------------------------------#
             
-    def run_calibs_pyxel(self):
+    def run_calibs_pyxel(self, args):
         """
         Module to add CCDs effects to the calibrated data produced by PyEchelle.
         """
@@ -262,16 +262,16 @@ class marvelsim(object):
         for i in range(1,self.nflat):
             errorcode('message', '\nSimulating spectral flat')
             # Run pyxel
-            self.enable_cosmics(exptime_flat)
+            self.enable_cosmics(self.exptime_flat)
             filename_flat = f'{args.outdir}/flat_'+f'{i}'.zfill(4)+'.fits'
             self.pipeline.charge_generation.load_charge.arguments.filename   = filename_flat
             self.pipeline.charge_generation.load_charge.arguments.time_scale = 5.0 #float(exptime_flat)
             pyxel.exposure_mode(exposure=self.exposure, detector=self.detector, pipeline=self.pipeline)
             # Swap files
             os.remove(filename_flat)
-            os.system(f'mv {pyxel_file} {filename_flat}')
+            os.system(f'mv {self.pyxel_file} {filename_flat}')
             # Add header
-            add_fitsheader(filename_flat, 'FLAT', exptime_flat)
+            add_fitsheader(filename_flat, 'FLAT', self.exptime_flat)
         
         # Generate a ThAr arc
         
@@ -285,9 +285,9 @@ class marvelsim(object):
             pyxel.exposure_mode(exposure=self.exposure, detector=self.detector, pipeline=self.pipeline)
             # Swap files
             os.remove(filename_thar)
-            os.system(f'mv {pyxel_file} {filename_thar}')
+            os.system(f'mv {self.pyxel_file} {filename_thar}')
             # Add header
-            add_fitsheader(filename_thar, 'THAR', exptime_thar)
+            add_fitsheader(filename_thar, 'THAR', self.exptime_thar)
 
         # Generate a ThNe arc
 
@@ -301,9 +301,9 @@ class marvelsim(object):
         #     pyxel.exposure_mode(exposure=exposure, detector=detector, pipeline=pipeline)
         #     # Swap files
         #     os.remove(filename_thne)
-        #     os.system(f'mv {pyxel_file} {filename_thne}')
+        #     os.system(f'mv {self.pyxel_file} {filename_thne}')
         #     # Add header
-        #     add_fitsheader(filename_thne, 'THNE', exptime_thne)
+        #     add_fitsheader(filename_thne, 'THNE', self.exptime_thne)
 
         # Generate a Etalon & ThAr
 
@@ -318,9 +318,9 @@ class marvelsim(object):
             pyxel.exposure_mode(exposure=self.exposure, detector=self.detector, pipeline=self.pipeline)
             # Swap files
             os.remove(filename_wave)
-            os.system(f'mv {pyxel_file} {filename_wave}')
+            os.system(f'mv {self.pyxel_file} {filename_wave}')
             # Add header
-            add_fitsheader(filename_wave, 'WAVE', exptime_wave)
+            add_fitsheader(filename_wave, 'WAVE', self.exptime_wave)
         # Remove pyxel folder
         os.rmdir(self.pyxel_path)
 
@@ -345,6 +345,10 @@ class marvelsim(object):
             os.system(f'mv {self.pyxel_file} {filename_science}')
             # Lastly add header
             add_fitsheader(filename_science, 'SCIENCE', args.time)
+            # Compress file
+            if args.zip:
+                os.system(f'zip {filename_science[:-5]}.zip {filename_science}')
+                os.remove(filename_science)
         # Remove pyxel folder
         os.rmdir(self.pyxel_path)
             
@@ -381,9 +385,10 @@ cal_group.add_argument('--tthar', metavar='NUM', type=int, help='Exposure time o
 cal_group.add_argument('--twave', metavar='NUM', type=int, help='Exptime Etalon+ThAr   (default:  30 s)')
 
 hpc_group = parser.add_argument_group('PERFORMANCE')
-hpc_group.add_argument('--cuda',  action='store_true', help='NVIDIA hardware using CUDA used for raytracing (makes cpu flag obsolete')
-hpc_group.add_argument('--cpu',   metavar='INT',  type=str, help='Maximum number of CPU cores used order-wise parallel computing')
-hpc_group.add_argument('--data',  metavar='PATH', type=str, help='Path to include RV file')
+hpc_group.add_argument('--data', metavar='PATH', type=str, help='Path to include RV file')
+hpc_group.add_argument('--cpu',  metavar='INT',  type=str, help='Maximum number of CPU cores used order-wise parallel computing')
+hpc_group.add_argument('--cuda', action='store_true', help='Flag to use CUDA NVIDIA hardware for raytracing (makes cpu flag obsolete')
+hpc_group.add_argument('--zip',  action='store_true', help='Flag to zip output files.')
 
 args = parser.parse_args()
 
