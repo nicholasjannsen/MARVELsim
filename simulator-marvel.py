@@ -336,7 +336,8 @@ class marvelsim(object):
             # Add cosmics
             self.enable_cosmics(args.time)
             # Run pyxel
-            filename_science = f'{args.outdir}/science_'+f'{i+1}'.zfill(4)+'.fits'
+            filename = f'science_'+f'{i+1}'.zfill(4)+'.fits'
+            filename_science = f'{args.outdir}/{filename}'
             self.pipeline.charge_generation.load_charge.arguments.filename   = filename_science
             self.pipeline.charge_generation.load_charge.arguments.time_scale = 5 #float(args.time)
             pyxel.exposure_mode(exposure=self.exposure, detector=self.detector, pipeline=self.pipeline)
@@ -347,7 +348,7 @@ class marvelsim(object):
             add_fitsheader(filename_science, 'SCIENCE', args.time)
             # Compress file
             if args.zip:
-                os.system(f'zip {filename_science[:-5]}.zip {filename_science}')
+                os.system(f'zip {filename[:-5]}.zip {filename_science}')
                 os.remove(filename_science)
         # Remove pyxel folder
         os.rmdir(self.pyxel_path)
