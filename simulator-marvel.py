@@ -319,9 +319,10 @@ class marvelsim(object):
             # Swap files
             os.remove(filename_wave)
             os.system(f'mv {pyxel_file} {filename_wave}')
-            os.rmdir(self.pyxel_path)
             # Add header
             add_fitsheader(filename_wave, 'WAVE', exptime_wave)
+        # Remove pyxel folder
+        os.rmdir(self.pyxel_path)
 
 
             
@@ -342,9 +343,10 @@ class marvelsim(object):
             # Swap files
             os.remove(filename_science)
             os.system(f'mv {self.pyxel_file} {filename_science}')
-            os.rmdir(self.pyxel_path)
             # Lastly add header
             add_fitsheader(filename_science, 'SCIENCE', args.time)
+        # Remove pyxel folder
+        os.rmdir(self.pyxel_path)
             
 #==============================================================#
 #               PARSING COMMAND-LINE ARGUMENTS                 #
