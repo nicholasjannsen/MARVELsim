@@ -107,6 +107,25 @@ class marvelsim(object):
         if args.cuda:
             self.run_marvel = self.run_marvel + f" --cuda"
 
+        # Check if all stellar parameters are present
+        if not args.calibs:
+            star = [args.teff, args.logg, args.z, args.alpha]
+            if None in star:
+                errorcode('error', 'One or more star parameters are missing!')
+
+        # Check for inputfile
+        if args.data:
+            try:
+                data = np.loadtxt(args.data)
+            except:
+                errorcode('error', 'File do not exist: {args.data}')
+            else:
+                self.t  = data[:,0]
+                self.rv = data[:,1]
+        elif args.rv:
+            self.rv = [float(args.rv)]
+        else:
+            self.rv = [0]
 
 
 
@@ -117,30 +136,30 @@ class marvelsim(object):
         """
         # Create an instance of the pyxel class from the MARVEL specific inputfile
         config = pyxel.load("inputfiles/inputfile_marvel.yaml")
-        exposure = config.exposure
-        detector = config.ccd_detector
-        pipeline = config.pipeline
+        self.exposure = config.exposure
+        self.detector = config.ccd_detector
+        self.pipeline = config.pipeline
 
         # Set output directory for pyxel
         # NOTE the folder "pyxel_dir" cannot be avoided at the moment..
         # and nor is it possible to rename the pyxel output files..
-        output_dir = str(exposure.outputs.output_dir)
-        pyxel_dir  = output_dir.split('/')[-1]
-        pyxel_file = args.outdir + '/' + pyxel_dir + '/detector_image_array_1.fits'
-        exposure.outputs.output_dir = pathlib.Path(args.outdir + '/' + pyxel_dir)
+        output_dir = str(self.exposure.outputs.output_dir)
+        self.pyxel_dir  = output_dir.split('/')[-1]
+        self.pyxel_file = args.outdir + '/' + self.pyxel_dir + '/detector_image_array_1.fits'
+        self.exposure.outputs.output_dir = pathlib.Path(args.outdir + '/' + self.pyxel_dir)
 
 
 
 
         
-    def enable_cosmics(self, exptime, pipeline):
+    def enable_cosmics(self, exptime):
         """
         Module to draw a random number distribution of cosmics scaled to the exposure time.
         """
         # Make sure cosmics are being added
-        pipeline.charge_generation.tars.enabled = True
+        self.pipeline.charge_generation.tars.enabled = True
         # Set random seed for cosmic rays
-        pipeline.charge_generation.tars.arguments.seed = np.random.randint(1e9)
+        self.pipeline.charge_generation.tars.arguments.seed = np.random.randint(1e9)
         # Benchmark 100 cosmics to an exposure time of 300 seconds
         #--------- testing
         #r = 100/300  # Rate
@@ -151,12 +170,13 @@ class marvelsim(object):
         #exit()
         rate = 100/300.
         ncosmics = int(rate * exptime + np.random.randint(500) * rate)
-        pipeline.charge_generation.tars.arguments.particle_number = ncosmics
+        self.pipeline.charge_generation.tars.arguments.particle_number = ncosmics
 
 
-        
-
-        
+    #--------------------------------------------#
+    #                 PYECHELLE                  #  
+    #--------------------------------------------#
+                
     def run_calibs_pyechelle(self, args):
         """
         Module to run generate calibration data with PyEchelle.
@@ -214,7 +234,26 @@ class marvelsim(object):
 
 
             
+    def run_science_pyechelle(self, args):
+        """
+        Module to run PyEchelle for star spectra.
+        """
+        
+        errorcode('message', '\nSimulating stellar spectrum with PyEchelle\n')
+        for i in range(len(self.rv)):
+            # Run pyechelle
+            filename_science = f'{args.outdir}/science_'+f'{i+1}'.zfill(4)+'.fits'
+            command_science = (f' --sources Phoenix Phoenix Phoenix Phoenix ThAr --etalon_d=6 --d_primary 0.8 --d_secondary 0.1' +
+                               f' --phoenix_t_eff {args.teff} --phoenix_log_g {args.logg} --phoenix_z {args.z}' +
+                               f' --phoenix_alpha {args.alpha} --phoenix_magnitude {args.mag}' +
+                               f' --rv {self.rv[i]} -t {args.time} -o {filename_science}')
+            os.system(self.run_marvel + command_science)
 
+            
+    #--------------------------------------------#
+    #                   PYXEL                    #  
+    #--------------------------------------------#
+            
     def run_calibs_pyxel(self):
         """
         Module to add CCDs effects to the calibrated data produced by PyEchelle.
@@ -236,9 +275,9 @@ class marvelsim(object):
             # Run pyxel
             self.enable_cosmics(exptime_flat)
             filename_flat = f'{args.outdir}/flat_'+f'{i}'.zfill(4)+'.fits'
-            pipeline.charge_generation.load_charge.arguments.filename   = filename_flat
-            pipeline.charge_generation.load_charge.arguments.time_scale = 5.0 #float(exptime_flat)
-            pyxel.exposure_mode(exposure=exposure, detector=detector, pipeline=pipeline)
+            self.pipeline.charge_generation.load_charge.arguments.filename   = filename_flat
+            self.pipeline.charge_generation.load_charge.arguments.time_scale = 5.0 #float(exptime_flat)
+            pyxel.exposure_mode(exposure=self.exposure, detector=self.detector, pipeline=self.pipeline)
             # Swap files
             os.remove(filename_flat)
             os.system(f'mv {pyxel_file} {filename_flat}')
@@ -252,9 +291,9 @@ class marvelsim(object):
             # Run pyxel
             self.enable_cosmics(self.exptime_thar)
             filename_thar = f'{args.outdir}/thar_'+f'{i}'.zfill(4)+'.fits'
-            pipeline.charge_generation.load_charge.arguments.filename   = filename_thar
-            pipeline.charge_generation.load_charge.arguments.time_scale = 5.0 #float(exptime_thar)
-            pyxel.exposure_mode(exposure=exposure, detector=detector, pipeline=pipeline)
+            self.pipeline.charge_generation.load_charge.arguments.filename   = filename_thar
+            self.pipeline.charge_generation.load_charge.arguments.time_scale = 5.0 #float(exptime_thar)
+            pyxel.exposure_mode(exposure=self.exposure, detector=self.detector, pipeline=self.pipeline)
             # Swap files
             os.remove(filename_thar)
             os.system(f'mv {pyxel_file} {filename_thar}')
@@ -268,8 +307,8 @@ class marvelsim(object):
         #     # Run pyxel
         #     enable_cosmics(exptime_thne)
         #     filename_thne = f'{args.outdir}/thne_'+f'{i}'.zfill(4)+'.fits'
-        #     pipeline.charge_generation.load_charge.arguments.filename   = filename_thne
-        #     pipeline.charge_generation.load_charge.arguments.time_scale = 5 #float(exptime_thne)
+        #     self.pipeline.charge_generation.load_charge.arguments.filename   = filename_thne
+        #     self.pipeline.charge_generation.load_charge.arguments.time_scale = 5 #float(exptime_thne)
         #     pyxel.exposure_mode(exposure=exposure, detector=detector, pipeline=pipeline)
         #     # Swap files
         #     os.remove(filename_thne)
@@ -284,55 +323,21 @@ class marvelsim(object):
             # Run pyxel
             self.enable_cosmics(exptime_thar)
             filename_wave = f'{args.outdir}/wave_'+f'{i}'.zfill(4)+'.fits'
-            pipeline.charge_generation.load_charge.arguments.filename   = filename_wave
-            pipeline.charge_generation.load_charge.arguments.time_scale = 5 #float(exptime_wave)
-            pyxel.exposure_mode(exposure=exposure, detector=detector, pipeline=pipeline)
+            self.pipeline.charge_generation.load_charge.arguments.filename   = filename_wave
+            self.pipeline.charge_generation.load_charge.arguments.time_scale = 5 #float(exptime_wave)
+            pyxel.exposure_mode(exposure=self.exposure, detector=self.detector, pipeline=self.pipeline)
             # Swap files
             os.remove(filename_wave)
             os.system(f'mv {pyxel_file} {filename_wave}')
             # Add header
             add_fitsheader(filename_wave, 'WAVE', exptime_wave)
 
-
-
-            
-    def run_science_pyechelle(self, args):
-        """
-        Module to run PyEchelle for star spectra.
-        """
-        
-        # Check if all stellar parameters are present
-        star = [args.teff, args.logg, args.z, args.alpha]
-        if None in star:
-            errorcode('error', 'One or more star parameters are missing!')
-
-        # Check for inputfile
-        if args.data:
-            try:
-                data = np.loadtxt(os.getcwd()+f'/{args.data}')
-            except:
-                errorcode('error', 'File do not exist!')
-            else:
-                t  = data[:,0]
-                rv = data[:,1]
-        elif args.rv:
-            rv = [int(args.rv)]
-        else:
-            rv = [0]
-
-        errorcode('message', '\nSimulating stellar spectrum with PyEchelle\n')
-        for i in range(len(rv)):
-            # Run pyechelle
-            filename_science = f'{args.outdir}/science_'+f'{i+1}'.zfill(4)+'.fits'
-            command_science = (f' --sources Phoenix Phoenix Phoenix Phoenix ThAr --etalon_d=6 --d_primary 0.8 --d_secondary 0.1' +
-                               f' --phoenix_t_eff {args.teff} --phoenix_log_g {args.logg} --phoenix_z {args.z}' +
-                               f' --phoenix_alpha {args.alpha} --phoenix_magnitude {args.mag}' +
-                               f' --rv {rv[i]} -t {args.time} -o {filename_science}')
-            os.system(self.run_marvel + command_science)
+        # Remove pyxel output folder
+        if args.hpc == 'pyxel':
+            os.rmdir(args.outdir + '/' + self.pyxel_dir)
 
 
 
-        
 
     def run_science_pyxel(self, args):
         """
@@ -340,17 +345,24 @@ class marvelsim(object):
         """
         
         errorcode('message', '\nSimulating stellar spectrum with PyEchelle\n')
-        # Run pyxel
-        self.enable_cosmics(args.time)
-        pipeline.charge_generation.load_charge.arguments.filename   = filename_science
-        pipeline.charge_generation.load_charge.arguments.time_scale = 5 #float(args.time)
-        pyxel.exposure_mode(exposure=exposure, detector=detector, pipeline=pipeline)
-        # Swap files
-        os.remove(filename_science)
-        os.system(f'mv {pyxel_file} {filename_science}')
-        os.rmdir(args.outdir + '/' + pyxel_dir)
-        # Lastly add header
-        add_fitsheader(filename_science, 'SCIENCE', args.time)
+        for i in range(len(self.rv)):
+            # Add cosmics
+            self.enable_cosmics(args.time)
+            # Run pyxel
+            filename_science = f'{args.outdir}/science_'+f'{i+1}'.zfill(4)+'.fits'
+            self.pipeline.charge_generation.load_charge.arguments.filename   = filename_science
+            self.pipeline.charge_generation.load_charge.arguments.time_scale = 5 #float(args.time)
+            pyxel.exposure_mode(exposure=self.exposure, detector=self.detector, pipeline=self.pipeline)
+            # Swap files
+            os.remove(filename_science)
+            os.system(f'mv {self.pyxel_file} {filename_science}')
+            os.rmdir(args.outdir + '/' + self.pyxel_dir)
+            # Lastly add header
+            add_fitsheader(filename_science, 'SCIENCE', args.time)
+
+        # Remove pyxel output folder
+        if args.hpc == 'pyxel':
+            os.rmdir(args.outdir + '/' + self.pyxel_dir)
 
 
 #==============================================================#
@@ -394,7 +406,7 @@ hpc_group.add_argument('--cuda',  action='store_true', help='NVIDIA hardware usi
 
 args = parser.parse_args()
 
-# Run software
+# Create instance of class
 m = marvelsim(args)
 
 if args.calibs:
@@ -430,10 +442,6 @@ else:
         m.run_science_pyechelle(args)
         m.init_pyxel(args)
         m.run_science_pyxel(args)
-
-# Remove pyxel output folder
-if args.hpc == 'pyxel':
-    os.rmdir(args.outdir + '/' + pyxel_dir)
 
 # Final execution time
 toc = datetime.datetime.now()
