@@ -61,7 +61,7 @@ class marvelsim(object):
             self.outdir = os.getcwd()
         else:
             self.outdir = args.outdir
-
+            
         # Control number of calibration images
         if args.nbias is None: self.nbias = 10
         else: self.nbias = args.nbias
@@ -89,8 +89,6 @@ class marvelsim(object):
         else: self.exptime_wave = args.twave
 
         
-                
-
         
     def init_pyechelle(self, args):
         """
@@ -99,11 +97,11 @@ class marvelsim(object):
         # Snippet command for pyechelle
         self.run_marvel = f'pyechelle -s MARVEL_2021_11_22 --fiber 1-5 --bias {self.bias_level} --read_noise {self.read_noise}' 
 
-        # Run with GPUs:
+        # Run with normal CPU cores
         if args.cpu:
             self.run_marvel = self.run_marvel + f" --max_cpu {args.cpu}"
 
-        # Run with CUDA requiring NVIDIA cores:
+        # Run with CUDA requiring NVIDIA hardware and GPUs
         if args.cuda:
             self.run_marvel = self.run_marvel + f" --cuda"
 
@@ -113,7 +111,7 @@ class marvelsim(object):
             if None in star:
                 errorcode('error', 'One or more star parameters are missing!')
 
-        # Check for inputfile
+        # Check for RV inputfile
         if args.data:
             try:
                 data = np.loadtxt(args.data)
@@ -126,7 +124,6 @@ class marvelsim(object):
             self.rv = [float(args.rv)]
         else:
             self.rv = [0]
-
 
 
             
@@ -145,12 +142,11 @@ class marvelsim(object):
         # and nor is it possible to rename the pyxel output files..
         output_dir = str(self.exposure.outputs.output_dir)
         self.pyxel_dir  = output_dir.split('/')[-1]
-        self.pyxel_file = args.outdir + '/' + self.pyxel_dir + '/detector_image_array_1.fits'
+        self.pyxel_path = args.outdir + '/' + self.pyxel_dir
+        self.pyxel_file = self.pyxel_path + '/detector_image_array_1.fits'
         self.exposure.outputs.output_dir = pathlib.Path(args.outdir + '/' + self.pyxel_dir)
 
-
-
-
+        
         
     def enable_cosmics(self, exptime):
         """
@@ -183,7 +179,6 @@ class marvelsim(object):
         """
         
         # Generate bias (pyechelle)
-
         for i in range(1,self.nbias+1):
             errorcode('message', '\nSimulating bias')
             # Run pyechelle
@@ -192,20 +187,16 @@ class marvelsim(object):
                              f' --bias {self.bias_level} --read_noise {self.read_noise} -o {filename_bias}')
             os.system(command_bias)
             add_fitsheader(filename_bias, 'BIAS', 0)
-
             
         # Generate a flat
-
         for i in range(1,self.nflat+1):
             errorcode('message', '\nSimulating spectral flat')
             # Run pyechelle
             filename_flat = f'{args.outdir}/flat_'+f'{i}'.zfill(4)+'.fits'
             command_flat  = self.run_marvel + f" --sources Constant --constant_intensity 0.01 -t {self.exptime_flat} -o {filename_flat}"
             os.system(command_flat)
-
             
         # Generate a ThAr arc
-
         for i in range(1,self.nthar+1):
             errorcode('message', '\nSimulating ThAr arc')
             # Run pyechelle
@@ -214,7 +205,6 @@ class marvelsim(object):
             os.system(command_thar)
 
         # Generate a ThNe arc
-
         # for i in num_calibs:
         #     errorcode('message', '\nSimulating ThNe arc')
         #     # Run pyechelle
@@ -223,7 +213,6 @@ class marvelsim(object):
         #     os.system(command_thne)
 
         # Generate a Etalon & ThAr
-
         for i in range(1,self.nwave+1):
             errorcode('message', '\nSimulating Etalon & ThAr')
             # Run pyechelle
@@ -320,8 +309,9 @@ class marvelsim(object):
 
         for i in range(1,self.nthar):
             errorcode('message', '\nSimulating Etalon & ThAr')
-            # Run pyxel
+            # Add cosmics
             self.enable_cosmics(exptime_thar)
+            # Run pyxel
             filename_wave = f'{args.outdir}/wave_'+f'{i}'.zfill(4)+'.fits'
             self.pipeline.charge_generation.load_charge.arguments.filename   = filename_wave
             self.pipeline.charge_generation.load_charge.arguments.time_scale = 5 #float(exptime_wave)
@@ -329,16 +319,12 @@ class marvelsim(object):
             # Swap files
             os.remove(filename_wave)
             os.system(f'mv {pyxel_file} {filename_wave}')
+            os.rmdir(self.pyxel_path)
             # Add header
             add_fitsheader(filename_wave, 'WAVE', exptime_wave)
 
-        # Remove pyxel output folder
-        if args.hpc == 'pyxel':
-            os.rmdir(args.outdir + '/' + self.pyxel_dir)
 
-
-
-
+            
     def run_science_pyxel(self, args):
         """
         Module to run PyEchelle for star spectra.
@@ -356,15 +342,10 @@ class marvelsim(object):
             # Swap files
             os.remove(filename_science)
             os.system(f'mv {self.pyxel_file} {filename_science}')
-            os.rmdir(args.outdir + '/' + self.pyxel_dir)
+            os.rmdir(self.pyxel_path)
             # Lastly add header
             add_fitsheader(filename_science, 'SCIENCE', args.time)
-
-        # Remove pyxel output folder
-        if args.hpc == 'pyxel':
-            os.rmdir(args.outdir + '/' + self.pyxel_dir)
-
-
+            
 #==============================================================#
 #               PARSING COMMAND-LINE ARGUMENTS                 #
 #==============================================================#
@@ -392,57 +373,30 @@ cal_group.add_argument('--ndark', metavar='NUM', type=int, help='Number of Dark 
 cal_group.add_argument('--nthar', metavar='NUM', type=int, help='Number of ThAr exposures (default:  5)')
 cal_group.add_argument('--nflat', metavar='NUM', type=int, help='Number of Flat exposures (default:  5)')
 cal_group.add_argument('--nwave', metavar='NUM', type=int, help='Numexp of Etalon + ThAr  (default:  5)')
-
 cal_group.add_argument('--tdark', metavar='NUM', type=int, help='Exposure time of Dark (default: 300 s)')
 cal_group.add_argument('--tflat', metavar='NUM', type=int, help='Exposure time of Flat (default:   5 s)')
 cal_group.add_argument('--tthar', metavar='NUM', type=int, help='Exposure time of ThAr (default:  30 s)')
 cal_group.add_argument('--twave', metavar='NUM', type=int, help='Exptime Etalon+ThAr   (default:  30 s)')
 
 hpc_group = parser.add_argument_group('PERFORMANCE')
-hpc_group.add_argument('--hpc',   metavar='NAME', type=str, help='Name to run either PyEchelle or Pyxel alone on the HPC')
-hpc_group.add_argument('--data',  metavar='PATH', type=str, help='Path to include RV file')
-hpc_group.add_argument('--cpu',   metavar='INT',  type=str, help='Maximum number of CPU cores used order-wise parallel computing')
 hpc_group.add_argument('--cuda',  action='store_true', help='NVIDIA hardware using CUDA used for raytracing (makes cpu flag obsolete')
+hpc_group.add_argument('--cpu',   metavar='INT',  type=str, help='Maximum number of CPU cores used order-wise parallel computing')
+hpc_group.add_argument('--data',  metavar='PATH', type=str, help='Path to include RV file')
 
 args = parser.parse_args()
 
 # Create instance of class
 m = marvelsim(args)
+m.init_pyechelle(args)
+m.init_pyxel(args)
 
 if args.calibs:
-    
-    if args.hpc == 'pyechelle':
-        args.cuda = True
-        m.init_pyechelle(args)
-        m.run_calibs_pyechelle(args)
-        
-    elif args.hpc == 'pyxel':
-        m.init_pyxel(args)
-        m.run_calibs_pyxel(args)
-        
-    else:
-        m.init_pyechelle(args)
-        m.run_calibs_pyechelle(args)
-        m.init_pyxel(args)
-        m.run_calibs_pyxel(args)
-
+    m.run_calibs_pyechelle(args)
+    m.run_calibs_pyxel(args)
 else:
+    m.run_science_pyechelle(args)
+    m.run_science_pyxel(args)
     
-    if args.hpc == 'pyechelle':
-        args.cuda = True
-        m.init_pyechelle(args)
-        m.run_science_pyechelle(args)
-        
-    elif args.hpc == 'pyxel':
-        m.init_pyxel(args)
-        m.run_science_pyxel(args)
-        
-    else:
-        m.init_pyechelle(args)
-        m.run_science_pyechelle(args)
-        m.init_pyxel(args)
-        m.run_science_pyxel(args)
-
 # Final execution time
 toc = datetime.datetime.now()
 print(f"\nMARVEL simulations took {toc - tic}")
