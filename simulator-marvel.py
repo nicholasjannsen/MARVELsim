@@ -18,6 +18,7 @@ User examples:
 """
 
 import os
+import yaml
 import pyxel
 import pathlib
 import datetime
@@ -61,7 +62,7 @@ class marvelsim(object):
             self.outdir = os.getcwd()
         else:
             self.outdir = args.outdir
-
+            
         # Control number of calibration images
         if args.nbias is None: self.nbias = 10
         else: self.nbias = args.nbias
@@ -131,6 +132,11 @@ class marvelsim(object):
         """
         Module to initialise Pyxel.
         """
+        
+        # with open("inputfiles/inputfile_marvel.yaml") as f:
+        #     y = yaml.safe_load(f)
+        #     y['exposure']['outputs']['output_folder'] = args.outdir
+                               
         # Create an instance of the pyxel class from the MARVEL specific inputfile
         config = pyxel.load("inputfiles/inputfile_marvel.yaml")
         self.exposure = config.exposure
@@ -146,7 +152,7 @@ class marvelsim(object):
         self.pyxel_file = self.pyxel_path + '/detector_image_array_1.fits'
         self.exposure.outputs.output_dir = pathlib.Path(args.outdir + '/' + self.pyxel_dir)
 
-        
+
         
     def enable_cosmics(self, exptime):
         """
@@ -170,10 +176,10 @@ class marvelsim(object):
 
 
     #--------------------------------------------#
-    #                 PYECHELLE                  #  
+    #                CALIBRATION                 #  
     #--------------------------------------------#
                 
-    def run_calibs_pyechelle(self, args):
+    def run_calibs(self, args):
         """
         Module to run generate calibration data with PyEchelle.
         """
@@ -187,49 +193,6 @@ class marvelsim(object):
                              f' --bias {self.bias_level} --read_noise {self.read_noise} -o {filename_bias}')
             os.system(command_bias)
             add_fitsheader(filename_bias, 'BIAS', 0)
-            
-        # Generate a flat
-        for i in range(1,self.nflat+1):
-            errorcode('message', '\nSimulating spectral flat')
-            # Run pyechelle
-            filename_flat = f'{args.outdir}/flat_'+f'{i}'.zfill(4)+'.fits'
-            command_flat  = self.run_marvel + f" --sources Constant --constant_intensity 0.01 -t {self.exptime_flat} -o {filename_flat}"
-            os.system(command_flat)
-            
-        # Generate a ThAr arc
-        for i in range(1, self.nthar+1):
-            errorcode('message', '\nSimulating ThAr arc')
-            # Run pyechelle
-            filename_thar = f'{args.outdir}/thar_'+f'{i}'.zfill(4)+'.fits'
-            command_thar  = self.run_marvel + f" --sources ThAr -t {self.exptime_thar} -o {filename_thar}"
-            os.system(command_thar)
-
-        # Generate a ThNe arc
-        # for i in num_calibs:
-        #     errorcode('message', '\nSimulating ThNe arc')
-        #     # Run pyechelle
-        #     filename_thne = f'{args.outdir}/thne_'+f'{i}'.zfill(4)+'.fits'
-        #     command_thne = run_marvel + f" --sources ThNe -t {self.exptime_thne} -o {filename_thne}"
-        #     os.system(command_thne)
-
-        # Generate a Etalon & ThAr
-        for i in range(1, self.nwave+1):
-            errorcode('message', '\nSimulating Etalon & ThAr')
-            # Run pyechelle
-            filename_wave = f'{args.outdir}/wave_'+f'{i}'.zfill(4)+'.fits'
-            command_wave  = (self.run_marvel + f' --sources Etalon ThAr ThAr ThAr ThAr --etalon_d=6 ' + 
-                             f'-t {self.exptime_thar} -o {filename_wave}')
-            os.system(command_wave)        
-
-            
-    #--------------------------------------------#
-    #                   PYXEL                    #  
-    #--------------------------------------------#
-            
-    def run_calibs_pyxel(self, args):
-        """
-        Module to add CCDs effects to the calibrated data produced by PyEchelle.
-        """
 
         # TODO can we do it faster with Pyxel?
         # NOTE We here generate a bias from a shortened dark exposure
@@ -239,14 +202,15 @@ class marvelsim(object):
         # pipeline.charge_generation.dark_current.arguments.dark_rate *= float(exptime_bais)
         # pyxel.exposure_mode(exposure=exposure, detector=detector, pipeline=pipeline)
 
-
         # Generate a flat
-
-        for i in range(1,self.nflat):
+        for i in range(1,self.nflat+1):
             errorcode('message', '\nSimulating spectral flat')
+            # Run pyechelle
+            filename_flat = f'{args.outdir}/flat_'+f'{i}'.zfill(4)+'.fits'
+            command_flat  = self.run_marvel + f" --sources Constant --constant_intensity 0.01 -t {self.exptime_flat} -o {filename_flat}"
+            os.system(command_flat)
             # Run pyxel
             self.enable_cosmics(self.exptime_flat)
-            filename_flat = f'{args.outdir}/flat_'+f'{i}'.zfill(4)+'.fits'
             self.pipeline.charge_generation.load_charge.arguments.filename   = filename_flat
             self.pipeline.charge_generation.load_charge.arguments.time_scale = 5.0 #float(exptime_flat)
             pyxel.exposure_mode(exposure=self.exposure, detector=self.detector, pipeline=self.pipeline)
@@ -255,14 +219,16 @@ class marvelsim(object):
             os.system(f'mv {self.pyxel_file} {filename_flat}')
             # Add header
             add_fitsheader(filename_flat, 'FLAT', self.exptime_flat)
-        
+            
         # Generate a ThAr arc
-        
-        errorcode('message', '\n[pyxel]: Simulating ThAr arc')
-        for i in range(1,self.nbias+1):
+        for i in range(1, self.nthar+1):
+            errorcode('message', '\nSimulating ThAr arc')
+            # Run pyechelle
+            filename_thar = f'{args.outdir}/thar_'+f'{i}'.zfill(4)+'.fits'
+            command_thar  = self.run_marvel + f" --sources ThAr -t {self.exptime_thar} -o {filename_thar}"
+            os.system(command_thar)
             # Run pyxel
             self.enable_cosmics(self.exptime_thar)
-            filename_thar = f'{args.outdir}/thar_'+f'{i}'.zfill(4)+'.fits'
             self.pipeline.charge_generation.load_charge.arguments.filename   = filename_thar
             self.pipeline.charge_generation.load_charge.arguments.time_scale = 5.0 #float(exptime_thar)
             pyxel.exposure_mode(exposure=self.exposure, detector=self.detector, pipeline=self.pipeline)
@@ -273,12 +239,14 @@ class marvelsim(object):
             add_fitsheader(filename_thar, 'THAR', self.exptime_thar)
 
         # Generate a ThNe arc
-
         # for i in num_calibs:
         #     errorcode('message', '\nSimulating ThNe arc')
+        #     # Run pyechelle
+        #     filename_thne = f'{args.outdir}/thne_'+f'{i}'.zfill(4)+'.fits'
+        #     command_thne = run_marvel + f" --sources ThNe -t {self.exptime_thne} -o {filename_thne}"
+        #     os.system(command_thne)
         #     # Run pyxel
         #     enable_cosmics(exptime_thne)
-        #     filename_thne = f'{args.outdir}/thne_'+f'{i}'.zfill(4)+'.fits'
         #     self.pipeline.charge_generation.load_charge.arguments.filename   = filename_thne
         #     self.pipeline.charge_generation.load_charge.arguments.time_scale = 5 #float(exptime_thne)
         #     pyxel.exposure_mode(exposure=exposure, detector=detector, pipeline=pipeline)
@@ -289,13 +257,15 @@ class marvelsim(object):
         #     add_fitsheader(filename_thne, 'THNE', self.exptime_thne)
 
         # Generate a Etalon & ThAr
-
-        for i in range(1,self.nthar):
+        for i in range(1, self.nwave+1):
             errorcode('message', '\nSimulating Etalon & ThAr')
-            # Add cosmics
-            self.enable_cosmics(exptime_thar)
-            # Run pyxel
+            # Run pyechelle
             filename_wave = f'{args.outdir}/wave_'+f'{i}'.zfill(4)+'.fits'
+            command_wave  = (self.run_marvel + f' --sources Etalon ThAr ThAr ThAr ThAr --etalon_d=6 ' + 
+                             f'-t {self.exptime_thar} -o {filename_wave}')
+            os.system(command_wave)        
+            # Run pyxel
+            self.enable_cosmics(exptime_thar)
             self.pipeline.charge_generation.load_charge.arguments.filename   = filename_wave
             self.pipeline.charge_generation.load_charge.arguments.time_scale = 5 #float(exptime_wave)
             pyxel.exposure_mode(exposure=self.exposure, detector=self.detector, pipeline=self.pipeline)
@@ -309,6 +279,11 @@ class marvelsim(object):
 
 
             
+            
+    #--------------------------------------------#
+    #                 SCIENCE OBS                #  
+    #--------------------------------------------#
+            
     def run_science(self, args):
         """
         Module to run PyEchelle for star spectra.
@@ -320,11 +295,11 @@ class marvelsim(object):
             filename = f'science_'+f'{i+1}'.zfill(4)+'.fits'
             filename_science = f'{args.outdir}/{filename}'
             # Run pyechelle
-            command_science = (f' --sources Phoenix Phoenix Phoenix Phoenix ThAr --etalon_d=6 --d_primary 0.8 --d_secondary 0.1' +
-                               f' --phoenix_t_eff {args.teff} --phoenix_log_g {args.logg} --phoenix_z {args.z}' +
-                               f' --phoenix_alpha {args.alpha} --phoenix_magnitude {args.mag}' +
-                               f' --rv {self.rv[i]} -t {args.time} -o {filename_science}')
-            os.system(self.run_marvel + command_science)
+            # command_science = (f' --sources Phoenix Phoenix Phoenix Phoenix ThAr --etalon_d=6 --d_primary 0.8 --d_secondary 0.1' +
+            #                    f' --phoenix_t_eff {args.teff} --phoenix_log_g {args.logg} --phoenix_z {args.z}' +
+            #                    f' --phoenix_alpha {args.alpha} --phoenix_magnitude {args.mag}' +
+            #                    f' --rv {self.rv[i]} -t {args.time} -o {filename_science}')
+            # os.system(self.run_marvel + command_science)
             # Run pyxel
             self.enable_cosmics(args.time)
             self.pipeline.charge_generation.load_charge.arguments.filename   = filename_science
@@ -337,9 +312,9 @@ class marvelsim(object):
             add_fitsheader(filename_science, 'SCIENCE', args.time)
             # Compress file
             if args.zip:
-                os.chdir(args.output)
+                os.chdir(args.outdir)
                 os.system(f'zip {filename[:-5]}.zip {filename}')
-                os.chdir(f'{args.output}/../')
+                os.chdir(f'{args.outdir}/../')
                 os.remove(filename_science)
         # Remove pyxel folder
         os.rmdir(self.pyxel_path)
@@ -390,8 +365,7 @@ m.init_pyechelle(args)
 m.init_pyxel(args)
 
 if args.calibs:
-    m.run_calibs_pyechelle(args)
-    m.run_calibs_pyxel(args)
+    m.run_calibs(args)
 else:
     m.run_science(args)
     
