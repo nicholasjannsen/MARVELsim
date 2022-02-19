@@ -171,10 +171,59 @@
             
   <div class="section" id="performance">
 <span id="id1"></span><h1>Performance<a class="headerlink" href="#performance" title="Permalink to this headline">¶</a></h1>
-<div class="admonition warning">
-<p class="admonition-title">Warning</p>
-<p>More information soon!</p>
+<p>In order to speed up the simulations in order obtain a set of calibrated data or a time series of stellar spectra with RV variations, we here demonstrate how to run MARVELsim on a High Performace Computing (HPC) facility. We note that MARVELsim is specifically designed to run with CUDA NVIDIA hardware which typically is available for GPU nodes on most computing clusters. Since PyEchelle are the bottleneck for running large simulations using CUDA or running the simulations on multiple CPUs has a dramatic decrease of the computational time. We specifically refer to <a class="reference external" href="https://stuermer.gitlab.io/pyechelle/benchmark.html">PyEchelle’s documentation on performance</a> for more information.</p>
+<p>We will use the Vlaams Supercomputing Centre (VSC) as example on how to create a job script to run with GPUs. Two example job script are provided in the <strong>MARVELsim/hpc</strong> folder for your convenience. The first shows a typical job script for running a full set of calibrated data:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/bin/bash</span>
+
+<span class="c1">#PBS -N output</span>
+<span class="c1">#PBS -A &lt;account_name&gt;</span>
+<span class="c1">#PBS -l nodes=1:ppn=36:gpus=4:skylake</span>
+<span class="c1">#PBS -l partition=gpu</span>
+<span class="c1">#PBS -l pmem=2gb</span>
+<span class="c1">#PBS -l walltime=03:00:00</span>
+
+<span class="nb">cd</span> <span class="nv">$PBS_O_WORKDIR</span>
+
+<span class="nv">PYTHONPATH</span><span class="o">=</span><span class="nv">$VSC_DATA</span>/MARVELsim/marvelsim/bin/python
+<span class="nb">export</span> PYTHONPATH
+<span class="nv">SIMDIR</span><span class="o">=</span><span class="nv">$VSC_DATA</span>/MARVELsim
+<span class="nb">export</span> SIMDIR
+
+<span class="c1"># Activate environment</span>
+<span class="nb">source</span> marvelsim/bin/activate
+
+<span class="c1"># Run MARVELsim</span>
+<span class="nb">cd</span> <span class="nv">$SIMDIR</span>
+python simulator-marvel.py --calibs --cuda --zip -o <span class="nv">$SIMDIR</span>/output
+</pre></div>
 </div>
+<p>Illustrated here we request a single node with 4 GPUs using each using 9 CPU claves (hence 36 in total) to execute the job. We request 2 GB of memory RAM to be on the safe side since a single 10,560 x 10,560 pixel full frame image occupy 851 Mb. Notice that it is possible to compress each image on the fly by enabling the flag <code class="docutils literal notranslate"><span class="pre">zip</span></code> as done in this example. Typical deflation rates per image are around 80%, hence, it is highly recommended to invoke this flag for faster data transfer after end job. For the job script show above the total run time (walltime) was 2 hours and 40 minutes.</p>
+<p>The following example shows a job script for running 300 stellar spectra:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/bin/bash</span>
+
+<span class="c1">#PBS -N output</span>
+<span class="c1">#PBS -A &lt;account/project&gt;</span>
+<span class="c1">#PBS -l nodes=1:ppn=36:gpus=4:skylake</span>
+<span class="c1">#PBS -l partition=gpu</span>
+<span class="c1">#PBS -l pmem=2gb</span>
+<span class="c1">#PBS -l walltime=40:00:00</span>
+
+<span class="nb">cd</span> <span class="nv">$PBS_O_WORKDIR</span>
+
+<span class="nv">PYTHONPATH</span><span class="o">=</span><span class="nv">$VSC_DATA</span>/MARVELsim/marvelsim/bin/python
+<span class="nb">export</span> PYTHONPATH
+<span class="nv">SIMDIR</span><span class="o">=</span><span class="nv">$VSC_DATA</span>/MARVELsim
+<span class="nb">export</span> SIMDIR
+
+<span class="c1"># Activate environment</span>
+<span class="nb">source</span> marvelsim/bin/activate
+
+<span class="c1"># Run MARVELsim</span>
+<span class="nb">cd</span> <span class="nv">$SIMDIR</span>
+python simulator-marvel.py --time <span class="m">900</span> --mag <span class="m">10</span>.0 --teff <span class="m">5800</span> --logg <span class="m">4</span>.5 --z <span class="m">0</span>.0 --alpha <span class="m">0</span>.0 --data data.txt --cuda --zip -o <span class="nv">$SIMDIR</span>/output
+</pre></div>
+</div>
+<p>Compared to the previous job script we here use the same computational resources, however, increasing the walltime. Notice that adding more nodes will not speed up the computations, however, some cluster do provide more GPUs which can be increased. We recommend to debug and test the computational resources needed for your jobs adding <code class="docutils literal notranslate"><span class="pre">#PBS</span> <span class="pre">-l</span> <span class="pre">qos=debugging</span></code> to the PSB details in the scripts shown above.</p>
 </div>
 
 
