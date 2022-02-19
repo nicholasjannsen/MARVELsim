@@ -78,16 +78,19 @@ class marvelsim(object):
         else: self.nwave = args.nwave
 
         # Control exposure time of calibration images [s]
-        if args.tdark is None: self.exptime_dark = 300
-        else: self.exptime_dark = args.ndark
-        if args.tflat is None: self.exptime_flat = 5
-        else: self.exptime_flat = args.tflat
-        if args.tthar is None: self.exptime_thar = 30
-        else: self.exptime_thar = args.tthar
-        #if args.tthne is None: self.exptime_thne = 30
-        #else: self.exptime_thne = args.tthne
-        if args.twave is None: self.exptime_wave = 5
-        else: self.exptime_wave = args.twave
+        if args.tdark is None: self.tdark = 300
+        else: self.tdark = args.tdark
+        if args.tflat is None: self.tflat = 5
+        else: self.tflat = args.tflat
+        if args.tthar is None: self.tthar = 30
+        else: self.tthar = args.tthar
+        #if args.tthne is None: self.tthne = 30
+        #else: self.tthne = args.tthne
+        if args.twave is None: self.twave = 5
+        else: self.twave = args.twave
+
+        # Set exposure time
+        self.exptime = args.time
 
         
         
@@ -126,13 +129,11 @@ class marvelsim(object):
         else:
             self.rv = [0]
 
-
             
     def init_pyxel(self, args):
         """
         Module to initialise Pyxel.
-        """
-        
+        """        
         # with open("inputfiles/inputfile_marvel.yaml") as f:
         #     y = yaml.safe_load(f)
         #     y['exposure']['outputs']['output_folder'] = args.outdir
@@ -176,7 +177,6 @@ class marvelsim(object):
         self.pipeline.charge_generation.tars.arguments.particle_number = ncosmics
 
 
-
     def fetch_nimg(self, imgtype):
         """
         Module fetch the number of exposure of image type.
@@ -190,6 +190,18 @@ class marvelsim(object):
         return nimg
 
 
+    def fetch_exptime(self, imgtype):
+        """
+        Module fetch the exposure time of image type.
+        """
+        if imgtype == 'bias': exptime = 0
+        if imgtype == 'flat': exptime = self.tflat
+        if imgtype == 'thar': exptime = self.tthar
+        if imgtype == 'wave': exptime = self.twave
+        if imgtype == 'science': exptime = self.exptime
+        # Finito!
+        return exptime
+
 
     def cmd_pyechelle(self, imgtype, filepath, i):
 
@@ -199,17 +211,17 @@ class marvelsim(object):
         if imgtype == 'flat':
             cmd = (self.run_marvel +
                    f' --sources Constant --constant_intensity 0.01' +
-                   f' -t {self.exptime_flat} -o {filepath}')
+                   f' -t {self.tflat} -o {filepath}')
         if imgtype == 'thar':
             cmd = (self.run_marvel +
-                   f' --sources ThAr -t {self.exptime_thar} -o {filepath}')
+                   f' --sources ThAr -t {self.tthar} -o {filepath}')
         # if imgtype == 'thne':
         #     cmd = (run_marvel +
-        #            f' --sources ThNe -t {self.exptime_thne} -o {filepath}')
+        #            f' --sources ThNe -t {self.tthne} -o {filepath}')
         if imgtype == 'wave':
             cmd = (self.run_marvel +
                    f' --sources Etalon ThAr ThAr ThAr ThAr --etalon_d=6' + 
-                   f' -t {self.exptime_thar} -o {filepath}')
+                   f' -t {self.tthar} -o {filepath}')
         if imgtype == 'science':
             cmd = (self.run_marvel +
                    ' --etalon_d=6 --d_primary 0.8 --d_secondary 0.1' +
@@ -220,10 +232,7 @@ class marvelsim(object):
                    f' --rv {self.rv[i]} -t {args.time} -o {filepath}')
         # Finito!
         return cmd
-        
-
-    
-        
+            
     #--------------------------------------------#
     #                  PYECHELLE                 #  
     #--------------------------------------------#
@@ -233,12 +242,11 @@ class marvelsim(object):
         Module to run generate calibration data with PyEchelle.
         """
 
-        errorcode('message', f'\nSimulating {imgtype}')
+        errorcode('message', f'\nSimulating {imgtype} with PyEchelle')
         for i in range(1, self.fetch_nimg(imgtype)+1):
             # Run pyechelle
             filename = f'{imgtype}_'+f'{i}'.zfill(4)+'.fits'
             filepath = f'{args.outdir}/{filename}'
-            print(self.cmd_pyechelle(imgtype, filepath, i-1)); exit()
             os.system(self.cmd_pyechelle(imgtype, filepath, i-1))
 
             # TODO can we do it faster with Pyxel?
@@ -249,21 +257,21 @@ class marvelsim(object):
             # pipeline.charge_generation.dark_current.arguments.dark_rate *= float(exptime_bais)
             # pyxel.exposure_mode(exposure=exposure, detector=detector, pipeline=pipeline)
             if imgtype == 'bias':
-                add_fitsheader(filename, fitstype, 0)
+                add_fitsheader(filepath, fitstype, 0)
             
     #--------------------------------------------#
     #                    PYXEL                   #  
     #--------------------------------------------#
 
-    def run_pyxel(self, args, imgtype, fitsname, nimg):
+    def run_pyxel(self, args, imgtype, fitstype):
 
-        errorcode('message', '\nSimulating {imgtype} spectrum\n')
-        for i in range(1, self.fetch_nimg(args)+1):
-            # Fetch filenames
-            filename = f'{imgtype}_'+f'{i+1}'.zfill(4)+'.fits'
+        errorcode('message', f'\nSimulating {imgtype} with Pyxel')
+        for i in range(1, self.fetch_nimg(imgtype)+1):
+            # Fetch filenames.
+            filename = f'{imgtype}_'+f'{i}'.zfill(4)+'.fits'
             filepath = f'{args.outdir}/{filename}'
             # Run pyxel
-            self.enable_cosmics(args.time)
+            self.enable_cosmics(self.fetch_exptime(imgtype))
             self.pipeline.charge_generation.load_charge.arguments.filename   = filepath
             self.pipeline.charge_generation.load_charge.arguments.time_scale = 5 #float(args.time)
             pyxel.exposure_mode(exposure=self.exposure, detector=self.detector, pipeline=self.pipeline)
@@ -271,12 +279,14 @@ class marvelsim(object):
             os.remove(filepath)
             os.system(f'mv {self.pyxel_file} {filepath}')
             # Lastly add header
-            add_fitsheader(filepath, fitsname, args.time)
+            print('Adding fits-header')
+            add_fitsheader(filepath, fitstype, args.time)
             # Compress file
             if args.zip:
+                print(f'Compressing {filename}')
                 os.chdir(args.outdir)
                 os.system(f'zip {filename[:-5]}.zip {filename}')
-                os.chdir(f'{args.outdir}/../')
+                os.chdir(f'{os.getcwd()}/../')
                 os.remove(filepath)
 
             
