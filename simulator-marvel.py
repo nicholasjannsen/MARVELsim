@@ -13,11 +13,12 @@ Computing (HPC) this makes it easy to simulate a time series of spectra.
 
 User examples:
   $ python simulator-marvel.py --calibs -o </path/to/outdir>
-  $ python simulator-marvel.py --time 300 --mag 10.0 --teff 5800 --logg 4.5 --z 0.0 --rv 5.5 -o </path/to/outdir>
-  $ python simulator-marvel.py --time 300 --mag 10.0 --teff 5800 --logg 4.5 --z 0.0 --rv $rv --index $i -o </path/to/outdir> 
+  $ python simulator-marvel.py --time 300 --mag 10.0 --teff 5800 --logg 4.5 --z 0.0 --alpha 0.0 --rv 5.5 -o </path/to/outdir>
+  $ python simulator-marvel.py --time 300 --mag 10.0 --teff 5800 --logg 4.5 --z 0.0 --alpha 0.0 --data <rv_data.txt> --cuda -o </path/to/outdir> 
 """
 
 import os
+import yaml
 import pyxel
 import pathlib
 import datetime
@@ -25,8 +26,7 @@ import argparse
 import subprocess
 import numpy as np
 import matplotlib.pyplot as plt
-from astropy.io import fits
-from utilities import errorcode
+from utilities import errorcode, add_fitsheader
 
 # Turn off warnings
 import warnings
@@ -36,6 +36,267 @@ warnings.filterwarnings("ignore")
 tic = datetime.datetime.now()
 
 #==============================================================#
+#                      PYECHELLE + PYXEL                       #
+#==============================================================#
+
+class marvelsim(object):
+    """
+    This class has the purpose
+    """
+    
+    # INITILIZE THE CLASS:
+    def __init__(self, args):
+        """
+        Constructor of the class.
+        """
+
+        # HARD-CODED PARAMETERS
+        
+        self.bias_level   = 2000   # [ADU]
+        self.read_noise   = 5      # [ADU] RMS
+        
+        # PARSED ARGUMENTS
+        
+        # Make it possible to use bash syntax for PWD
+        if args.outdir == '.':
+            self.outdir = os.getcwd()
+        else:
+            self.outdir = args.outdir
+            
+        # Control number of calibration images
+        if args.nbias is None: self.nbias = 10
+        else: self.nbias = args.nbias
+        if args.ndark is None: self.ndark = 10
+        else: self.ndark = args.ndark
+        if args.nflat is None: self.nflat = 5
+        else: self.nflat = args.nflat
+        if args.nthar is None: self.nthar = 5
+        else: self.nthar = args.nthar
+        #if args.nthne is None: self.nthne = 5
+        #else: self.nthne = args.nthne
+        if args.nwave is None: self.nwave = 5
+        else: self.nwave = args.nwave
+
+        # Control exposure time of calibration images [s]
+        if args.tdark is None: self.tdark = 300
+        else: self.tdark = args.tdark
+        if args.tflat is None: self.tflat = 5
+        else: self.tflat = args.tflat
+        if args.tthar is None: self.tthar = 30
+        else: self.tthar = args.tthar
+        #if args.tthne is None: self.tthne = 30
+        #else: self.tthne = args.tthne
+        if args.twave is None: self.twave = 5
+        else: self.twave = args.twave
+
+        # Set exposure time
+        self.exptime = args.time
+
+        
+        
+    def init_pyechelle(self, args):
+        """
+        Module to initialise PyEchelle
+        """
+        # Snippet command for pyechelle
+        self.run_marvel = f'pyechelle -s MARVEL_2021_11_22 --fiber 1-5 --bias {self.bias_level} --read_noise {self.read_noise}' 
+
+        # Run with normal CPU cores
+        if args.cpu:
+            self.run_marvel = self.run_marvel + f" --max_cpu {args.cpu}"
+
+        # Run with CUDA requiring NVIDIA hardware and GPUs
+        if args.cuda:
+            self.run_marvel = self.run_marvel + f" --cuda"
+
+        # Check if all stellar parameters are present
+        if not args.calibs:
+            star = [args.teff, args.logg, args.z, args.alpha]
+            if None in star:
+                errorcode('error', 'One or more star parameters are missing!')
+
+        # Check for RV inputfile
+        if args.data:
+            try:
+                data = np.loadtxt(args.data)
+            except:
+                errorcode('error', 'File do not exist: {args.data}')
+            else:
+                self.t  = data[:,0]
+                self.rv = data[:,1]
+        elif args.rv:
+            self.rv = [float(args.rv)]
+        else:
+            self.rv = [0]
+
+            
+    def init_pyxel(self, args):
+        """
+        Module to initialise Pyxel.
+        """        
+        # with open("inputfiles/inputfile_marvel.yaml") as f:
+        #     y = yaml.safe_load(f)
+        #     y['exposure']['outputs']['output_folder'] = args.outdir
+                               
+        # Create an instance of the pyxel class from the MARVEL specific inputfile
+        config = pyxel.load("inputfiles/inputfile_marvel.yaml")
+        self.exposure = config.exposure
+        self.detector = config.ccd_detector
+        self.pipeline = config.pipeline
+
+        # Set output directory for pyxel
+        # NOTE the folder "pyxel_dir" cannot be avoided at the moment..
+        # and nor is it possible to rename the pyxel output files..
+        output_dir = str(self.exposure.outputs.output_dir)
+        self.pyxel_dir  = output_dir.split('/')[-1]
+        self.pyxel_path = args.outdir + '/' + self.pyxel_dir
+        self.pyxel_file = self.pyxel_path + '/detector_image_array_1.fits'
+        self.exposure.outputs.output_dir = pathlib.Path(args.outdir + '/' + self.pyxel_dir)
+        # Finito!
+        return self.pyxel_path
+
+        
+    def enable_cosmics(self, exptime):
+        """
+        Module to draw a random number distribution of cosmics scaled to the exposure time.
+        """
+        # Make sure cosmics are being added
+        self.pipeline.charge_generation.tars.enabled = True
+        # Set random seed for cosmic rays
+        self.pipeline.charge_generation.tars.arguments.seed = np.random.randint(1e9)
+        # Benchmark 100 cosmics to an exposure time of 300 seconds
+        #--------- testing
+        #r = 100/300  # Rate
+        #k = np.random.randint(100)
+        #l = r * exptime
+        #Ncosmics = l**k * np.exp(-l) / np.math.factorial(k)
+        #print(Ncosmics)
+        #exit()
+        rate = 100/300.
+        ncosmics = int(rate * exptime + np.random.randint(500) * rate)
+        self.pipeline.charge_generation.tars.arguments.particle_number = ncosmics
+
+
+    def fetch_nimg(self, imgtype):
+        """
+        Module fetch the number of exposure of image type.
+        """
+        if imgtype == 'bias': nimg = self.nbias
+        if imgtype == 'flat': nimg = self.nflat
+        if imgtype == 'thar': nimg = self.nthar
+        if imgtype == 'wave': nimg = self.nwave
+        if imgtype == 'science': nimg = len(self.rv)
+        # Finito!
+        return nimg
+
+
+    def fetch_exptime(self, imgtype):
+        """
+        Module fetch the exposure time of image type.
+        """
+        if imgtype == 'bias': exptime = 0
+        if imgtype == 'flat': exptime = self.tflat
+        if imgtype == 'thar': exptime = self.tthar
+        if imgtype == 'wave': exptime = self.twave
+        if imgtype == 'science': exptime = self.exptime
+        # Finito!
+        return exptime
+
+
+    def compress_data(self, args, filename, filepath):
+        print(f'Compressing {filename}')
+        os.chdir(args.outdir)
+        os.system(f'zip {filename[:-5]}.zip {filename}')
+        os.chdir(f'{os.getcwd()}/../')
+        os.remove(filepath)
+
+
+    def cmd_pyechelle(self, imgtype, filepath, i):
+
+        if imgtype == 'bias':
+            cmd = (f'pyechelle -s MARVEL_2021_11_22 --sources Constant -t 0' +
+                   f' --bias {self.bias_level} --read_noise {self.read_noise} -o {filepath}')
+        if imgtype == 'flat':
+            cmd = (self.run_marvel +
+                   f' --sources Constant --constant_intensity 0.01' +
+                   f' -t {self.tflat} -o {filepath}')
+        if imgtype == 'thar':
+            cmd = (self.run_marvel +
+                   f' --sources ThAr -t {self.tthar} -o {filepath}')
+        # if imgtype == 'thne':
+        #     cmd = (run_marvel +
+        #            f' --sources ThNe -t {self.tthne} -o {filepath}')
+        if imgtype == 'wave':
+            cmd = (self.run_marvel +
+                   f' --sources Etalon ThAr ThAr ThAr ThAr --etalon_d=6' + 
+                   f' -t {self.tthar} -o {filepath}')
+        if imgtype == 'science':
+            cmd = (self.run_marvel +
+                   ' --etalon_d=6 --d_primary 0.8 --d_secondary 0.1' +
+                   f' --sources Phoenix Phoenix Phoenix Phoenix ThAr' +
+                   f' --phoenix_t_eff {args.teff} --phoenix_log_g {args.logg}' +
+                   f' --phoenix_z {args.z} --phoenix_alpha {args.alpha}' +
+                   f' --phoenix_magnitude {args.mag}' +
+                   f' --rv {self.rv[i]} -t {args.time} -o {filepath}')
+        # Finito!
+        return cmd
+            
+    #--------------------------------------------#
+    #                  PYECHELLE                 #  
+    #--------------------------------------------#
+                
+    def run_pyechelle(self, args, imgtype, fitstype):
+        """
+        Module to run generate calibration data with PyEchelle.
+        """
+
+        errorcode('message', f'\nSimulating {imgtype} with PyEchelle')
+        for i in range(1, self.fetch_nimg(imgtype)+1):
+            # Run pyechelle
+            filename = f'{imgtype}_'+f'{i}'.zfill(4)+'.fits'
+            filepath = f'{args.outdir}/{filename}'
+            os.system(self.cmd_pyechelle(imgtype, filepath, i-1))
+
+            # TODO can we do it faster with Pyxel?
+            # NOTE We here generate a bias from a shortened dark exposure
+            # This is done by multiplying the dark rate with the bias exposure time
+            # pipeline.charge_generation.load_charge.enabled = False
+            # pipeline.charge_generation.tars.enabled = False
+            # pipeline.charge_generation.dark_current.arguments.dark_rate *= float(exptime_bais)
+            # pyxel.exposure_mode(exposure=exposure, detector=detector, pipeline=pipeline)
+            if imgtype == 'bias':
+                add_fitsheader(filepath, fitstype, 0)
+                # Compress file
+                if args.zip:
+                    self.compress_data(args, filename, filepath)
+
+    #--------------------------------------------#
+    #                    PYXEL                   #  
+    #--------------------------------------------#
+
+    def run_pyxel(self, args, imgtype, fitstype):
+
+        errorcode('message', f'\nSimulating {imgtype} with Pyxel')
+        for i in range(1, self.fetch_nimg(imgtype)+1):
+            # Fetch filenames.
+            filename = f'{imgtype}_'+f'{i}'.zfill(4)+'.fits'
+            filepath = f'{args.outdir}/{filename}'
+            # Run pyxel
+            self.enable_cosmics(self.fetch_exptime(imgtype))
+            self.pipeline.charge_generation.load_charge.arguments.filename   = filepath
+            self.pipeline.charge_generation.load_charge.arguments.time_scale = 5 #float(args.time)
+            pyxel.exposure_mode(exposure=self.exposure, detector=self.detector, pipeline=self.pipeline)
+            # Swap files
+            os.remove(filepath)
+            os.system(f'mv {self.pyxel_file} {filepath}')
+            # Lastly add header
+            print('Adding fits-header')
+            add_fitsheader(filepath, fitstype, args.time)
+            # Compress file
+            if args.zip:
+                self.compress_data(args, filename, filepath)
+            
+#==============================================================#
 #               PARSING COMMAND-LINE ARGUMENTS                 #
 #==============================================================#
 
@@ -44,331 +305,61 @@ parser = argparse.ArgumentParser(epilog=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter,
                                  description=errorcode('software', software))
 
-parser.add_argument('-c', '--calibs', action='store_true', help='Flag to invoke a set of calibration data. Default: False')
-parser.add_argument('-o', '--outdir', metavar='OUTDIR', type=str, help='Output directory to store simulations')
+parser.add_argument('-o', '--outdir', metavar='PATH', type=str, help='Output directory to store simulations')
 
 obs_group = parser.add_argument_group('OBSERVATION')
 obs_group.add_argument('-t', '--time', metavar='SEC', type=float, help='Exposure time of stellar observation [s]')
+obs_group.add_argument('--mag',   metavar='VMAG',     type=str,   help='Johnson-Cousin V passband magnitude')
+obs_group.add_argument('--teff',  metavar='KELVIN',   type=str,   help='Stellar effective temperature [K]')
+obs_group.add_argument('--logg',  metavar='DEX',      type=str,   help='Stellar surface gravity [relative log10]')
+obs_group.add_argument('--z',     metavar='DEX',      type=str,   help='Stellar metallicity [Fe/H]')
+obs_group.add_argument('--alpha', metavar='DEX',      type=str,   help='Stellar Alpha element abundance [alpha/H]')
+obs_group.add_argument('--rv',    metavar='M/S',      type=str,   help='Radial Velocity shift of star due to exoplanet [m/s]')
 
-star_group = parser.add_argument_group('STAR')
-star_group.add_argument('--mag',  metavar='VMAG',   type=str, help='Johnson-Cousin V passband magnitude')
-star_group.add_argument('--teff', metavar='KELVIN', type=str, help='Stellar effective temperature [K]')
-star_group.add_argument('--logg', metavar='DEX',    type=str, help='Stellar surface gravity [relative log10]')
-star_group.add_argument('--z',    metavar='DEX',    type=str, help='Stellar metallicity [Fe/H]')
-
-planet_group = parser.add_argument_group('EXOPLANET')
-planet_group.add_argument('--rv', metavar='M/S', type=str, help='Radial Velocity shift of star due to exoplanet [m/s]')
+cal_group = parser.add_argument_group('CALIBRATION')
+cal_group.add_argument('-c', '--calibs', action='store_true', help='Flag to simulate a calibration dataset (default: False)')
+cal_group.add_argument('--nbias', metavar='NUM', type=int, help='Number of Bias exposures (default: 10)')
+cal_group.add_argument('--ndark', metavar='NUM', type=int, help='Number of Dark exposures (default: 10)')
+cal_group.add_argument('--nthar', metavar='NUM', type=int, help='Number of ThAr exposures (default:  5)')
+cal_group.add_argument('--nflat', metavar='NUM', type=int, help='Number of Flat exposures (default:  5)')
+cal_group.add_argument('--nwave', metavar='NUM', type=int, help='Numexp of Etalon + ThAr  (default:  5)')
+cal_group.add_argument('--tdark', metavar='NUM', type=int, help='Exposure time of Dark (default: 300 s)')
+cal_group.add_argument('--tflat', metavar='NUM', type=int, help='Exposure time of Flat (default:   5 s)')
+cal_group.add_argument('--tthar', metavar='NUM', type=int, help='Exposure time of ThAr (default:  30 s)')
+cal_group.add_argument('--twave', metavar='NUM', type=int, help='Exptime Etalon+ThAr   (default:  30 s)')
 
 hpc_group = parser.add_argument_group('PERFORMANCE')
-hpc_group.add_argument('--index', metavar='INT', type=str, help='Integer index used for parallel computations')
-hpc_group.add_argument('--cpu',   metavar='INT', type=str, help='Maximum number of CPU cores used order-wise parallel computing')
-hpc_group.add_argument('--cuda',  action='store_true', help='NVIDIA hardware using CUDA used for raytracing (makes cpu flag obsolete')
+hpc_group.add_argument('--data', metavar='PATH', type=str, help='Path to include RV file')
+hpc_group.add_argument('--cpu',  metavar='INT',  type=str, help='Maximum number of CPU cores used order-wise parallel computing')
+hpc_group.add_argument('--cuda', action='store_true', help='Flag to use CUDA NVIDIA hardware for raytracing (makes cpu flag obsolete')
+hpc_group.add_argument('--zip',  action='store_true', help='Flag to zip output files.')
 
 args = parser.parse_args()
 
-#==============================================================#
-#                           UTILITIES                          #
-#==============================================================#
+# Create instance of class
+m = marvelsim(args)
+m.init_pyechelle(args)
+pyxel_path = m.init_pyxel(args)
 
-def add_fitsheader(filename, obsmode, exptime):
-    # Load and open file
-    hdul = fits.open(filename)
-    hdr = hdul[0].header
-    # Add headers
-    hdr.append(('ORIGIN', 'Instituut voor Sterrenkunde, KU Leuven', 'Institution'), end=True)
-    hdr.append(('OBSERVAT', 'LaPalma', 'Observatory name'), end=True)
-    hdr.append(('TELESCOP', 'MARVEL', 'Telescope name'), end=True)
-    hdr.append(('OBSGEO-X', '5327306.5552', 'Cartesian X [meters] GRS80'), end=True)
-    hdr.append(('OBSGEO-Y', '-1718448.6952', 'Cartesian Y [meters] GRS80'), end=True)
-    hdr.append(('OBSGEO-Z', '3051947.7715', 'Cartesian Z [meters] GRS80'), end=True)
-    hdr.append(('OBSERVER', 'Nicholas Jannsen', 'Observer'), end=True)
-    hdr.append(('PROG_ID', '0', 'Programme ID'), end=True)
-    hdr.append(('INSTRUME', 'MARVEL', 'Instrument'), end=True)
-    hdr.append(('FIBMODE', 'High-Res', 'Fibre mode'), end=True)
-    hdr.append(('CREATOR', 'revision_20201117', 'Version of data acquisition system'), end=True)
-    hdr.append(('HDRVERS', '20151026', 'Version of FITS header'), end=True)
-    hdr.append(('FILENAME', f'{filename}', 'Origina'), end=True)
-    hdr.append(('UNSEQ', '995604', 'Unique sequence number'), end=True)
-    hdr.append(('OBSMODE', f'{obsmode}', 'Observing mode'), end=True)
-    hdr.append(('IMAGETYP', f'{obsmode}', 'Image type'), end=True)
-    hdr.append(('EXPTYPE', f'{obsmode}', 'Exposure type'), end=True)
-    hdr.append(('COMMENTS', '', 'Free comments by the observer'), end=True)
-    hdr.append(('DATE-OBS', '2021-03-09T17:19:37.034931', 'Start of observation'), end=True)
-    hdr.append(('DATE-END', '2021-03-09T17:19:37.034167', 'End of observation'), end=True)
-    hdr.append(('DATE-AVG', '2021-03-09T17:19:37.034549', 'Midpoint of observation'), end=True)
-    hdr.append(('DATE', '2021-03-09T17:20:26.418524', 'Time of file creation'), end=True)
-    hdr.append(('EXPTIME', f'{exptime}', 'Exposure time'), end=True)
-    hdr.append(('OBJECT', 'CALIBRATION', 'Object name'), end=True)
-    hdr.append(('OBJ_RA', '0.0', '[deg] Object RA'), end=True)
-    hdr.append(('OBJ_DEC', '0.0', '[deg] Object DEC'), end=True)
-    hdr.append(('EQUINOX', '2000.0', 'Equinox of coordinates'), end=True)
-    hdr.append(('RADECSYS', 'FK5', 'Coordinate system'), end=True)
-    hdr.append(('TEMPM1', '99999.99000000001', '[C] Telescope temperature M1'), end=True)
-    hdr.append(('TEMPM1MC', '99999.99000000001', '[C] Telescope temperature mirror cell M1'), end=True)
-    hdr.append(('TEMPM2', '99999.99000000001', '[C] Telescope temperature M2'), end=True)
-    hdr.append(('TEMPM2E', '7.6', '[C] Telescope temperature M2E'), end=True)
-    hdr.append(('TEMPTT', '8.9', '[C] Telescope tube top temperature'), end=True)
-    hdr.append(('TEMPTB', '8.5', '[C] Telescope tube center temperature'), end=True)
-    hdr.append(('TEMPT032', '99999.99000000001', '[C] Temperature inside REM rack'), end=True)
-    hdr.append(('TEMPT106', '99999.99000000001', '[C] Temperature inside RPM rack'), end=True)
-    hdr.append(('TEMPT107', '7.9', '[C] Temperature of air in Maia side Nasmyth'), end=True)
-    hdr.append(('TEMPT108', '99999.99000000001', '[C] Temperature of Hermes adapter'), end=True)
-    hdr.append(('TEMPT033', '99999.99000000001', '[C] Temperature at top op fork, Hermes side'), end=True)
-    hdr.append(('TEMPT109', '9.6', '[C] Temperature of air at top of tube'), end=True)
-    hdr.append(('TEMPT110', '99999.99000000001', '[C] Temperature of air inside tube'), end=True)
-    hdr.append(('TEMPT114', '99999.99000000001', '[C] Dewpoint at top of tube'), end=True)
-    hdr.append(('HUMT111', '29.9', '[%] Rel humidity of air at top of tube'), end=True)
-    hdr.append(('PCIFILE', 'None', 'PCI card setup file'), end=True)
-    hdr.append(('TIMFILE', '/home/mocs/mocs/config/mocs/marvel/tim-MARVEL-20130205-sp_idle.lod', ''), end=True)
-    hdr.append(('UTILFILE', 'None', 'Utility board setup file'), end=True)
-    hdr.append(('DETMODE', 'LGN', 'Controller readout speed/gain setting'), end=True)
-    hdr.append(('READMODE', 'L', 'Detector readout mode'), end=True)
-    hdr.append(('DETGAIN', '1.2', '[e-/ADU] Detector gain'), end=True)
-    hdr.append(('DETBIAS', '2180.0', '[ADU] Expected bias level'), end=True)
-    hdr.append(('BINX', '1', 'Binning factor in x'), end=True)
-    hdr.append(('BINY', '1', 'Binning factor in y'), end=True)
-    hdr.append(('DTM1_1', '1', 'Binning factor in x'), end=True)
-    hdr.append(('DTM1_2', '1', 'Binning factor in y'), end=True)
-    hdr.append(('WINDOWED', 'FALSE', 'Has the detector been windowed?'), end=True)
-    hdr.append(('TEMP_MET', '6.4', '[C]  Temperature Meteo Station'), end=True)
-    hdr.append(('HUM_MET', '12.0', '[%]  Rel humidity Meteo Station'), end=True)
-    hdr.append(('PRES_MET', '772.0', '[mbar]  Atm pressure Meteo Station'), end=True)
-    hdr.append(('WINDAVG', '5.9', '[m/s]  Avg wind speed Meteo Station'), end=True)
-    hdr.append(('WINDMAX', '6.9', '[m/s]  Gust wind speed Meteo Station'), end=True)
-    hdr.append(('WINDDIR', '27.0', '[deg]  Avg wind direction Meteo Station'), end=True)
-    hdr.append(('INSTDATE', '20180724', 'Last intervention in instrument'), end=True)
-    hdr.append(('CTRDATE', '20091112', 'Last change in detector controller setup'), end=True)
-    hdr.append(('CTR_ID', 'UNKNOWN', 'Controller serial number'), end=True)
-    hdr.append(('PCI_ID', 'SN381', 'PCI card serial number'), end=True)
-    hdr.append(('TIM_ID', 'UNKNOWN', 'Timing board serial number'), end=True)
-    hdr.append(('UTIL_ID', 'UNKNOWN', 'Utility board serial number'), end=True)
-    hdr.append(('DETNAME', 'Marvel-Science-GC2', 'Detector name'), end=True)
-    hdr.append(('DETTYPE', 'E2V42-90', 'Detector type'), end=True)
-    hdr.append(('DETID', 'DET06', 'Detector ID'), end=True)
-    hdr.append(('TEMPCCD', '160.0', '[K]  Temperature of detector'), end=True)
-    hdr.append(('TEMPCRYO', '83.694', '[K]  Temperature of coldhead'), end=True)
-    hdr.append(('PRESH044', '779.232', '[mbar] Pressure in outer room'), end=True)
-    hdr.append(('PRESH095', '782.3', '[mbar] Pressure in outer room West'), end=True)
-    hdr.append(('HUMH071', '42.355154', '[%] Rel humidity in outer room'), end=True)
-    hdr.append(('HUMH072', '35.580974', '[%] Rel humidity on table'), end=True)
-    hdr.append(('TEMPH039', '18.008', '[C] Temperature in inner room'), end=True)
-    hdr.append(('TEMPH040', '13.838', '[C] Temperature in outer room'), end=True)
-    hdr.append(('TEMPH047', '16.996', '[C] MARVEL temperature air.camera'), end=True)
-    hdr.append(('TEMPH048', '17.851', '[C] MARVEL temperature table.center'), end=True)
-    hdr.append(('TEMPH050', '17.920', '[C] MARVEL temperature grating.mount.top'), end=True)
-    hdr.append(('TEMPH051', '17.819', '[C] MARVEL temperature fiberexit.mount'), end=True)
-    hdr.append(('TEMPH061', '17.859', '[C] MARVEL temperature maincoll.glass.top'), end=True)
-    hdr.append(('TEMPH052', '18.030', '[C] MARVEL temperature maincoll.mount.top'), end=True)
-    hdr.append(('TEMPH053', '17.977', '[C] MARVEL temperature maincoll.mount.bot'), end=True)
-    hdr.append(('TEMPH054', '17.670', '[C] MARVEL temperature camera.top.center'), end=True)
-    hdr.append(('TEMPH055', '16.483', '[C] MARVEL temperature cryostat.front'), end=True)
-    hdr.append(('TEMPH056', '16.025', '[C] MARVEL temperature cryostat.rear'), end=True)
-    hdr.append(('TEMPH057', '17.859', '[C] MARVEL temperature grating.glass.center'), end=True)
-    hdr.append(('TEMPH058', '17.966', '[C] MARVEL temperature maincoll.glass.top'), end=True)
-    hdr.append(('TEMPH059', '17.979', '[C] MARVEL temperature maincoll.glass.bot'), end=True)
-    hdr.append(('BSCALE', '1', ''), end=True)
-    hdr.append(('BZERO', '32768', ''), end=True)
-    # Write new file with header
-    fits.writeto(filename, hdul[0].data, hdr, overwrite=True)
-
-    
-def enable_cosmics(exptime):
-    """
-    Draw a random number distribution of cosmics scaled to the exposure time.
-    """
-    # Make sure cosmics are being added
-    pipeline.charge_generation.tars.enabled = True
-    # Set random seed for cosmic rays
-    pipeline.charge_generation.tars.arguments.seed = np.random.randint(1e9)
-    # Benchmark 100 cosmics to an exposure time of 300 seconds
-    #--------- testing
-    #r = 100/300  # Rate
-    #k = np.random.randint(100)
-    #l = r * exptime
-    #Ncosmics = l**k * np.exp(-l) / np.math.factorial(k)
-    #print(Ncosmics)
-    #exit()
-    rate = 100/300.
-    ncosmics = int(rate * exptime + np.random.randint(300) * rate)
-    pipeline.charge_generation.tars.arguments.particle_number = ncosmics
-
-
-#==============================================================#
-#                      PYECHELLE + PYXEL                       #
-#==============================================================#
-
-# Hard-coded parameters
-bias_level   = 2000   # [ADU]
-read_noise   = 5      # [ADU] RMS
-exptime_thar = 30     # [s]
-exptime_thne = 30     # [s]
-exptime_wave = 10     # [s]
-exptime_flat = 5      # [s]
-num_calibs = range(1,6)
-
-# Make it possible to use bash syntax for PWD
-if args.outdir == '.': args.outdir = os.getcwd()
-
-# Snippet command for pyechelle
-run_marvel = f'pyechelle -s MARVEL_2021_11_22 --fiber 1-5 --bias {bias_level} --read_noise {read_noise}' 
-
-# Run with GPUs:
-if args.cpu: run_marvel = run_marvel + f" --max_cpu {args.cpu}"
-
-# Run with CUDA requiring NVIDIA cores:
-if args.cuda: run_marvel = run_marvel + f" --cuda"
-
-# Create an instance of the pyxel class from the MARVEL specific inputfile
-config = pyxel.load("inputfiles/inputfile_marvel.yaml")
-exposure = config.exposure
-detector = config.ccd_detector
-pipeline = config.pipeline
-
-# Set output directory for pyxel
-# NOTE the folder "pyxel_dir" cannot be avoided at the moment..
-# and nor is it possible to rename the pyxel output files..
-output_dir = str(exposure.outputs.output_dir)
-pyxel_dir  = output_dir.split('/')[-1]
-pyxel_file = args.outdir + '/' + pyxel_dir + '/detector_image_array_1.fits'
-exposure.outputs.output_dir = pathlib.Path(args.outdir + '/' + pyxel_dir)
-
-#------------------------------------#
-#            RUN CALIBRATION         #
-#------------------------------------#
-
-if args.calibs:  # TODO how many exposures do we need of each calibs?
-
-    # Generate bias (pyechelle)
-
-    for i in range(1,11):
-        errorcode('message', '\nSimulating bias')
-        # Run pyechelle
-        filename_bias = f'{args.outdir}bias_'+f'{i}'.zfill(4)+'.fits'
-        command_bias  = (f'pyechelle -s MARVEL_2021_11_22 --sources Constant -t 0' +
-                         f' --bias {bias_level} --read_noise {read_noise} -o {filename_bias}')
-        os.system(command_bias)
-        add_fitsheader(filename_bias, 'BIAS', 0)
-
-        # TODO can we do it faster with Pyxel?
-        # NOTE We here generate a bias from a shortened dark exposure
-        # This is done by multiplying the dark rate with the bias exposure time
-        # pipeline.charge_generation.load_charge.enabled = False
-        # pipeline.charge_generation.tars.enabled = False
-        # pipeline.charge_generation.dark_current.arguments.dark_rate *= float(exptime_bais)
-        # pyxel.exposure_mode(exposure=exposure, detector=detector, pipeline=pipeline)
-    
-    # Generate a ThAr arc
-
-    for i in num_calibs:
-        errorcode('message', '\nSimulating ThAr arc')
-        # Run pyechelle
-        filename_thar = f'{args.outdir}thar_'+f'{i}'.zfill(4)+'.fits'
-        command_thar  = run_marvel + f" --sources ThAr -t {exptime_thar} -o {filename_thar}"
-        os.system(command_thar)
-        # Run pyxel
-        enable_cosmics(exptime_thar)
-        pipeline.charge_generation.load_charge.arguments.filename   = filename_thar
-        pipeline.charge_generation.load_charge.arguments.time_scale = 5.0 #float(exptime_thar)
-        pyxel.exposure_mode(exposure=exposure, detector=detector, pipeline=pipeline)
-        # Swap files
-        os.remove(filename_thar)
-        os.system(f'mv {pyxel_file} {filename_thar}')
-        # Add header
-        add_fitsheader(filename_thar, 'THAR', exptime_thar)
-
-    # Generate a ThNe arc
-
-    for i in num_calibs:
-        errorcode('message', '\nSimulating ThNe arc')
-        # Run pyechelle
-        filename_thne = f'{args.outdir}thne_'+f'{i}'.zfill(4)+'.fits'
-        command_thne = run_marvel + f" --sources ThNe -t {exptime_thne} -o {filename_thne}"
-        os.system(command_thne)
-        # Run pyxel
-        enable_cosmics(exptime_thne)
-        pipeline.charge_generation.load_charge.arguments.filename   = filename_thne
-        pipeline.charge_generation.load_charge.arguments.time_scale = 5 #float(exptime_thne)
-        pyxel.exposure_mode(exposure=exposure, detector=detector, pipeline=pipeline)
-        # Swap files
-        os.remove(filename_thne)
-        os.system(f'mv {pyxel_file} {filename_thne}')
-        # Add header
-        add_fitsheader(filename_thne, 'THNE', exptime_thne)
-
-    # Generate a Etalon & ThAr
-
-    for i in num_calibs:
-        errorcode('message', '\nSimulating Etalon & ThAr')
-        # Run pyechelle
-        filename_wave = f'{args.outdir}wave_'+f'{i}'.zfill(4)+'.fits'
-        command_wave  = run_marvel + f" --sources Etalon ThAr ThAr ThAr ThAr --etalon_d=6 -t {exptime_thar} -o {filename_wave}"
-        os.system(command_wave)
-        # Run pyxel
-        enable_cosmics(exptime_thar)
-        pipeline.charge_generation.load_charge.arguments.filename   = filename_wave
-        pipeline.charge_generation.load_charge.arguments.time_scale = 5 #float(exptime_wave)
-        pyxel.exposure_mode(exposure=exposure, detector=detector, pipeline=pipeline)
-        # Swap files
-        os.remove(filename_wave)
-        os.system(f'mv {pyxel_file} {filename_wave}')
-        # Add header
-        add_fitsheader(filename_wave, 'WAVE', exptime_wave)
-
-    # Generate a flat
-
-    for i in num_calibs:
-        errorcode('message', '\nSimulating spectral flat')
-        # Run pyechelle
-        filename_flat = f'{args.outdir}/flat_'+f'{i}'.zfill(4)+'.fits'
-        command_flat  = run_marvel + f" --sources Constant --constant_intensity 0.01 -t {exptime_flat} -o {filename_flat}"
-        os.system(command_flat)
-        # Run pyxel
-        enable_cosmics(exptime_flat)
-        pipeline.charge_generation.load_charge.arguments.filename   = filename_flat
-        pipeline.charge_generation.load_charge.arguments.time_scale = 5.0 #float(exptime_flat)
-        pyxel.exposure_mode(exposure=exposure, detector=detector, pipeline=pipeline)
-        # Swap files
-        os.remove(filename_flat)
-        os.system(f'mv {pyxel_file} {filename_flat}')
-        # Add header
-        add_fitsheader(filename_flat, 'FLAT', exptime_flat)
-        
-#------------------------------------#
-#           RUN RV SEQUENCE          #
-#------------------------------------#
-
-else:
-
-    # Generate a science frame
-
-    errorcode('message', '\nSimulating stellar spectrum\n')
+if args.calibs:
     # Run pyechelle
-    if args.rv is None: args.rv = 0
-    if args.index is None: args.index = 1
-    filename_science = f'{args.outdir}/science_'+f'{args.index}'.zfill(4)+'.fits'
-    command_science = (f" --sources Phoenix Phoenix Phoenix Phoenix ThAr --etalon_d=6 --d_primary 0.8 --d_secondary 0.1" +
-                       f" --phoenix_t_eff {args.teff} --phoenix_log_g {args.logg} --phoenix_z {args.z} --phoenix_alpha 0.0" +
-                       f" --phoenix_magnitude {args.mag} --rv {args.rv} -t {args.time} -o {filename_science}")
-    os.system(run_marvel + command_science)
+    m.run_pyechelle(args, 'bias', 'BIAS')
+    m.run_pyechelle(args, 'flat', 'FLAT')
+    m.run_pyechelle(args, 'thar', 'THAR')
+    m.run_pyechelle(args, 'wave', 'WAVE')
+    # Run Pyxel
+    m.run_pyxel(args, 'flat', 'FLAT')
+    m.run_pyxel(args, 'thar', 'THAR')
+    m.run_pyxel(args, 'wave', 'WAVE')
+else:
+    # Run pyechelle
+    m.run_pyechelle(args, 'science', 'SCIENCE')
     # Run pyxel
-    enable_cosmics(args.time)
-    pipeline.charge_generation.load_charge.arguments.filename   = filename_science
-    pipeline.charge_generation.load_charge.arguments.time_scale = 5 #float(args.time)
-    pyxel.exposure_mode(exposure=exposure, detector=detector, pipeline=pipeline)
-    # Swap files
-    os.remove(filename_science)
-    os.system(f'mv {pyxel_file} {filename_science}')
-    os.rmdir(args.outdir + '/' + pyxel_dir)
-    # Lastly add header
-    add_fitsheader(filename_science, 'SCIENCE', args.time)
+    m.run_pyxel(args, 'science', 'SCIENCE')
 
-#==============================================================#
-#                          PROLOGUE                            #
-#==============================================================#
-
-# Remove pyxel output folder
-os.rmdir(args.outdir + '/' + pyxel_dir)
-
+# Remove pyxel folder
+os.rmdir(pyxel_path)
+    
 # Final execution time
 toc = datetime.datetime.now()
 print(f"\nMARVEL simulations took {toc - tic}")
