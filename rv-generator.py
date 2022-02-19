@@ -135,10 +135,9 @@ K  = ', '.join(K)
 
 if args.outputfile:
     index  = np.arange(1, len(RV)+1, 1)
-    header = 'i,t,rv'
+    #header = 'i,t,rv'
     np.savetxt(args.outputfile, np.transpose([index, t, RV]),
-               fmt=['%i', '%0.6f', '%0.6f'], delimiter=',',
-               header=header)
+               fmt=['%i', '%0.6f', '%0.6f'])
 
 #==============================================================#
 #                           MAKE PLOT                          #
