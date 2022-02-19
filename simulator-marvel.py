@@ -68,7 +68,7 @@ class marvelsim(object):
         else: self.nbias = args.nbias
         if args.ndark is None: self.ndark = 10
         else: self.ndark = args.ndark
-        if args.nflat is None: self.flat = 5
+        if args.nflat is None: self.nflat = 5
         else: self.nflat = args.nflat
         if args.nthar is None: self.nthar = 5
         else: self.nthar = args.nthar
@@ -203,6 +203,14 @@ class marvelsim(object):
         return exptime
 
 
+    def compress_data(self, args, filename, filepath):
+        print(f'Compressing {filename}')
+        os.chdir(args.outdir)
+        os.system(f'zip {filename[:-5]}.zip {filename}')
+        os.chdir(f'{os.getcwd()}/../')
+        os.remove(filepath)
+
+
     def cmd_pyechelle(self, imgtype, filepath, i):
 
         if imgtype == 'bias':
@@ -258,7 +266,10 @@ class marvelsim(object):
             # pyxel.exposure_mode(exposure=exposure, detector=detector, pipeline=pipeline)
             if imgtype == 'bias':
                 add_fitsheader(filepath, fitstype, 0)
-            
+                # Compress file
+                if args.zip:
+                    self.compress_data(args, filename, filepath)
+
     #--------------------------------------------#
     #                    PYXEL                   #  
     #--------------------------------------------#
@@ -283,12 +294,7 @@ class marvelsim(object):
             add_fitsheader(filepath, fitstype, args.time)
             # Compress file
             if args.zip:
-                print(f'Compressing {filename}')
-                os.chdir(args.outdir)
-                os.system(f'zip {filename[:-5]}.zip {filename}')
-                os.chdir(f'{os.getcwd()}/../')
-                os.remove(filepath)
-
+                self.compress_data(args, filename, filepath)
             
 #==============================================================#
 #               PARSING COMMAND-LINE ARGUMENTS                 #
@@ -342,7 +348,6 @@ if args.calibs:
     m.run_pyechelle(args, 'thar', 'THAR')
     m.run_pyechelle(args, 'wave', 'WAVE')
     # Run Pyxel
-    m.run_pyxel(args, 'bias', 'BIAS')
     m.run_pyxel(args, 'flat', 'FLAT')
     m.run_pyxel(args, 'thar', 'THAR')
     m.run_pyxel(args, 'wave', 'WAVE')
