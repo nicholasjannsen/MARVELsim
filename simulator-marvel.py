@@ -45,7 +45,7 @@ class marvelsim(object):
     """
     
     # INITILIZE THE CLASS:
-    def __init__(self, args):
+    def __init__(self):
         """
         Constructor of the class.
         """
@@ -62,39 +62,33 @@ class marvelsim(object):
             self.outdir = os.getcwd()
         else:
             self.outdir = args.outdir
-            
+
+        # Default stellar parameters of a Sun-like star
+        if args.mag   is None: args.mag   = 10.
+        if args.teff  is None: args.teff  = 5800
+        if args.logg  is None: args.logg  = 4.5
+        if args.z     is None: args.z     = 0.
+        if args.alpha is None: args.alpha = 0.
+        if args.rv    is None: args.alpha = 0.
+
         # Control number of calibration images
-        if args.nbias is None: self.nbias = 10
-        else: self.nbias = args.nbias
-        if args.ndark is None: self.ndark = 10
-        else: self.ndark = args.ndark
-        if args.nflat is None: self.nflat = 5
-        else: self.nflat = args.nflat
-        if args.nthar is None: self.nthar = 5
-        else: self.nthar = args.nthar
-        #if args.nthne is None: self.nthne = 5
-        #else: self.nthne = args.nthne
-        if args.nwave is None: self.nwave = 5
-        else: self.nwave = args.nwave
+        if args.nbias is None: args.nbias = 10
+        if args.nflat is None: args.nflat = 5
+        if args.nthar is None: args.nthar = 5
+        #if args.nthne is None: args.nthne = 5
+        if args.nwave is None: args.nwave = 5
 
         # Control exposure time of calibration images [s]
-        if args.tdark is None: self.tdark = 300
-        else: self.tdark = args.tdark
-        if args.tflat is None: self.tflat = 5
-        else: self.tflat = args.tflat
-        if args.tthar is None: self.tthar = 30
-        else: self.tthar = args.tthar
-        #if args.tthne is None: self.tthne = 30
-        #else: self.tthne = args.tthne
-        if args.twave is None: self.twave = 5
-        else: self.twave = args.twave
-
-        # Set exposure time
-        self.exptime = args.time
-
+        if args.tdark is None: args.tdark = 300
+        if args.tflat is None: args.tflat = 5
+        if args.tthar is None: args.tthar = 30
+        #if args.tthne is None: args.tthne = 30
+        if args.twave is None: args.twave = 5
         
         
-    def init_pyechelle(self, args):
+        
+        
+    def init_pyechelle(self):
         """
         Module to initialise PyEchelle
         """
@@ -123,14 +117,15 @@ class marvelsim(object):
                 errorcode('error', 'File do not exist: {args.data}')
             else:
                 self.t  = data[:,0]
-                self.rv = data[:,1]
+                args.rv = data[:,1]
         elif args.rv:
-            self.rv = [float(args.rv)]
+            args.rv = [float(args.rv)]
         else:
-            self.rv = [0]
+            args.rv = [0]
+
 
             
-    def init_pyxel(self, args):
+    def init_pyxel(self):
         """
         Module to initialise Pyxel.
         """        
@@ -155,7 +150,7 @@ class marvelsim(object):
         # Finito!
         return self.pyxel_path
 
-        
+    
     def enable_cosmics(self, exptime):
         """
         Module to draw a random number distribution of cosmics scaled to the exposure time.
@@ -181,11 +176,11 @@ class marvelsim(object):
         """
         Module fetch the number of exposure of image type.
         """
-        if imgtype == 'bias': nimg = self.nbias
-        if imgtype == 'flat': nimg = self.nflat
-        if imgtype == 'thar': nimg = self.nthar
-        if imgtype == 'wave': nimg = self.nwave
-        if imgtype == 'science': nimg = len(self.rv)
+        if imgtype == 'bias':    nimg = args.nbias
+        if imgtype == 'flat':    nimg = args.nflat
+        if imgtype == 'thar':    nimg = args.nthar
+        if imgtype == 'wave':    nimg = args.nwave
+        if imgtype == 'science': nimg = len(args.rv)
         # Finito!
         return nimg
 
@@ -194,16 +189,16 @@ class marvelsim(object):
         """
         Module fetch the exposure time of image type.
         """
-        if imgtype == 'bias': exptime = 0
-        if imgtype == 'flat': exptime = self.tflat
-        if imgtype == 'thar': exptime = self.tthar
-        if imgtype == 'wave': exptime = self.twave
-        if imgtype == 'science': exptime = self.exptime
+        if imgtype == 'bias':    exptime = 0
+        if imgtype == 'flat':    exptime = args.tflat
+        if imgtype == 'thar':    exptime = args.tthar
+        if imgtype == 'wave':    exptime = args.twave
+        if imgtype == 'science': exptime = args.time
         # Finito!
         return exptime
 
 
-    def compress_data(self, args, filename, filepath):
+    def compress_data(self, filename, filepath):
         print(f'Compressing {filename}')
         os.chdir(args.outdir)
         os.system(f'zip {filename[:-5]}.zip {filename}')
@@ -219,17 +214,17 @@ class marvelsim(object):
         if imgtype == 'flat':
             cmd = (self.run_marvel +
                    f' --sources Constant --constant_intensity 0.01' +
-                   f' -t {self.tflat} -o {filepath}')
+                   f' -t {args.tflat} -o {filepath}')
         if imgtype == 'thar':
             cmd = (self.run_marvel +
-                   f' --sources ThAr -t {self.tthar} -o {filepath}')
+                   f' --sources ThAr -t {args.tthar} -o {filepath}')
         # if imgtype == 'thne':
         #     cmd = (run_marvel +
-        #            f' --sources ThNe -t {self.tthne} -o {filepath}')
+        #            f' --sources ThNe -t {args.tthne} -o {filepath}')
         if imgtype == 'wave':
             cmd = (self.run_marvel +
                    f' --sources Etalon ThAr ThAr ThAr ThAr --etalon_d=6' + 
-                   f' -t {self.tthar} -o {filepath}')
+                   f' -t {args.tthar} -o {filepath}')
         if imgtype == 'science':
             cmd = (self.run_marvel +
                    ' --etalon_d=6 --d_primary 0.8 --d_secondary 0.1' +
@@ -237,7 +232,7 @@ class marvelsim(object):
                    f' --phoenix_t_eff {args.teff} --phoenix_log_g {args.logg}' +
                    f' --phoenix_z {args.z} --phoenix_alpha {args.alpha}' +
                    f' --phoenix_magnitude {args.mag}' +
-                   f' --rv {self.rv[i]} -t {args.time} -o {filepath}')
+                   f' --rv {args.rv[i]} -t {args.time} -o {filepath}')
         # Finito!
         return cmd
             
@@ -245,13 +240,12 @@ class marvelsim(object):
     #                  PYECHELLE                 #  
     #--------------------------------------------#
                 
-    def run_pyechelle(self, args, imgtype, fitstype):
+    def run_pyechelle(self, imgtype, fitstype):
         """
-        Module to run generate calibration data with PyEchelle.
-        """
-
-        errorcode('message', f'\nSimulating {imgtype} with PyEchelle')
+        Module to generate spectra with PyEchelle.
+        """        
         for i in range(1, self.fetch_nimg(imgtype)+1):
+            errorcode('message', f'\nSimulating {imgtype} with PyEchelle')
             # Run pyechelle
             filename = f'{imgtype}_'+f'{i}'.zfill(4)+'.fits'
             filepath = f'{args.outdir}/{filename}'
@@ -268,16 +262,18 @@ class marvelsim(object):
                 add_fitsheader(filepath, fitstype, 0)
                 # Compress file
                 if args.zip:
-                    self.compress_data(args, filename, filepath)
+                    self.compress_data(filename, filepath)
 
     #--------------------------------------------#
     #                    PYXEL                   #  
     #--------------------------------------------#
 
-    def run_pyxel(self, args, imgtype, fitstype):
-
-        errorcode('message', f'\nSimulating {imgtype} with Pyxel')
+    def run_pyxel(self, imgtype, fitstype):
+        """
+        Module to add CCD effects spectra with Pyxel.
+        """
         for i in range(1, self.fetch_nimg(imgtype)+1):
+            errorcode('message', f'\nSimulating {imgtype} with Pyxel')
             # Fetch filenames.
             filename = f'{imgtype}_'+f'{i}'.zfill(4)+'.fits'
             filepath = f'{args.outdir}/{filename}'
@@ -294,8 +290,9 @@ class marvelsim(object):
             add_fitsheader(filepath, fitstype, args.time)
             # Compress file
             if args.zip:
-                self.compress_data(args, filename, filepath)
-            
+                self.compress_data(filename, filepath)
+
+                
 #==============================================================#
 #               PARSING COMMAND-LINE ARGUMENTS                 #
 #==============================================================#
@@ -337,25 +334,25 @@ hpc_group.add_argument('--zip',  action='store_true', help='Flag to zip output f
 args = parser.parse_args()
 
 # Create instance of class
-m = marvelsim(args)
-m.init_pyechelle(args)
-pyxel_path = m.init_pyxel(args)
+m = marvelsim()
+m.init_pyechelle()
+pyxel_path = m.init_pyxel()
 
 if args.calibs:
     # Run pyechelle
-    m.run_pyechelle(args, 'bias', 'BIAS')
-    m.run_pyechelle(args, 'flat', 'FLAT')
-    m.run_pyechelle(args, 'thar', 'THAR')
-    m.run_pyechelle(args, 'wave', 'WAVE')
+    m.run_pyechelle('bias', 'BIAS')
+    m.run_pyechelle('flat', 'FLAT')
+    m.run_pyechelle('thar', 'THAR')
+    m.run_pyechelle('wave', 'WAVE')
     # Run Pyxel
-    m.run_pyxel(args, 'flat', 'FLAT')
-    m.run_pyxel(args, 'thar', 'THAR')
-    m.run_pyxel(args, 'wave', 'WAVE')
+    m.run_pyxel('flat', 'FLAT')
+    m.run_pyxel('thar', 'THAR')
+    m.run_pyxel('wave', 'WAVE')
 else:
     # Run pyechelle
-    m.run_pyechelle(args, 'science', 'SCIENCE')
+    m.run_pyechelle('science', 'SCIENCE')
     # Run pyxel
-    m.run_pyxel(args, 'science', 'SCIENCE')
+    m.run_pyxel('science', 'SCIENCE')
 
 # Remove pyxel folder
 os.rmdir(pyxel_path)
