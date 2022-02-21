@@ -103,16 +103,10 @@ class marvelsim(object):
         if args.cuda:
             self.run_marvel = self.run_marvel + f" --cuda"
 
-        # Check if all stellar parameters are present
-        if not args.calibs:
-            star = [args.teff, args.logg, args.z, args.alpha]
-            if None in star:
-                errorcode('error', 'One or more star parameters are missing!')
-
         # Check for RV inputfile
         if args.data:
             try:
-                data = np.loadtxt(args.data)
+                data = np.loadtxt(args.data, delimter=',', skiprows=1)
             except:
                 errorcode('error', 'File do not exist: {args.data}')
             else:
