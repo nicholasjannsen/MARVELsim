@@ -1,10 +1,9 @@
 #!/bin/bash
 
-#PBS -N test
+#PBS -N output
 #PBS -A lp_mesa_modeling
-#PBS -l nodes=1:ppn=36:gpus=4:skylake
-#PBS -l partition=gpu
-#PBS -l pmem=2gb
+#PBS -l nodes=1:ppn=6:skylake
+#PBS -l pmem=30gb
 #PBS -l walltime=03:00:00
 
 cd $PBS_O_WORKDIR
@@ -13,11 +12,11 @@ PYTHONPATH=$VSC_DATA/MARVELsim/marvelsim/bin/python
 export PYTHONPATH
 SIMDIR=$VSC_DATA/MARVELsim
 export SIMDIR
-OUTDIR=OUTDIR=/scratch/leuven/341/vsc34166/marvelsim/sim1
+OUTDIR=/scratch/leuven/341/vsc34166/marvelsim/sim1
 
 # Make sure to activate environment 
 source marvelsim/bin/activate
 
-# Run calibration
+# Run star spectrum
 cd $SIMDIR
-python simulator-marvel.py --calibs --cuda --zip -o $OUTDIR
+python simulator-marvel.py --dex $index --zip -o $OUTDIR

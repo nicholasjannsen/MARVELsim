@@ -129,10 +129,7 @@ class marvelsim(object):
         """
         Module to initialise Pyxel.
         """        
-        # with open("inputfiles/inputfile_marvel.yaml") as f:
-        #     y = yaml.safe_load(f)
-        #     y['exposure']['outputs']['output_folder'] = args.outdir
-                               
+        
         # Create an instance of the pyxel class from the MARVEL specific inputfile
         config = pyxel.load("inputfiles/inputfile_marvel.yaml")
         self.exposure = config.exposure
@@ -292,6 +289,31 @@ class marvelsim(object):
             if args.zip:
                 self.compress_data(filename, filepath)
 
+
+                
+    def run_pyxel_cpu(self, imgtype, fitstype):
+        """
+        Module to add CCD effects spectra with Pyxel.
+        """
+        errorcode('message', f'\nSimulating {imgtype} with Pyxel')
+        # Fetch filenames.
+        filename = f'{imgtype}_'+f'{args.dex}'.zfill(4)+'.fits'
+        filepath = f'{args.outdir}/{filename}'
+        # Run pyxel
+        self.enable_cosmics(self.fetch_exptime(imgtype))
+        self.pipeline.charge_generation.load_charge.arguments.filename   = filepath
+        self.pipeline.charge_generation.load_charge.arguments.time_scale = 5 #float(args.time)
+        pyxel.exposure_mode(exposure=self.exposure, detector=self.detector, pipeline=self.pipeline)
+        # Swap files
+        os.remove(filepath)
+        os.system(f'mv {self.pyxel_file} {filepath}')
+        # Lastly add header
+        print('Adding fits-header')
+        add_fitsheader(filepath, fitstype, args.time)
+        # Compress file
+        if args.zip:
+            self.compress_data(filename, filepath)
+
                 
 #==============================================================#
 #               PARSING COMMAND-LINE ARGUMENTS                 #
@@ -327,6 +349,7 @@ cal_group.add_argument('--twave', metavar='NUM', type=int, help='Exptime Etalon+
 
 hpc_group = parser.add_argument_group('PERFORMANCE')
 hpc_group.add_argument('--data', metavar='PATH', type=str, help='Path to include RV file')
+hpc_group.add_argument('--dex',  metavar='NAME', type=int, help='Index for running Pyxel on CPUs')
 hpc_group.add_argument('--cpu',  metavar='INT',  type=str, help='Maximum number of CPU cores used order-wise parallel computing')
 hpc_group.add_argument('--cuda', action='store_true', help='Flag to use CUDA NVIDIA hardware for raytracing (makes cpu flag obsolete')
 hpc_group.add_argument('--zip',  action='store_true', help='Flag to zip output files.')
@@ -348,6 +371,11 @@ if args.calibs:
     m.run_pyxel('flat', 'FLAT')
     m.run_pyxel('thar', 'THAR')
     m.run_pyxel('wave', 'WAVE')
+
+elif args.dex:
+    # Run pyxel with CPUs
+    m.run_pyxel_cpu('science', 'SCIENCE')
+
 else:
     # Run pyechelle
     m.run_pyechelle('science', 'SCIENCE')
