@@ -4,7 +4,7 @@
 #PBS -A lp_mesa_modeling
 #PBS -l nodes=1:ppn=6:skylake
 #PBS -l pmem=30gb
-#PBS -l walltime=03:00:00
+#PBS -l walltime=04:00:00
 
 cd $PBS_O_WORKDIR
 
@@ -12,11 +12,11 @@ PYTHONPATH=$VSC_DATA/MARVELsim/marvelsim/bin/python
 export PYTHONPATH
 SIMDIR=$VSC_DATA/MARVELsim
 export SIMDIR
-OUTDIR=/scratch/leuven/341/vsc34166/marvelsim/sim1
+OUTDIR=/scratch/leuven/341/vsc34166/marvelsim/sim0_200kms
 
 # Make sure to activate environment 
 source marvelsim/bin/activate
 
 # Run star spectrum
 cd $SIMDIR
-python simulator-marvel.py --dex $index --zip -o $OUTDIR
+python simulator-marvel.py --time 900 --dex $index --zip -o $OUTDIR

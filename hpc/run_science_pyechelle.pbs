@@ -13,12 +13,12 @@ PYTHONPATH=$VSC_DATA/MARVELsim/marvelsim/bin/python
 export PYTHONPATH
 SIMDIR=$VSC_DATA/MARVELsim
 export SIMDIR
-OUTDIR=OUTDIR=/scratch/leuven/341/vsc34166/marvelsim/sim1 
+OUTDIR=/scratch/leuven/341/vsc34166/marvelsim/sim0_200kms
 
 # Make sure to activate environment 
 source marvelsim/bin/activate
 
 # Run star spectrum
 cd $SIMDIR
-python simulator-marvel.py --time 900 --mag 10.0 --teff 5800 --logg 4.5 --z 0.0 --alpha 0.0 --cuda --data data.txt -o $OUTDIR
+python simulator-marvel.py --time 900 --mag 10.0 --teff 5800 --logg 4.5 --z 0.0 --alpha 0.0 --cuda --data data_200kms.txt -o $OUTDIR
 
