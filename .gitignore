@@ -5,13 +5,12 @@
 *.log
 *.zip
 *.npy
-
-# Backup files
 *#
 *~
 *.#*
 
 # Folders
+sims/
 models/
 venv/
 marvelsim/
