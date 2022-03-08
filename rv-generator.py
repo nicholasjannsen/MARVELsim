@@ -34,22 +34,165 @@ plt.rcParams['text.usetex'] = True
 #                           UTILITIES                          #
 #==============================================================#
 
-def rv_model(t, t0, Ms, Mp, P, a, e, i, w):
+class RV(object):
+    """
+    This class has the purpose
+    """
+    
+    # INITILIZE THE CLASS:
+    def __init__(self):
+        """
+        Constructor of the class.
+        """
+        self.tdur = args.tdur
 
-    # Time of periastron
-    tp = t0.to('d').value - P.to('d').value * (np.pi/2. - w.value)
 
-    # True anomaly with radvel
-    nu = radvel.orbit.true_anomaly(t, tp, P.to('d').value, e) * u.rad
+        
+    
+    def rv_model(self, t):
 
-    # RV signal as function of nu: Murray & Correia (2011) Eq. 61, 65 and 66
-    # NOTE "astar" in the following is the reduced semimajor axies due to the common
-    # center-of-mass and "K" is the relative RV semi-amplitude of the star.
-    astar = Mp / (Mp + Ms) * a
-    K     = 2.*np.pi/P * astar * np.sin(i)/np.sqrt(1. - np.power(e,2))
-    RV    = K * (np.cos(nu + w) - e*np.cos(w))
+        # Time of periastron
+        tp = self.t0.to('d').value - self.P.to('d').value * (np.pi/2. - self.w.value)
 
-    return RV, K
+        # True anomaly with radvel
+        nu = radvel.orbit.true_anomaly(t, self.tp, self.P.to('d').value, self.e) * u.rad
+
+        # RV signal as function of nu: Murray & Correia (2011) Eq. 61, 65 and 66
+        # NOTE "astar" in the following is the reduced semimajor axies due to the common
+        # center-of-mass and "K" is the relative RV semi-amplitude of the star.
+        astar = self.Mp / (self.Mp + self.Ms) * self.a
+        K     = 2.*np.pi/self.P * astar * np.sin(self.i)/np.sqrt(1. - np.power(self.e,2))
+        RV    = K * (np.cos(nu + self.w) - self.e*np.cos(self.w))
+
+        return RV, K
+
+
+
+
+
+    def combine_model(self):
+        
+        # Prepare time points
+        self.t  = np.linspace(0, self.tdur, self.tdur)
+        self.tt = np.linspace(0, self.tdur, self.tdur*1000)
+
+        # If constant star is requested
+        if args.constant:
+            self.RV = np.ones(len(self.t)) * args.constant
+
+        # If RV light curve is requested
+        else:
+
+            # Single entry parameters
+            self.Rs = (args.rs * u.R_sun).to('m')
+            self.Ms = (args.ms * u.M_sun).to('kg')
+
+            # Multi entry parameters
+            self.t0 = (args.t0[0] * u.d).to('s')
+            self.P  = (args.p[0] * u.d).to('s')
+            self.e  = args.e[0] 
+            self.i  = (args.i[0] * u.deg).to('rad')
+            self.w  = (args.w[0] * u.deg).to('rad')
+            self.Rp = (args.rp[0] * u.R_earth).to('m')
+            self.Mp = (args.mp[0] * u.M_earth).to('kg')
+
+            # Calculate semi-major axis (K3)
+            self.a  = (c.G * P**2 * (Ms + Mp) / (4*np.pi**2))**(1/3.)
+
+            # Count number of planets
+            self.n_planets = len(t0)
+
+            RV0 = []
+            RV1 = []
+            K   = []
+
+            for n in range(self.n_planets):
+
+                # Make models
+                rv0, K0 = self.rv_model(self.t,  self.t0[n], self.Ms, self.Mp[n], self.P[n], self.a[n], self.e[n], self.i[n], self.w[n])
+                rv1, _  = self.rv_model(self.tt, self.t0[n], self.Ms, self.Mp[n], self.P[n], self.a[n], self.e[n], self.i[n], self.w[n])
+
+                RV0.append(rv0)
+                RV1.append(rv1)
+                K.append(f'{K0.value:.2f} m/s')
+
+
+            # Combine models
+            self.RV = np.sum(np.array(RV0), axis=0)
+            self.rv = np.sum(np.array(RV1), axis=0)
+            self.K  = ', '.join(K) 
+
+            # Plot light curve if required
+            self.plot_model()
+
+
+
+
+    def save_model(self):
+
+        # Select output format
+        if args.constant:
+            fmt = '%i'
+        else:
+            fmt = ['%i', '%0.6f', '%0.6f']
+                    
+        # We here save the output in a format that HPC worker can read
+        if args.outputfile:
+            index  = np.arange(1, len(self.RV)+1, 1)
+            header = 'index, time, rv'
+            np.savetxt(args.outputfile, np.transpose([index, self.t, self.RV]),
+                       fmt=fmt, header=header, comments='', delimiter=',')
+
+
+
+
+
+    def plot_model(self):
+
+        # Plot and save model
+        plt.figure(figsize=(10,5))
+
+        # Prepare title
+        Rs = self.Rs.to('R_sun').value
+        Ms = self.Ms.to('M_sun').value
+
+        lab_star = (r'\textbf{Star:}' +
+                    r' $R_s$ = '+f'{Rs:.2f}'+r' $R_{\odot}$;' +
+                    r' $M_s$ = '+f'{Ms:.2f}'+r' $M_{\odot}$')
+
+        if n_planets == 1:
+
+            # Revert parameters for plot
+            Rp = self.Rp.to('R_earth').value[0]
+            Mp = self.Mp.to('M_earth').value[0]
+            t0 = self.t0.to('d').value[0]
+            P  = self.P.to('d').value[0]
+            a  = self.a.to('R_sun').value[0]
+            i  = self.i.to('deg').value[0]
+            w  = self.w.to('deg').value[0]
+            e  = self.e[0]
+
+            lab_planet = (r'\textbf{Planet:}' +
+                          r' $R_p$ = '+f'{Rp:.1f}'+r' $R_{\oplus}$;' +
+                          r' $M_p$ = '+f'{Mp:.1f}'+r' $M_{\oplus}$;' +
+                          r' $t_0$ = '+f'{t0:.1f}'+r' days;' +
+                          r' $P$ = '+f'{P:.1f}'+r' days;' +
+                          r' $a$ = '+f'{a:.1f}'+r' $R_{\odot}$;' +
+                          r' $i$ = '+f'{i:.1f}'+r'$^{\circ}$;' +
+                          r' $w$ = '+f'{w:.1f}'+r'$^{\circ}$;' +
+                          r' $e$ = '+f'{e:.1f}')
+
+            plt.title(lab_star + '\n' + lab_planet, fontsize=14)
+        else:
+            plt.title(lab_star, fontsize=14)
+
+        plt.plot(self.t,  self.RV, 'mo', alpha=0.5, label='Observations')
+        plt.plot(self.tt, self.rv, 'k:', alpha=0.5, label=r'$K_{RV}$ = ' + self.K)
+        plt.xlabel('Time [d]')
+        plt.ylabel('Radial Velocity [m/s]')
+        plt.legend(loc='best')
+        plt.tight_layout()
+        plt.show()
 
 
 #==============================================================#
@@ -62,7 +205,8 @@ parser = argparse.ArgumentParser(epilog=__doc__,
 parser.add_argument('-o', '--outputfile', metavar='PATH', type=str, help='Output file -> /path/to/filename.txt')
 
 obs_group = parser.add_argument_group('OBSERVATION')
-obs_group.add_argument('-tdur', metavar='DAY', type=int, help='Duration of observing campaign [days]')
+obs_group.add_argument('-tdur',     metavar='DAY', type=int, help='Duration of observing campaign [days]')
+obs_group.add_argument('-constant', metavar='RV',  type=int, help='Flag to produce a constant light curve')
 
 star_group = parser.add_argument_group('STAR')
 star_group.add_argument('-rs', metavar='RSUN', type=float, help='Stellar radius [Rsun]')
@@ -79,161 +223,10 @@ planet_group.add_argument('-mp', metavar='MEARTH', action='append', type=float, 
 
 args = parser.parse_args()
 
-# Single entry parameters
-tdur = args.tdur
-Rs = (args.rs * u.R_sun).to('m')
-Ms = (args.ms * u.M_sun).to('kg')
+# Initialise instance of class
 
-# Multi entry parameters
-t0 = (args.t0[0] * u.d).to('s')
-P  = (args.p[0] * u.d).to('s')
-e  = args.e[0] 
-i  = (args.i[0] * u.deg).to('rad')
-w  = (args.w[0] * u.deg).to('rad')
-Rp = (args.rp[0] * u.R_earth).to('m')
-Mp = (args.mp[0] * u.M_earth).to('kg')
-
-# Calculate semi-major axis (K3)
-a  = (c.G * P**2 * (Ms + Mp) / (4*np.pi**2))**(1/3.)
-
-# Count number of planets
-n_planets = len(t0)
-
-#==============================================================#
-#                         CUSTOM MODELS                        #
-#==============================================================#
-
-# Prepare time points
-t  = np.linspace(0, tdur, tdur)
-tt = np.linspace(0, tdur, tdur*1000)
-
-RV0 = []
-RV1 = []
-K   = []
-
-for n in range(n_planets):
-
-    # Make models
-    rv0, K0 = rv_model(t,  t0[n], Ms, Mp[n], P[n], a[n], e[n], i[n], w[n])
-    rv1, _  = rv_model(tt, t0[n], Ms, Mp[n], P[n], a[n], e[n], i[n], w[n])
-
-    RV0.append(rv0)
-    RV1.append(rv1)
-    K.append(f'{K0.value:.2f} m/s')
+rv = RV()
+rv.combine_model()
+rv.save_model()
 
 
-# Combine models
-RV = np.sum(np.array(RV0), axis=0)
-rv = np.sum(np.array(RV1), axis=0)
-K  = ', '.join(K) 
-
-#==============================================================#
-#                          SAVE OUTPUT                         #
-#==============================================================#
-
-# We here save the output in a format that HPC worker can read
-
-if args.outputfile:
-    index  = np.arange(1, len(RV)+1, 1)
-    #header = 'i,t,rv'
-    np.savetxt(args.outputfile, np.transpose([index, t, RV]),
-               fmt=['%i', '%0.6f', '%0.6f'])
-
-#==============================================================#
-#                           MAKE PLOT                          #
-#==============================================================#
-
-# Plot and save model
-plt.figure(figsize=(10,5))
-
-# Prepare title
-Rs = Rs.to('R_sun').value
-Ms = Ms.to('M_sun').value
-
-lab_star   = (r'\textbf{Star:}' +
-              r' $R_s$ = '+f'{Rs:.2f}'+r' $R_{\odot}$;' +
-              r' $M_s$ = '+f'{Ms:.2f}'+r' $M_{\odot}$')
-
-if n_planets == 1:
-    
-    # Revert parameters for plot
-    Rp = Rp.to('R_earth').value[0]
-    Mp = Mp.to('M_earth').value[0]
-    t0 = t0.to('d').value[0]
-    P  = P.to('d').value[0]
-    a  = a.to('R_sun').value[0]
-    i  = i.to('deg').value[0]
-    w  = w.to('deg').value[0]
-    e  = e[0]
-
-    lab_planet = (r'\textbf{Planet:}' +
-                  r' $R_p$ = '+f'{Rp:.1f}'+r' $R_{\oplus}$;' +
-                  r' $M_p$ = '+f'{Mp:.1f}'+r' $M_{\oplus}$;' +
-                  r' $t_0$ = '+f'{t0:.1f}'+r' days;' +
-                  r' $P$ = '+f'{P:.1f}'+r' days;' +
-                  r' $a$ = '+f'{a:.1f}'+r' $R_{\odot}$;' +
-                  r' $i$ = '+f'{i:.1f}'+r'$^{\circ}$;' +
-                  r' $w$ = '+f'{w:.1f}'+r'$^{\circ}$;' +
-                  r' $e$ = '+f'{e:.1f}')
-
-    plt.title(lab_star + '\n' + lab_planet, fontsize=14)
-else:
-    plt.title(lab_star, fontsize=14)
-    
-plt.plot(t,  RV, 'mo', alpha=0.5, label='Observations')
-plt.plot(tt, rv, 'k:', alpha=0.5, label=r'$K_{RV}$ = ' + K)
-plt.xlabel('Time [d]')
-plt.ylabel('Radial Velocity [m/s]')
-plt.legend(loc='best')
-plt.tight_layout()
-plt.show()
-
-
-
-
-
-# FUTRUE WORK
-
-# # Initialize and setup radvel model 
-# params = radvel.Parameters(num_planets=n_planets)
-
-# # Setup model
-# xx = []
-# for n in range(n_planets):
-#     m = n + 1
-#     params[f'tc{m}']  = radvel.Parameter(value=t0[n])
-#     params[f'per{m}'] = radvel.Parameter(value=P[n])
-#     params[f'a{m}']   = radvel.Parameter(value=a[n])
-#     params[f'rp{m}']  = radvel.Parameter(value=Rp[n]) # Rs/Rp
-#     params[f'inc{m}'] = radvel.Parameter(value=i[n]*np.pi/180)
-#     params[f'e{m}']   = radvel.Parameter(value=e[n], vary=False, linear=False)
-#     params[f'w{m}']   = radvel.Parameter(value=w[n]*np.pi/180, vary=False, linear=False)
-#     params[f'k{m}']   = radvel.Parameter(value=30, vary=False)
-
-#     x = 10 * n
-#     indices = {
-#         f'tc{m}': 0+x,
-#         f'per{m}': 1+x,
-#         f'rp{m}': 2+x,
-#         f'a{m}': 5+x,
-#         f'inc{m}': 4+x,
-#         f'e{m}': 5+x,
-#         f'w{m}': 6+x,
-#         f'k{m}': 7+x,
-#         f'dvdt': 8+x,
-#         f'curv': 9+x,
-#     }
-#     xx.append(indices)
-
-# if n_planets==1: indices = {**xx[0]}
-# if n_planets==2: indices = {**xx[0], **xx[1]}
-# if n_planets==3: indices = {**xx[0], **xx[1], **xx[2]}
-# if n_planets==4: indices = {**xx[0], **xx[1], **xx[2], **xx[3]}
-# if n_planets==5: indices = {**xx[0], **xx[1], **xx[2], **xx[3], **xx[4]}
-
-# #print(params); exit()
-
-# # Run RV model
-# mod_rv = radvel.GeneralRVModel(params, forward_model=rv_calc)
-# mod_rv.vector.indices = indices
-# mod_rv.vector.dict_to_vector()
