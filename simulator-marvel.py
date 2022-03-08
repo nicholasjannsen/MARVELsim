@@ -106,9 +106,9 @@ class marvelsim(object):
         # Check for RV inputfile
         if args.data:
             try:
-                data = np.loadtxt(args.data, delimter=',', skiprows=1)
+                data = np.loadtxt(args.data, delimiter=',', skiprows=1)
             except:
-                errorcode('error', 'File do not exist: {args.data}')
+                errorcode('error', r'File do not exist: {args.data}')
             else:
                 self.t  = data[:,1]
                 args.rv = data[:,2]
