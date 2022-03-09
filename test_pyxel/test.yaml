@@ -23,8 +23,8 @@ ccd_detector:
 
   geometry:
 
-    row: 10560              # [pixel]
-    col: 10560              # [pixel]
+    row: 500 #10560              # [pixel]
+    col: 500 #10560              # [pixel]
     total_thickness: 40.    # [um] -> pyxel default
     pixel_vert_size: 9.     # [um]
     pixel_horz_size: 9.     # [um]

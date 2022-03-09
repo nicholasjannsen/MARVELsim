@@ -12,7 +12,6 @@
 # Folders
 sims/
 models/
-venv/
 marvelsim/
 hpc/server/
 
