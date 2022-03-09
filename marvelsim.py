@@ -195,7 +195,10 @@ class marvelsim(object):
         os.system(f'zip {filename[:-5]}.zip {filename}')
         os.chdir(f'{os.getcwd()}/../')
         os.remove(filepath)
-
+            
+    #--------------------------------------------#
+    #                  PYECHELLE                 #  
+    #--------------------------------------------#
 
     def cmd_pyechelle(self, imgtype, filepath, i):
 
@@ -226,11 +229,9 @@ class marvelsim(object):
                    f' --rv {args.rv[i]} -t {args.time} -o {filepath}')
         # Finito!
         return cmd
-            
-    #--------------------------------------------#
-    #                  PYECHELLE                 #  
-    #--------------------------------------------#
-                
+
+
+    
     def run_pyechelle(self, imgtype, fitstype):
         """
         Module to generate spectra with PyEchelle.
@@ -353,7 +354,6 @@ args = parser.parse_args()
 # Create instance of class
 m = marvelsim()
 m.init_pyechelle()
-pyxel_path = m.init_pyxel()
 
 if args.calibs:
     # Run pyechelle
@@ -362,23 +362,32 @@ if args.calibs:
     m.run_pyechelle('thar', 'THAR')
     m.run_pyechelle('wave', 'WAVE')
     # Run Pyxel
+    pyxel_path = m.init_pyxel()
     m.run_pyxel('flat', 'FLAT')
     m.run_pyxel('thar', 'THAR')
     m.run_pyxel('wave', 'WAVE')
-
-elif args.dex:
-    # Run pyxel with CPUs
-    m.run_pyxel_cpu('science', 'SCIENCE')
-
-else:
-    # Run pyechelle
-    m.run_pyechelle('science', 'SCIENCE')
-    # Run pyxel
-    m.run_pyxel('science', 'SCIENCE')
-
-# Remove pyxel folder
-os.rmdir(pyxel_path)
+    os.rmdir(pyxel_path)
     
+else:
+
+    if args.cuda or args.cpu:
+        # Run pyechelle alone with either CUDA or CPUs 
+        m.run_pyechelle('science', 'SCIENCE')
+    
+    if args.dex:
+        # Run pyxel alone with CPUs
+        pyxel_path = m.init_pyxel()
+        m.run_pyxel_cpu('science', 'SCIENCE')
+        os.rmdir(pyxel_path)
+
+    else:
+        # Run pyechelle
+        m.run_pyechelle('science', 'SCIENCE')
+        # Run pyxel
+        pyxel_path = m.init_pyxel()
+        m.run_pyxel('science', 'SCIENCE')
+        os.rmdir(pyxel_path)
+
 # Final execution time
 toc = datetime.datetime.now()
 print(f"\nMARVEL simulations took {toc - tic}")
