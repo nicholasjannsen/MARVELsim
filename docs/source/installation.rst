@@ -17,8 +17,31 @@ Move to a desired directory for which you want to download the software and simp
    git clone https://github.com/nicholasjannsen/MARVELsim.git
 
 
-2. Create Python environment
+2. Create Python environment with Poetry
 -------------------------
+
+Since the most commen use case for MARVELsim is to run with HPC, we use `Poetry <https://python-poetry.org/>`_ to manage and install out Python libraries. Here we show how to install Poetry on your local machine/on the VSC. First `install Poetry <https://python-poetry.org/docs/master/>`_ from the **master** branch 
+
+.. code-block:: shell
+
+   curl -sSL https://install.python-poetry.org | POETRY_HOME=$VSC_DATA/poetry python -
+   
+Unless ``poetry --version`` can be commanded then include the following path to your ``~/.bashrc`` file
+
+.. code-block:: shell
+
+   # Add poetry to path
+   export PATH="$HOME/.poetry/bin:$PATH"
+
+When working on the VSC each virtual environment needs to be installed in the data folder. Hence change the installation location by
+   
+.. code-block:: shell
+
+   poetry config virtualenvs.path $VSC_DATA/poetry/virtualenvs
+
+
+
+   
 
 The easiest way version control both PyEchelle, Pyxel, and their dependencies is to create a python environment. First install the python3-venv package
 

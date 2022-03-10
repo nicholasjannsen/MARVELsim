@@ -23,8 +23,8 @@ ccd_detector:
 
   geometry:
 
-    row: 10000 #10560              # [pixel]
-    col: 10000 #10560              # [pixel]
+    row: 10560              # [pixel]
+    col: 10560              # [pixel]
     total_thickness: 40.    # [um] -> pyxel default
     pixel_vert_size: 9.     # [um]
     pixel_horz_size: 9.     # [um]
@@ -36,21 +36,37 @@ ccd_detector:
     temperature: 200        # [K]
 
   characteristics:
-    qe:   0.9               # QE approximation
-    sv:   7.0e-6            # [V/e] Charge readout sensitivity
-    amp:  11                # [V/V] Gain of ouput amplifier
-    a1:   1                 # [V/V] Gain of signal processor -> pyxel default TODO
-    a2:   65536             # [DN/V] Gain of analog-to-digtital converter (16 bit)
-    fwc:  800000            # [e] Full-well capacity TODO
-    fwc_serial: 800000      # [e] Full-well capacity (serial register) TODO
-    vg:   1.62e-10          # [cm^2] Half-pixel volumen charge can occupy -> pyxel default TODO
-    svg:  1.62e-10          # [cm^2] Half-pixel volumen charge can occupy -> pyxel default TODO
-    t:    1.10e-4           # [s] Parallel transfer time -> PLATO CCDs
-    st:   3.40e-4           # [s] Serial transfer time -> PLATO CCDs
+    quantum_efficiency:        0.9         # QE approximation
+    charge_to_volt_conversion: 7.0e-6      # [V/e] Charge readout sensitivity
+    pre_amplification:         11          # [V/V] Gain of ouput amplifier
+    adc_voltage_range:         [0., 10.]
+    adc_bit_resolution:        16
+    full_well_capacity:        800000      # [e] Full-well capacity
 
 #--------------------------------------------------------------
 pipeline:
 #--------------------------------------------------------------
+
+  # photon -> photon
+  photon_generation:
+  
+    - name: shot_noise
+      func: pyxel.models.photon_generation.shot_noise
+      enabled: true
+
+    - name: cosmix
+      func: pyxel.models.charge_generation.cosmix
+      enabled: true
+      arguments:
+        simulation_mode: cosmic_ray
+        running_mode: stepsize
+        particle_type: proton
+        initial_energy: 100.       # [MeV]
+        particles_per_second: 100  # [p/s]
+        incident_angles:
+        starting_position:
+        spectrum_file: "../inputfiles/proton_L2_solarMax_11mm_Shielding.txt"
+        seed: 4321
 
   # photon -> charge
   charge_generation:
@@ -60,8 +76,9 @@ pipeline:
       func: pyxel.models.charge_generation.load_charge
       enabled: true
       arguments:
-        filename: filename.fits  # NOTE will be overwritten
+        filename: science_0001.fits  # NOTE will be overwritten
         position: [0,0]
+        align: "center"
         time_scale: 1            # NOTE will be overwritten
 
     - name: dark_current
@@ -69,22 +86,7 @@ pipeline:
       enabled: true
       arguments:
         dark_rate: 0.1   # [e/pix/s] TODO this should be provided by manufacturer
-        gain: 9.4        # [e/ADU] TODO make low and high readout mode as arg parse 
 
-    # Cosmics from TARS model
-    - name: tars
-      func: pyxel.models.charge_generation.run_tars
-      enabled: false             # NOTE will be activated except for bias'
-      arguments: # TODO configure!
-        simulation_mode: cosmic_ray
-        running_mode: stepsize
-        particle_type: proton
-        initial_energy: 50        # [MeV]
-        particle_number: 1        # TODO probably >1000 for a (10x10)k CCD. Should follow a Poisson distribution so every new exposure get assigned differnt values
-        incident_angles:
-        starting_position:
-        spectrum_file: 'inputfiles/proton_L2_solarMax_11mm_Shielding.txt'  # NOTE probably good to use WC (solar max) scenario for input to pipeline
-        seed: 4321
 
   # charge -> pixel
   charge_collection:
@@ -107,22 +109,18 @@ pipeline:
 
   # pixel -> pixel
   charge_transfer:
-
-    - name: cdm 
+    - name: cdm
       func: pyxel.models.charge_transfer.cdm
-      enabled: false # NOTE The CTI effect is too prominent with the current parameters 
-      arguments: # TODO configure!
-        parallel_cti: true
-        serial_cti: false
+      enabled: true
+      arguments:
+        direction: parallel
+        trap_release_times: [3.e-2]
+        trap_densities: [20.]
+        sigma: [1.e-10]
+        beta: 0.1
+        max_electron_volume: 1.62e-10   # [cm^2]
+        transfer_period: 9.4722e-04     # [s]
         charge_injection: false
-        beta_p: 0.37
-        tr_p: [3.e-2]
-        nt_p: [20.]
-        sigma_p: [1.e-10]
-        beta_s: 0.
-        tr_s: []
-        nt_s: []
-        sigma_s: []
 
   # pixel -> signal
   charge_measurement:
@@ -137,7 +135,7 @@ pipeline:
     - name: simple_amplifier
       func: pyxel.models.readout_electronics.simple_amplifier
       enabled: true
-
-    - name: simple_digitization
-      func: pyxel.models.readout_electronics.simple_digitization
+      
+    - name: simple_adc
+      func: pyxel.models.readout_electronics.simple_adc
       enabled: true

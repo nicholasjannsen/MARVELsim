@@ -7,10 +7,10 @@ authors = ["Nicholas Jannsen <nicholas.jannsen@kuleuven.be>"]
 [tool.poetry.dependencies]
 python = ">=3.8,<3.10"
 pyechelle = "^0.2.3"
+pyxel-sim = "^1.0.0"
 colorama = "^0.4.4"
 celerite = "^0.4.2"
 radvel = "^1.4.9"
-pyxel-sim = {version = "0.11.5", extras = ["all"]}
 
 [tool.poetry.dev-dependencies]
 

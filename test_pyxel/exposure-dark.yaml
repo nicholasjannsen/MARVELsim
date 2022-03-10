@@ -1,0 +1,111 @@
+# ########################################################### #
+# Pyxel detector simulation framework                         #
+#                                                             #
+# Example yaml configuration file                             #
+# Single run combining different detector effect models       #
+# Created by D. Lucsanyi (ESA)                                #
+# ########################################################### #
+
+exposure:
+
+  readout:
+    non_destructive:  true
+    times: '[1]'
+
+  outputs:
+    output_folder: 'output'
+
+cmos_detector:
+
+  geometry:
+
+    row: 450               # pixel
+    col: 450               # pixel
+    total_thickness: 40.    # um
+    pixel_vert_size: 10.    # um
+    pixel_horz_size: 10.    # um
+
+  environment:
+    temperature: 300        # K
+
+  characteristics:
+    quantum_efficiency: 0.5                  # -
+    charge_to_volt_conversion: 1.0e-6        # V/e
+    pre_amplification: 80                    # V/V
+    adc_voltage_range: [0., 10.]
+    adc_bit_resolution: 16
+    full_well_capacity: 100000               # e
+    
+pipeline:
+
+  # photon -> photon
+  photon_generation:
+    - name: load_image
+      func: pyxel.models.photon_generation.load_image
+      enabled: true
+      arguments:
+        #image_file: data/fits/Pleiades_HST.fits
+        image_file: data/fits/dark_data.fits
+        convert_to_photons: true
+        align: "center"
+        bit_resolution: 16
+
+    - name: shot_noise
+      func: pyxel.models.photon_generation.shot_noise
+      enabled: true
+
+  # photon -> photon
+  optics:
+  #  - name: optical_psf
+  #    func: pyxel.models.optics.optical_psf
+  #    enabled: false
+  #    arguments:
+  #      fov_pixels: 30          # FOV in pixel
+  #      pixelscale: 0.1        # micron/pixel OR arcsec/pixel
+  #      wavelength: 2.e-6       # wavelength in microns
+  #      optical_system:
+  #        - item: CircularAperture
+  #          radius: 0.5
+
+  # photon -> charge
+  charge_generation:
+    - name: photoelectrons
+      func: pyxel.models.charge_generation.simple_conversion
+      enabled: true
+
+  # charge -> pixel
+  charge_collection:
+    - name: simple_collection
+      func: pyxel.models.charge_collection.simple_collection
+      enabled: true
+
+    - name: full_well
+      func: pyxel.models.charge_collection.simple_full_well
+      enabled: true
+      
+    # - name: persistence
+    #   func: pyxel.models.charge_collection.persistence
+    #   enabled: true
+    #   arguments:
+    #     trap_time_constants: [1, 10, 100, 1000, 10000]
+    #     trap_densities_filename: data/fits/20210408121614_20210128_ENG20370_AUTOCHAR-Persistence_FitTrapDensityMap.fits
+    #     trap_capacities_filename: data/fits/20210408093114_20210128_ENG20370_AUTOCHAR-Persistence_FitMaximumTrapMap.fits
+    #     trap_proportions: [0.307, 0.175, 0.188, 0.136, 0.194]
+        
+  # pixel -> pixel
+  charge_transfer:
+
+  # pixel -> signal
+  charge_measurement:
+    - name: simple_measurement
+      func: pyxel.models.charge_measurement.simple_measurement
+      enabled: true
+      
+  # signal -> image
+  readout_electronics:
+    - name: simple_amplifier
+      func: pyxel.models.readout_electronics.simple_amplifier
+      enabled: true
+    - name: simple_adc
+      func: pyxel.models.readout_electronics.simple_adc
+      enabled: true

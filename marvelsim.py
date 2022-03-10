@@ -147,9 +147,9 @@ class marvelsim(object):
         Module to draw a random number distribution of cosmics scaled to the exposure time.
         """
         # Make sure cosmics are being added
-        self.pipeline.charge_generation.tars.enabled = True
+        self.pipeline.photon_generation.tars.enabled = True
         # Set random seed for cosmic rays
-        self.pipeline.charge_generation.tars.arguments.seed = np.random.randint(1e9)
+        self.pipeline.photon_generation.cosmix.arguments.seed = np.random.randint(1e9)
         # Benchmark 100 cosmics to an exposure time of 300 seconds
         #--------- testing
         #r = 100/300  # Rate
@@ -160,7 +160,7 @@ class marvelsim(object):
         #exit()
         rate = 100/300.
         ncosmics = int(rate * exptime + np.random.randint(500) * rate)
-        self.pipeline.charge_generation.tars.arguments.particle_number = ncosmics
+        self.pipeline.photon_generation.cosmix.arguments.particles_per_second = ncosmics
 
 
     def fetch_nimg(self, imgtype):
