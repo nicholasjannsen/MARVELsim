@@ -23,7 +23,7 @@ exposure:
 
   readout:
     non_destructive:  true
-    times: '[10]'
+    times: '[1]'
 
 
   outputs:
@@ -85,6 +85,10 @@ pipeline:
   # photon -> charge
   charge_generation:
 
+    - name: photoelectrons
+      func: pyxel.models.charge_generation.simple_conversion
+      enabled: true
+    
     # Load in PyEchelle image
     - name: load_charge
       func: pyxel.models.charge_generation.load_charge
@@ -95,11 +99,12 @@ pipeline:
         align: "center"
         time_scale: 300            # NOTE will be overwritten
 
-    # - name: dark_current
-    #   func: pyxel.models.charge_generation.dark_current
-    #   enabled: true
-    #   arguments:
-    #     dark_rate: 0.1   # [e/pix/s] TODO this should be provided by manufacturer
+    - name: dark_current
+      func: pyxel.models.charge_generation.dark_current
+      enabled: true
+      arguments:
+        dark_rate: 0.1   # [e/pix/s] TODO this should be provided by manufacturer
+
 
 
   # charge -> pixel

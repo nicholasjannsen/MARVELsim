@@ -147,7 +147,10 @@ class marvelsim(object):
         Module to draw a random number distribution of cosmics scaled to the exposure time.
         """
         # Make sure cosmics are being added
-        self.pipeline.photon_generation.tars.enabled = True
+        self.pipeline.photon_generation.cosmix.enabled = True
+        # Use spacecraft model for cosmis
+        filename_cosmix = os.getcwd() + '/inputfiles/proton_L2_solarMax_11mm_Shielding.txt' 
+        self.pipeline.photon_generation.cosmix.arguments.spectrum_file = filename_cosmix
         # Set random seed for cosmic rays
         self.pipeline.photon_generation.cosmix.arguments.seed = np.random.randint(1e9)
         # Benchmark 100 cosmics to an exposure time of 300 seconds
@@ -334,13 +337,13 @@ cal_group = parser.add_argument_group('CALIBRATION')
 cal_group.add_argument('-c', '--calibs', action='store_true', help='Flag to simulate a calibration dataset (default: False)')
 cal_group.add_argument('--nbias', metavar='NUM', type=int, help='Number of Bias exposures (default: 10)')
 cal_group.add_argument('--ndark', metavar='NUM', type=int, help='Number of Dark exposures (default: 10)')
-cal_group.add_argument('--nthar', metavar='NUM', type=int, help='Number of ThAr exposures (default:  5)')
-cal_group.add_argument('--nflat', metavar='NUM', type=int, help='Number of Flat exposures (default:  5)')
-cal_group.add_argument('--nwave', metavar='NUM', type=int, help='Numexp of Etalon + ThAr  (default:  5)')
+cal_group.add_argument('--nthar', metavar='NUM', type=int, help='Number of ThAr exposures (default: 5)')
+cal_group.add_argument('--nflat', metavar='NUM', type=int, help='Number of Flat exposures (default: 5)')
+cal_group.add_argument('--nwave', metavar='NUM', type=int, help='Numexp of Etalon + ThAr  (default: 5)')
 cal_group.add_argument('--tdark', metavar='NUM', type=int, help='Exposure time of Dark (default: 300 s)')
-cal_group.add_argument('--tflat', metavar='NUM', type=int, help='Exposure time of Flat (default:   5 s)')
-cal_group.add_argument('--tthar', metavar='NUM', type=int, help='Exposure time of ThAr (default:  30 s)')
-cal_group.add_argument('--twave', metavar='NUM', type=int, help='Exptime Etalon+ThAr   (default:  30 s)')
+cal_group.add_argument('--tflat', metavar='NUM', type=int, help='Exposure time of Flat (default: 5 s)')
+cal_group.add_argument('--tthar', metavar='NUM', type=int, help='Exposure time of ThAr (default: 30 s)')
+cal_group.add_argument('--twave', metavar='NUM', type=int, help='Exposure time of Etalon + ThAr (default: 30 s)')
 
 hpc_group = parser.add_argument_group('PERFORMANCE')
 hpc_group.add_argument('--data', metavar='PATH', type=str, help='Path to include RV file')

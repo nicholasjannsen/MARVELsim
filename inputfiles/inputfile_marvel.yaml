@@ -65,7 +65,7 @@ pipeline:
         particles_per_second: 100  # [p/s]
         incident_angles:
         starting_position:
-        spectrum_file: "../inputfiles/proton_L2_solarMax_11mm_Shielding.txt"
+        spectrum_file: "/inputfiles/proton_L2_solarMax_11mm_Shielding.txt"
         seed: 4321
 
   # photon -> charge

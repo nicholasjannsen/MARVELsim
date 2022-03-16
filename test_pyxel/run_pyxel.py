@@ -12,14 +12,11 @@ detector = config.ccd_detector    # class CCD
 pipeline = config.pipeline        # class DetectionPipeline
 
 # Run pyxel in exposure mode
-#pipeline.photon_generation.cosmix.arguments.seed                 = np.random.randint(1e9)
-#pipeline.photon_generation.cosmix.arguments.particles_per_second = 100
+pipeline.photon_generation.cosmix.arguments.seed                 = np.random.randint(1e9)
+pipeline.photon_generation.cosmix.arguments.particles_per_second = 100
 pipeline.charge_generation.load_charge.arguments.filename        = 'science.fits'
 
-#pipeline.charge_generation.load_charge.arguments.time_scale       = 300
-
-#print(exposure.readout)
+#print(detector.charge_generation)
 #exit()
-
 
 results = pyxel.exposure_mode(exposure=exposure, detector=detector, pipeline=pipeline)
