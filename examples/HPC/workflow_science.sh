@@ -5,7 +5,7 @@ data=$1
 
 # Clean and load modules
 module purge
-module restore plato
+module restore marvelsim
 module load worker
 
 # Summit jobs as a workflow

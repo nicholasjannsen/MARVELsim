@@ -2,23 +2,21 @@
 
 #PBS -N output
 #PBS -A lp_mesa_modeling
-#PBS -l nodes=1:ppn=36:gpus=4:skylake
+#PBS -l nodes=1:ppn=14:gpus=4:skylake
 #PBS -l partition=gpu
 #PBS -l pmem=2gb
-#PBS -l walltime=10:00:00
+#PBS -l walltime=06:00:00
 
 cd $PBS_O_WORKDIR
 
-PYTHONPATH=$VSC_DATA/MARVELsim/marvelsim/bin/python
-export PYTHONPATH
-SIMDIR=$VSC_DATA/MARVELsim
+# Export paths
+SIMDIR=$VSC_DATA/marvelsim/marvelsim
 export SIMDIR
-OUTDIR=/scratch/leuven/341/vsc34166/marvelsim/sim0_200kms
+OUTDIR=</path/to/output/>
+export OUTDIR
+POETRY=</path/to/poetry/virtualenvs/name>
 
-# Make sure to activate environment 
-source marvelsim/bin/activate
-
-# Run star spectrum
-cd $SIMDIR
-python simulator-marvel.py --time 900 --mag 10.0 --teff 5800 --logg 4.5 --z 0.0 --alpha 0.0 --cuda --data data_200kms.txt -o $OUTDIR
+# Run calibration
+. $POETRY
+python $SIMDIR/marvelsim.py --time 900 --mag 10.0 --teff 5800 --logg 4.5 --z 0.0 --alpha 0.0 --cuda --data data.txt -o $OUTDIR
 
