@@ -10,9 +10,7 @@
 *.#*
 
 # Folders
-sims/
 models/
-marvelsim/
 hpc/server/
 
 # Make exceptions
