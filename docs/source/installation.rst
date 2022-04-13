@@ -7,8 +7,9 @@ In this tutorial we cover how to setup an Python environment that allows you qui
 
    At the moment this software is only supported for Python 3.8.
 
+   
 1. Downlod from source
--------------------
+----------------------
 
 Move to a desired directory for which you want to download the software and simply:
 
@@ -17,33 +18,87 @@ Move to a desired directory for which you want to download the software and simp
    git clone https://github.com/nicholasjannsen/MARVELsim.git
 
 
-2. Create Python environment with Poetry
--------------------------
+2. Create Conda environment
+---------------------------
+   
+We strongly recommend to install Poetry through a Anaconda environment. This is especially handy when installing on a computing cluster since these typically only have limited versions of Python installed by default. While using Anaconda all Python versions can be installed and thus an exact freeze of the poetry installation can be made. Thus first install Anaconda or miniconda and the create a new virtuel environment called ``marvelsim``: 
 
-Since the most commen use case for MARVELsim is to run with HPC, we use `Poetry <https://python-poetry.org/>`_ to manage and install out Python libraries. Here we show how to install Poetry on your local machine/on the VSC. First `install Poetry <https://python-poetry.org/docs/master/>`_ from the **master** branch 
+.. code-block:: shell
+		
+   conda create -n marvelsim python=3.8 numpy scipy matplotlib
+
+Now activate your new conda environment:
+
+.. code-block:: shell
+
+   conda activate marvelsim
+
+   
+3. Install with Poetry
+----------------------
+
+Since the most commen use case for MARVELsim is to run with HPC, we use `Poetry <https://python-poetry.org/>`_ to manage and install out Python libraries. First `install Poetry <https://python-poetry.org/docs/master/>`_ from the **master** branch 
+
+.. code-block:: shell
+
+   curl -sSL https://install.python-poetry.org | python -
+   
+Verify that poetry was installed successfully by typing
+
+``poetry --version``
+
+We commanded to include the following path to your ``~/.bashrc`` file:
+
+.. code-block:: shell
+
+   export PATH="$HOME/.poetry/bin:$PATH"
+
+Deactivate your conda environment and install with poetry:
+
+.. code-block:: shell
+
+   conda deactivate
+   poetry install
+
+   
+3. Install with Poetry on HPC
+-----------------------------
+
+Here we show how to install Poetry on the VSC. When installing on a computing cluster you should typically want to avoid installing software directly to your ``$HOME`` space since this has a very limited amount of available space. Must clusters recommend to install software in your ``$DATA`` directory. Hence:
 
 .. code-block:: shell
 
    curl -sSL https://install.python-poetry.org | POETRY_HOME=$VSC_DATA/poetry python -
    
-Unless ``poetry --version`` can be commanded then include the following path to your ``~/.bashrc`` file
+Verify that poetry was installed successfully by typing ``poetry --version``. In order for Poetry to available from any compute node you need to include the following path to your ``~/.bashrc`` file:
 
 .. code-block:: shell
 
-   # Add poetry to path
-   export PATH="$HOME/.poetry/bin:$PATH"
+   POETRY=$VSC_DATA/poetry/bin
+   export POETRY
 
-When working on the VSC each virtual environment needs to be installed in the data folder. Hence change the installation location by
+Next change the installation location of the virtuel poetry environment to:
    
 .. code-block:: shell
 
    poetry config virtualenvs.path $VSC_DATA/poetry/virtualenvs
 
+Finally deactiavte your conda environment and install MARVELsim from the base directory using:
 
+.. code-block:: shell
 
+   conda deactivate
+   poetry install
+
+.. warning::
+
+   It is important that the conda environment is deactivated before running ``poetry install``. If not done all packages will be installed within your conda ``bin`` folder and poetry cannot find your packges when using either ``poetry shell`` to spawn a shell environment or ``poetry run python marvelsim.py`` for running a script directly.
+  
+
+Install with a python3-venv
+---------------------------
    
-
-The easiest way version control both PyEchelle, Pyxel, and their dependencies is to create a python environment. First install the python3-venv package
+Another method is use a control all dependencies with a python3-venv environment. First install the python3-venv package
 
 .. code-block:: shell
 
@@ -62,22 +117,7 @@ To activate and deactivate the environment simply use
    source marvelsim/bin/activate
    deactivate
 
-
-3. Install software
-----------------
-
-At the root of the MARVELsim repository a installation script called ``install.sh`` are provided for the installation. This scripts takes care of activating your virtual environment before installing the necessary packages using ``pip``. Now install all necessary Python libraries by simply commanding:
-
-.. code-block:: shell
-
-   ./install.sh
-
-
-.. warning::
-
-   The install script automatically installs Pyxel version 11.5, however, a newer version not yet well document and not supported by MARVELsim are available. Thus, double check that your have the correct version of pyxel by ``pyxel --version``.
-
-
+   
 Extra tools
 -----------
 
