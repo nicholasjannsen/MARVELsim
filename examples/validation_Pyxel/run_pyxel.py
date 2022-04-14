@@ -16,12 +16,10 @@ pipeline.photon_generation.cosmix.arguments.seed                 = np.random.ran
 pipeline.photon_generation.cosmix.arguments.particles_per_second = 0
 pipeline.charge_generation.load_charge.arguments.filename        = 'zeros.fits'
 pipeline.charge_generation.load_charge.arguments.time_scale      = 1
-pipeline.charge_generation.dark_current.arguments.dark_rate      = 1
+pipeline.charge_generation.dark_current.arguments.dark_rate      = 0.1
+
 #exposure = '[1]'
-
-print(exposure)
-exit()
-
-
+#print(exposure)
+#exit()
 
 results = pyxel.exposure_mode(exposure=exposure, detector=detector, pipeline=pipeline)
