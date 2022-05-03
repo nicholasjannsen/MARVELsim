@@ -12,9 +12,9 @@ spectra including a RV signal. Used in combination with High Performance
 Computing (HPC) this makes it easy to simulate a time series of spectra.
 
 User examples:
-  $ python simulator-marvel.py --calibs -o </path/to/outdir>
-  $ python simulator-marvel.py --time 300 --mag 10.0 --teff 5800 --logg 4.5 --z 0.0 --alpha 0.0 --rv 5.5 -o </path/to/outdir>
-  $ python simulator-marvel.py --time 300 --mag 10.0 --teff 5800 --logg 4.5 --z 0.0 --alpha 0.0 --data <rv_data.txt> --cuda -o </path/to/outdir> 
+  $ python marvelsim.py --calibs -o </path/to/outdir>
+  $ python marvelsim.py --time 300 --mag 10.0 --teff 5800 --logg 4.5 --z 0.0 --alpha 0.0 --rv 5.5 -o </path/to/outdir>
+  $ python marvelsim.py --time 300 --mag 10.0 --teff 5800 --logg 4.5 --z 0.0 --alpha 0.0 --data <rv_data.txt> --cuda -o </path/to/outdir> 
 """
 
 import os

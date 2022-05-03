@@ -4,14 +4,9 @@
 Placeholder for all the small utilities in this repo.
 """
 
-from colorama import Fore, Style
-from astropy.io import fits
-
-# Get software versions
 import pkg_resources
-marvelsim_version = pkg_resources.get_distribution('MARVELsim').version
-pyechelle_version = pkg_resources.get_distribution('pyechelle').version
-
+from astropy.io import fits
+from colorama import Fore, Style
 
 #==============================================================#
 #                           UTILITIES                          #
@@ -37,6 +32,9 @@ def add_fitsheader(filename, obsmode, exptime, readmode, bias, gain, speed):
     # Load and open file
     hdul = fits.open(filename)
     hdr = hdul[0].header
+    # Get software versions
+    marvelsim_version = pkg_resources.get_distribution('MARVELsim').version
+    pyechelle_version = pkg_resources.get_distribution('pyechelle').version
     # Add headers
     hdr.append(('PYECHE_V', f'{pyechelle_version}', 'PyEchelle version'), end=True)
     hdr.append(('MARVEL_V', f'{marvelsim_version}', 'MARVELsim version'), end=True)
