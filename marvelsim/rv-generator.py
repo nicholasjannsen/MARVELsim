@@ -49,20 +49,20 @@ class RV(object):
 
         
     
-    def rv_model(self, t):
+    def rv_model(self, t, t0, Ms, Mp, P, a, e, i, w):
 
         # Time of periastron
-        tp = self.t0.to('d').value - self.P.to('d').value * (np.pi/2. - self.w.value)
+        tp = t0.to('d').value - P.to('d').value * (np.pi/2. - w.value)
 
         # True anomaly with radvel
-        nu = radvel.orbit.true_anomaly(t, self.tp, self.P.to('d').value, self.e) * u.rad
+        nu = radvel.orbit.true_anomaly(t, tp, P.to('d').value, e) * u.rad
 
         # RV signal as function of nu: Murray & Correia (2011) Eq. 61, 65 and 66
         # NOTE "astar" in the following is the reduced semimajor axies due to the common
         # center-of-mass and "K" is the relative RV semi-amplitude of the star.
-        astar = self.Mp / (self.Mp + self.Ms) * self.a
-        K     = 2.*np.pi/self.P * astar * np.sin(self.i)/np.sqrt(1. - np.power(self.e,2))
-        RV    = K * (np.cos(nu + self.w) - self.e*np.cos(self.w))
+        astar = Mp / (Mp + Ms) * a
+        K     = 2.*np.pi/P * astar * np.sin(i)/np.sqrt(1. - np.power(e,2))
+        RV    = K * (np.cos(nu + w) - e*np.cos(w))
 
         return RV, K
 
@@ -97,10 +97,10 @@ class RV(object):
             self.Mp = (args.mp[0] * u.M_earth).to('kg')
 
             # Calculate semi-major axis (K3)
-            self.a  = (c.G * P**2 * (Ms + Mp) / (4*np.pi**2))**(1/3.)
+            self.a  = (c.G * self.P**2 * (self.Ms + self.Mp) / (4*np.pi**2))**(1/3.)
 
             # Count number of planets
-            self.n_planets = len(t0)
+            self.n_planets = len(self.t0)
 
             RV0 = []
             RV1 = []
@@ -160,7 +160,7 @@ class RV(object):
                     r' $R_s$ = '+f'{Rs:.2f}'+r' $R_{\odot}$;' +
                     r' $M_s$ = '+f'{Ms:.2f}'+r' $M_{\odot}$')
 
-        if n_planets == 1:
+        if self.n_planets == 1:
 
             # Revert parameters for plot
             Rp = self.Rp.to('R_earth').value[0]
