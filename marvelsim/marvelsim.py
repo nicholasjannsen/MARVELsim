@@ -27,6 +27,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from utilities import errorcode, add_fitsheader
 from pathlib import Path
+from zipfile import ZipFile
 
 # Turn off warnings
 import warnings
@@ -62,9 +63,9 @@ class marvelsim(object):
 
         # Output paths
         if args.outdir == '.':
-            self.outdir = os.getcwd()
+            self.outdir = Path.cwd()
         else:
-            self.outdir = args.outdir
+            self.outdir = Path(args.outdir).resolve()
 
         # Default stellar parameters of a Sun-like star
         if args.mag   is None: args.mag   = 10.
@@ -138,9 +139,9 @@ class marvelsim(object):
         # and nor is it possible to rename the pyxel output files..
         output_dir = str(self.exposure.outputs.output_dir)
         self.pyxel_dir  = output_dir.split('/')[-1]
-        self.pyxel_path = args.outdir + '/' + self.pyxel_dir
-        self.pyxel_file = self.pyxel_path + '/detector_image_array_1.fits'
-        self.exposure.outputs.output_dir = Path(args.outdir + '/' + self.pyxel_dir)
+        self.pyxel_path = Path.joinpath(self.outdir, self.pyxel_dir)
+        self.pyxel_file = Path.joinpath(self.pyxel_path, '/detector_image_array_1.fits')
+        self.exposure.outputs.output_dir = Path.joinpath(self.outdir, self.pyxel_dir)
 
         # Finito!
         return self.pyxel_path
@@ -149,7 +150,7 @@ class marvelsim(object):
     
     def enable_cosmics(self, exptime):
         """
-        Module to draw a random number distribution of cosmics scaled to the exposure time.
+        Module to draw cosmic rays from a Poisson distibution scaled to the exposure time.
         """
         # Make sure cosmics are being added
         self.pipeline.photon_generation.cosmix.enabled = True
@@ -201,10 +202,12 @@ class marvelsim(object):
     
 
     def compress_data(self, filename, filepath):
+        # Compress file
         print(f'Compressing {filename}')
-        os.chdir(args.outdir)
-        os.system(f'zip {filename[:-5]}.zip {filename}')
-        os.chdir(f'{os.getcwd()}/../')
+        filepath = str(filepath) 
+        with ZipFile(f'{filepath[:-5]}.zip', 'w') as zipfile:
+            zipfile.write(filepath)
+        # Remove uncompressed file
         os.remove(filepath)
             
     #--------------------------------------------#
@@ -251,7 +254,7 @@ class marvelsim(object):
             errorcode('message', f'\nSimulating {imgtype} with PyEchelle')
             # Run pyechelle
             filename = f'{imgtype}_'+f'{i}'.zfill(4)+'.fits'
-            filepath = f'{args.outdir}/{filename}'
+            filepath = Path.joinpath(self.outdir, filename)
             os.system(self.cmd_pyechelle(imgtype, filepath, i-1))
 
             # TODO can we do it faster with Pyxel?
@@ -279,7 +282,7 @@ class marvelsim(object):
             errorcode('message', f'\nSimulating {imgtype} with Pyxel')
             # Fetch filenames.
             filename = f'{imgtype}_'+f'{i}'.zfill(4)+'.fits'
-            filepath = f'{args.outdir}/{filename}'
+            filepath = Path.joinpath(self.outdir, filename)
             # Run pyxel
             self.enable_cosmics(self.fetch_exptime(imgtype))
             self.pipeline.charge_generation.load_charge.arguments.filename   = filepath
@@ -304,7 +307,7 @@ class marvelsim(object):
         errorcode('message', f'\nSimulating {imgtype} with Pyxel')
         # Fetch filenames.
         filename = f'{imgtype}_'+f'{args.dex}'.zfill(4)+'.fits'
-        filepath = f'{args.outdir}/{filename}'
+        filepath = Path.joinpath(self.outdir, filename)
         # Run pyxel
         self.enable_cosmics(self.fetch_exptime(imgtype))
         self.pipeline.charge_generation.load_charge.arguments.filename   = filepath
