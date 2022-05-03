@@ -23,7 +23,7 @@ exposure:
 
   readout:
     non_destructive:  true
-    times: '[0.01]'
+    times: '[1]'
 
   outputs:
     output_folder: "output"
@@ -40,8 +40,8 @@ ccd_detector:
 
   geometry:
 
-    row: 100 #10560              # [pixel]
-    col: 100 #10560              # [pixel]
+    row: 10560              # [pixel]
+    col: 10560              # [pixel]
     total_thickness: 40.    # [um] -> pyxel default
     pixel_vert_size: 9.     # [um]
     pixel_horz_size: 9.     # [um]
