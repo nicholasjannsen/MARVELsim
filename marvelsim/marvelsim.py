@@ -58,8 +58,7 @@ class marvelsim(object):
         # PARSED ARGUMENTS
         
         # Input paths
-        self.path      = Path(__file__).parent.resolve()
-        self.input_dir = Path.joinpath(self.path, "../inputfiles/inputfile_marvel.yaml")
+        self.cwd = Path(__file__).parent.resolve()
 
         # Output paths
         if args.outdir == '.':
@@ -128,7 +127,8 @@ class marvelsim(object):
         """        
         
         # Create an instance of the pyxel class from the MARVEL specific inputfile
-        config = pyxel.load(self.input_dir)
+        filename_inputfile = Path.joinpath(self.cwd, "../inputfiles/inputfile_marvel.yaml")
+        config = pyxel.load(filename_inputfile)
         self.exposure = config.exposure
         self.detector = config.ccd_detector
         self.pipeline = config.pipeline
@@ -154,7 +154,7 @@ class marvelsim(object):
         # Make sure cosmics are being added
         self.pipeline.photon_generation.cosmix.enabled = True
         # Use spacecraft model for cosmis
-        filename_cosmix = os.getcwd() + '/../inputfiles/proton_L2_solarMax_11mm_Shielding.txt' 
+        filename_cosmix = Path.joinpath(self.cwd, '../inputfiles/proton_L2_solarMax_11mm_Shielding.txt')
         self.pipeline.photon_generation.cosmix.arguments.spectrum_file = filename_cosmix
         # Set random seed for cosmic rays
         self.pipeline.photon_generation.cosmix.arguments.seed = np.random.randint(1e9)
