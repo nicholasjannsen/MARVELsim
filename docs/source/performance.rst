@@ -19,7 +19,7 @@ We will use the Vlaams Supercomputing Centre (VSC) as example on how to create a
 
    #PBS -N output
    #PBS -A <account_name>
-   #PBS -l nodes=1:ppn=16:gpus=4:skylake
+   #PBS -l nodes=1:ppn=36:gpus=4:skylake
    #PBS -l partition=gpu
    #PBS -l pmem=2gb
    #PBS -l walltime=03:00:00
