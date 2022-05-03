@@ -20,13 +20,13 @@ User examples:
 import os
 import yaml
 import pyxel
-import pathlib
 import datetime
 import argparse
 import subprocess
 import numpy as np
 import matplotlib.pyplot as plt
 from utilities import errorcode, add_fitsheader
+from pathlib import Path
 
 # Turn off warnings
 import warnings
@@ -57,7 +57,11 @@ class marvelsim(object):
         
         # PARSED ARGUMENTS
         
-        # Make it possible to use bash syntax for PWD
+        # Input paths
+        self.path      = Path(__file__).parent.resolve()
+        self.input_dir = Path.joinpath(self.path, "../inputfiles/inputfile_marvel.yaml")
+
+        # Output paths
         if args.outdir == '.':
             self.outdir = os.getcwd()
         else:
@@ -124,7 +128,7 @@ class marvelsim(object):
         """        
         
         # Create an instance of the pyxel class from the MARVEL specific inputfile
-        config = pyxel.load(os.getcwd() + "/../inputfiles/inputfile_marvel.yaml")
+        config = pyxel.load(self.input_dir)
         self.exposure = config.exposure
         self.detector = config.ccd_detector
         self.pipeline = config.pipeline
@@ -136,7 +140,8 @@ class marvelsim(object):
         self.pyxel_dir  = output_dir.split('/')[-1]
         self.pyxel_path = args.outdir + '/' + self.pyxel_dir
         self.pyxel_file = self.pyxel_path + '/detector_image_array_1.fits'
-        self.exposure.outputs.output_dir = pathlib.Path(args.outdir + '/' + self.pyxel_dir)
+        self.exposure.outputs.output_dir = Path(args.outdir + '/' + self.pyxel_dir)
+
         # Finito!
         return self.pyxel_path
 
