@@ -206,7 +206,7 @@ class marvelsim(object):
         print(f'Compressing {filename}')
         filepath = str(filepath) 
         with ZipFile(f'{filepath[:-5]}.zip', 'w') as zipfile:
-            zipfile.write(filepath)
+            zipfile.write(filepath, f'{filename}')
         # Remove uncompressed file
         os.remove(filepath)
             
