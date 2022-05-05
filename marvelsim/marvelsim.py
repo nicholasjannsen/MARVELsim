@@ -227,7 +227,7 @@ class marvelsim(object):
     def compress_data(self, filename, filepath):
         print(f'Compressing {filename}')
         os.chdir(args.outdir)
-        os.system(f'zip {filename[:-5]}.zip {filename}')
+        os.system(f'zip -j {filename[:-5]}.zip {filename}')
         os.chdir(f'{os.getcwd()}/../')
         os.remove(filepath)
 
