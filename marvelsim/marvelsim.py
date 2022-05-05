@@ -128,7 +128,7 @@ class marvelsim(object):
         """        
         
         # Create an instance of the pyxel class from the MARVEL specific inputfile
-        filename_inputfile = Path.joinpath(self.cwd, "../inputfiles/inputfile_marvel.yaml")
+        filename_inputfile = self.cwd / "../inputfiles/inputfile_marvel.yaml"
         config = pyxel.load(filename_inputfile)
         self.exposure = config.exposure
         self.detector = config.ccd_detector
@@ -139,9 +139,9 @@ class marvelsim(object):
         # and nor is it possible to rename the pyxel output files..
         output_dir = str(self.exposure.outputs.output_dir)
         self.pyxel_dir  = output_dir.split('/')[-1]
-        self.pyxel_path = Path.joinpath(self.outdir, self.pyxel_dir)
-        self.pyxel_file = Path.joinpath(self.pyxel_path, '/detector_image_array_1.fits')
-        self.exposure.outputs.output_dir = Path.joinpath(self.outdir, self.pyxel_dir)
+        self.pyxel_path = self.outdir / self.pyxel_dir
+        self.pyxel_file = self.pyxel_path / 'detector_image_array_1.fits'
+        self.exposure.outputs.output_dir = self.pyxel_path
 
         # Finito!
         return self.pyxel_path
@@ -155,7 +155,7 @@ class marvelsim(object):
         # Make sure cosmics are being added
         self.pipeline.photon_generation.cosmix.enabled = True
         # Use spacecraft model for cosmis
-        filename_cosmix = Path.joinpath(self.cwd, '../inputfiles/proton_L2_solarMax_11mm_Shielding.txt')
+        filename_cosmix = self.cwd / '../inputfiles/proton_L2_solarMax_11mm_Shielding.txt'
         self.pipeline.photon_generation.cosmix.arguments.spectrum_file = filename_cosmix
         # Set random seed for cosmic rays
         self.pipeline.photon_generation.cosmix.arguments.seed = np.random.randint(1e9)
@@ -206,7 +206,7 @@ class marvelsim(object):
         print(f'Compressing {filename}')
         filepath = str(filepath) 
         with ZipFile(f'{filepath[:-5]}.zip', 'w') as zipfile:
-            zipfile.write(filepath, f'{filename}')
+            zipfile.write(filepath, filename)
         # Remove uncompressed file
         os.remove(filepath)
             
@@ -254,7 +254,7 @@ class marvelsim(object):
             errorcode('message', f'\nSimulating {imgtype} with PyEchelle')
             # Run pyechelle
             filename = f'{imgtype}_'+f'{i}'.zfill(4)+'.fits'
-            filepath = Path.joinpath(self.outdir, filename)
+            filepath = self.outdir / filename
             os.system(self.cmd_pyechelle(imgtype, filepath, i-1))
 
             # TODO can we do it faster with Pyxel?
@@ -282,17 +282,17 @@ class marvelsim(object):
             errorcode('message', f'\nSimulating {imgtype} with Pyxel')
             # Fetch filenames.
             filename = f'{imgtype}_'+f'{i}'.zfill(4)+'.fits'
-            filepath = Path.joinpath(self.outdir, filename)
+            filepath = self.outdir / filename
             # Run pyxel
             self.enable_cosmics(self.fetch_exptime(imgtype))
             self.pipeline.charge_generation.load_charge.arguments.filename   = filepath
             self.pipeline.charge_generation.load_charge.arguments.time_scale = 5 #float(args.time)
             pyxel.exposure_mode(exposure=self.exposure, detector=self.detector, pipeline=self.pipeline)
-            # Swap files
+            # Swap files -> Remove PyEchelle file and replace with Pyxel file
             os.remove(filepath)
             os.system(f'mv {self.pyxel_file} {filepath}')
             # Lastly add header
-            print('Adding fits-header')
+            print('Adding fits-header')         
             add_fitsheader(filepath, fitstype, args.time)
             # Compress file
             if args.zip:
@@ -307,7 +307,7 @@ class marvelsim(object):
         errorcode('message', f'\nSimulating {imgtype} with Pyxel')
         # Fetch filenames.
         filename = f'{imgtype}_'+f'{args.dex}'.zfill(4)+'.fits'
-        filepath = Path.joinpath(self.outdir, filename)
+        filepath = self.outdir / filename
         # Run pyxel
         self.enable_cosmics(self.fetch_exptime(imgtype))
         self.pipeline.charge_generation.load_charge.arguments.filename   = filepath
