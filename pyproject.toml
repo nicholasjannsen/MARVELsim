@@ -11,6 +11,7 @@ pyxel-sim = "^1.0.0"
 colorama = "^0.4.4"
 celerite = "^0.4.2"
 radvel = "^1.4.9"
+renku-sphinx-theme = "^0.2.2"
 
 [tool.poetry.dev-dependencies]
 
