@@ -8,6 +8,8 @@ At the root of the MARVELsim repository two scripts called ``marvelsim.py`` and 
    Note that while working in a python prompt/environment, Pyxel currently has a bug for overwriting the output file directory stated in the input YAML file. This means that the user needs to manually specify the output path within ``MARVELsim/inputfiles/inputfile_marvel.yaml`` (see ``exposure:outputs:output_folder``). Otherwise the default ``MARVELsim/output`` folder will be used.
 
 
+.. _tutorial_calibration:
+   
 Calibration mode
 ----------------
 
