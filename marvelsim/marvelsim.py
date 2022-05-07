@@ -202,11 +202,13 @@ class marvelsim(object):
     
 
     def compress_data(self, filename, filepath):
-        # Compress file
         print(f'Compressing {filename}')
-        filepath = str(filepath) 
+        filepath = str(filepath)
+        # Open and write zip file
         with ZipFile(f'{filepath[:-5]}.zip', 'w') as zipfile:
             zipfile.write(filepath, filename)
+            # Give full access to file
+            os.system(f'chmod 755 {filepath[:-5]}.zip')
         # Remove uncompressed file
         os.remove(filepath)
             
