@@ -340,14 +340,17 @@ parser.add_argument('-o', '--outdir', metavar='PATH', type=str, help='Output dir
 
 obs_group = parser.add_argument_group('OBSERVATION')
 obs_group.add_argument('-t', '--time', metavar='SEC', type=float, help='Exposure time of stellar observation [s]')
-obs_group.add_argument('--mag',   metavar='VMAG',     type=str,   help='Johnson-Cousin V passband magnitude')
-obs_group.add_argument('--teff',  metavar='KELVIN',   type=str,   help='Stellar effective temperature [K]')
-obs_group.add_argument('--logg',  metavar='DEX',      type=str,   help='Stellar surface gravity [relative log10]')
-obs_group.add_argument('--z',     metavar='DEX',      type=str,   help='Stellar metallicity [Fe/H]')
-obs_group.add_argument('--alpha', metavar='DEX',      type=str,   help='Stellar Alpha element abundance [alpha/H]')
-obs_group.add_argument('--rv',    metavar='M/S',      type=str,   help='Radial Velocity shift of star due to exoplanet [m/s]')
 
-cal_group = parser.add_argument_group('CALIBRATION')
+sci_group = parser.add_argument_group('SCIENCE MODE')
+cal_group.add_argument('-s', '--science', action='store_true', help='Flag to simulate stellar spectrum (default: False)')
+sci_group.add_argument('--mag',   metavar='VMAG',     type=str,   help='Johnson-Cousin V passband magnitude')
+sci_group.add_argument('--teff',  metavar='KELVIN',   type=str,   help='Stellar effective temperature [K]')
+sci_group.add_argument('--logg',  metavar='DEX',      type=str,   help='Stellar surface gravity [relative log10]')
+sci_group.add_argument('--z',     metavar='DEX',      type=str,   help='Stellar metallicity [Fe/H]')
+sci_group.add_argument('--alpha', metavar='DEX',      type=str,   help='Stellar Alpha element abundance [alpha/H]')
+sci_group.add_argument('--rv',    metavar='M/S',      type=str,   help='Radial Velocity shift of star due to exoplanet [m/s]')
+
+cal_group = parser.add_argument_group('CALIBRATION MODE')
 cal_group.add_argument('-c', '--calibs', action='store_true', help='Flag to simulate a calibration dataset (default: False)')
 cal_group.add_argument('--nbias', metavar='NUM', type=int, help='Number of Bias exposures (default: 10)')
 cal_group.add_argument('--ndark', metavar='NUM', type=int, help='Number of Dark exposures (default: 10)')
@@ -387,22 +390,25 @@ if args.calibs:
     
 else:
 
-    # Run pyechelle alone with either CUDA or CPUs 
-    if args.cuda or args.cpu:
-        m.run_pyechelle('science', 'SCIENCE')
-
-    # Run pyxel alone with CPUs
-    if args.dex:
-        pyxel_path = m.init_pyxel()
-        m.run_pyxel_cpu('science', 'SCIENCE')
-        os.rmdir(pyxel_path)
-
     # Run pyechelle and Pyxel together
-    else:
+    if args.science:
         m.run_pyechelle('science', 'SCIENCE')
         pyxel_path = m.init_pyxel()
         m.run_pyxel('science', 'SCIENCE')
         os.rmdir(pyxel_path)
+
+    # Run pyechelle alone with either CUDA or CPUs 
+    elif args.cuda or args.cpu:
+        m.run_pyechelle('science', 'SCIENCE')
+
+    # Run pyxel alone with CPUs
+    elif args.dex:
+        pyxel_path = m.init_pyxel()
+        m.run_pyxel_cpu('science', 'SCIENCE')
+        os.rmdir(pyxel_path)
+
+    else:
+        errorcode('error', 'Not valid setup for science mode!')
 
 # Final execution time
 toc = datetime.datetime.now()
