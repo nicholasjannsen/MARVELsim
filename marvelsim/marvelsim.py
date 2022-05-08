@@ -342,7 +342,7 @@ obs_group = parser.add_argument_group('OBSERVATION')
 obs_group.add_argument('-t', '--time', metavar='SEC', type=float, help='Exposure time of stellar observation [s]')
 
 sci_group = parser.add_argument_group('SCIENCE MODE')
-cal_group.add_argument('-s', '--science', action='store_true', help='Flag to simulate stellar spectrum (default: False)')
+sci_group.add_argument('-s', '--science', action='store_true', help='Flag to simulate stellar spectra')
 sci_group.add_argument('--mag',   metavar='VMAG',     type=str,   help='Johnson-Cousin V passband magnitude')
 sci_group.add_argument('--teff',  metavar='KELVIN',   type=str,   help='Stellar effective temperature [K]')
 sci_group.add_argument('--logg',  metavar='DEX',      type=str,   help='Stellar surface gravity [relative log10]')
@@ -351,7 +351,7 @@ sci_group.add_argument('--alpha', metavar='DEX',      type=str,   help='Stellar 
 sci_group.add_argument('--rv',    metavar='M/S',      type=str,   help='Radial Velocity shift of star due to exoplanet [m/s]')
 
 cal_group = parser.add_argument_group('CALIBRATION MODE')
-cal_group.add_argument('-c', '--calibs', action='store_true', help='Flag to simulate a calibration dataset (default: False)')
+cal_group.add_argument('-c', '--calibs', action='store_true', help='Flag to simulate calibration data')
 cal_group.add_argument('--nbias', metavar='NUM', type=int, help='Number of Bias exposures (default: 10)')
 cal_group.add_argument('--ndark', metavar='NUM', type=int, help='Number of Dark exposures (default: 10)')
 cal_group.add_argument('--nthar', metavar='NUM', type=int, help='Number of ThAr exposures (default: 5)')
@@ -363,7 +363,7 @@ cal_group.add_argument('--tthar', metavar='NUM', type=int, help='Exposure time o
 cal_group.add_argument('--twave', metavar='NUM', type=int, help='Exposure time of Etalon + ThAr (default: 30 s)')
 
 hpc_group = parser.add_argument_group('PERFORMANCE')
-hpc_group.add_argument('--data', metavar='PATH', type=str, help='Path to include RV file')
+hpc_group.add_argument('--data', metavar='PATH', type=str, help='Path RV file created by "rv-generator.py"')
 hpc_group.add_argument('--dex',  metavar='NAME', type=int, help='Index for running Pyxel on CPUs')
 hpc_group.add_argument('--cpu',  metavar='INT',  type=str, help='Maximum number of CPU cores used order-wise parallel computing')
 hpc_group.add_argument('--cuda', action='store_true', help='Flag to use CUDA NVIDIA hardware for raytracing (makes cpu flag obsolete')
