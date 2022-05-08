@@ -208,7 +208,7 @@ class marvelsim(object):
         # Open and write zip file
         with ZipFile(f'{filepath[:-5]}.zip', 'w') as zipfile:
             zipfile.write(filepath, filename)
-            # Give full access to file
+            # Give full read/write permission
             os.system(f'chmod 755 {filepath[:-5]}.zip')
         # Remove uncompressed file
         os.remove(filepath)
@@ -294,9 +294,11 @@ class marvelsim(object):
             # Swap files -> Remove PyEchelle file and replace with Pyxel file
             os.remove(filepath)
             os.system(f'mv {self.pyxel_file} {filepath}')
-            # Lastly add header
+            # Add fits header
             print('Adding fits-header')         
             add_fitsheader(filepath, fitstype, args.time)
+            # Give full read/write permission
+            os.system(f'chmod 755 {filepath}')
             # Compress file
             if args.zip:
                 self.compress_data(filename, filepath)
@@ -319,9 +321,11 @@ class marvelsim(object):
         # Swap files
         os.remove(filepath)
         os.system(f'mv {self.pyxel_file} {filepath}')
-        # Lastly add header
+        # Add fits header
         print('Adding fits-header')
         add_fitsheader(filepath, fitstype, args.time)
+        # Give full read/write permission
+        os.system(f'chmod 755 {filepath}')
         # Compress file
         if args.zip:
             self.compress_data(filename, filepath)
