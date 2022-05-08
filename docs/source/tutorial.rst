@@ -50,6 +50,8 @@ Like the calibration mode of ``marvelsim.py``, the science mode is likewise very
    
    For more explicit examples on how to use either PyEchelle and Pyxel independently, have a look at the section :ref:`extra examples <extra examples>`.
 
+   
+.. _tutorial_rv_script:
 
 RV time series
 --------------

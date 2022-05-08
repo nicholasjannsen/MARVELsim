@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #PBS -N test
-#PBS -A lp_mesa_modeling
+#PBS -A <account>
 #PBS -l nodes=1:ppn=14:gpus=4:skylake
 #PBS -l partition=gpu
 #PBS -l pmem=2gb
@@ -10,12 +10,15 @@
 cd $PBS_O_WORKDIR
 
 # Export paths
+POETRY=$VSC_DATA/poetry/virtualenvs/marvelsim-3qcQCF7a-py3.8/bin/activate
+export POETRY
 SIMDIR=$VSC_DATA/marvelsim/marvelsim
 export SIMDIR
-OUTDIR=</path/to/output/>
+OUTDIR=$VSC_SCRATCH/marvelsim/output
 export OUTDIR
-POETRY=</path/to/poetry/virtualenvs/name>
 
-# Run calibration
-. $POETRY
+# Activate poetry shell
+source $POETRY
+
+# Run calibration mode
 python $SIMDIR/marvelsim.py --calibs --cuda --zip -o $OUTDIR
