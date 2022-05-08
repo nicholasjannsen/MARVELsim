@@ -113,7 +113,8 @@ class marvelsim(object):
             except:
                 errorcode('error', r'File do not exist: {args.data}')
             else:
-                self.texp = data[:,1] # TODO not used yet but integrate
+                # TODO not used yet but integrate
+                #self.texp = data[:,1]
                 args.rv   = data[:,2]
         elif args.rv:
             args.rv = [float(args.rv)]
