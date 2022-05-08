@@ -113,8 +113,8 @@ class marvelsim(object):
             except:
                 errorcode('error', r'File do not exist: {args.data}')
             else:
-                self.t  = data[:,1]
-                args.rv = data[:,2]
+                args.time = data[:,1]
+                args.rv   = data[:,2]
         elif args.rv:
             args.rv = [float(args.rv)]
         else:
@@ -386,20 +386,19 @@ if args.calibs:
     
 else:
 
+    # Run pyechelle alone with either CUDA or CPUs 
     if args.cuda or args.cpu:
-        # Run pyechelle alone with either CUDA or CPUs 
         m.run_pyechelle('science', 'SCIENCE')
-    
+
+    # Run pyxel alone with CPUs
     if args.dex:
-        # Run pyxel alone with CPUs
         pyxel_path = m.init_pyxel()
         m.run_pyxel_cpu('science', 'SCIENCE')
         os.rmdir(pyxel_path)
 
+    # Run pyechelle and Pyxel together
     else:
-        # Run pyechelle
         m.run_pyechelle('science', 'SCIENCE')
-        # Run pyxel
         pyxel_path = m.init_pyxel()
         m.run_pyxel('science', 'SCIENCE')
         os.rmdir(pyxel_path)
