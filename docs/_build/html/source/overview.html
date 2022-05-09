@@ -1,0 +1,237 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Overview &mdash; MARVELsim 0.1.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/fonts.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> MARVELsim
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">Overview</a><ul>
+<li><a class="reference internal" href="#more-information">More information</a></li>
+</ul>
+</li>
+</ul>
+</div>
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">MARVELsim</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+<div class="git-ribbon">
+  <a href="http://github.com/SwissDataScienceCenter" rel="me">Join us on GitHub</a>
+</div>
+
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Overview</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/source/overview.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <section id="overview">
+<h1>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h1>
+<p>This documentation is an easy guide how to sucessfully generate realistic MARVEL data products. The simulations are build from two popular main modules named <a class="reference external" href="https://stuermer.gitlab.io/pyechelle/index.html">PyEchelle</a> and <a class="reference external" href="https://esa.gitlab.io/pyxel/">Pyxel</a>. <a class="reference external" href="https://stuermer.gitlab.io/pyechelle/index.html">PyEchelle</a> is a Python based fast generic spectrum simulator that is used to generate each object or calibration spectrum, whereas <a class="reference external" href="https://esa.gitlab.io/pyxel/">Pyxel</a> is a general imaging detector simulation framework in Python that is used to efficiently add-on all necessary CCDs effects.</p>
+<a class="reference internal image-reference" href="../_images/marvel_spectrum.png"><img alt="../_images/marvel_spectrum.png" class="align-center" src="../_images/marvel_spectrum.png" style="width: 700px;" /></a>
+<p>The above figure (with curtesy of this <a class="reference external" href="https://arxiv.org/pdf/2012.08121.pdf">paper</a>) outlines the echelle spectrum of the MARVEL spectrograph for a potential object spectrum fed to fiber 2-5 and with Etalon fed to fiber 1.</p>
+<section id="more-information">
+<h2>More information<a class="headerlink" href="#more-information" title="Permalink to this headline">¶</a></h2>
+<dl class="simple">
+<dt>Full list of PyEchelle resources:</dt><dd><ul class="simple">
+<li><p><a class="reference external" href="https://stuermer.gitlab.io/pyechelle/index.html">PyEchelle’s documentation</a></p></li>
+<li><p><a class="reference external" href="https://gitlab.com/Stuermer/pyechelle">PyEchelle’s GitLab repository</a></p></li>
+<li><p><a class="reference external" href="https://iopscience.iop.org/article/10.1088/1538-3873/aaec2e/pdf">PyEchelle’s precusor’s publication (Echelle++)</a></p></li>
+</ul>
+</dd>
+<dt>Full list of Pyxel resources:</dt><dd><ul class="simple">
+<li><p><a class="reference external" href="https://esa.gitlab.io/pyxel/">Pyxel’s Documentation</a></p></li>
+<li><p><a class="reference external" href="https://gitlab.com/esa/pyxel">Pyxel’s Simulator GitLab repository</a></p></li>
+<li><p><a class="reference external" href="https://gitlab.com/esa/pyxel-data">Pyxel’s Data-example GitLab repository</a></p></li>
+<li><p><a class="reference external" href="https://gitter.im/pyxel-framework/community">Pyxel’s Gitter helpdesk community</a></p></li>
+</ul>
+</dd>
+</dl>
+</section>
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2022, KU Leuven.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

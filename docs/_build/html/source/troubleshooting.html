@@ -1,0 +1,231 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Troubleshooting &mdash; MARVELsim 0.1.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/fonts.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> MARVELsim
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">Troubleshooting</a><ul>
+<li><a class="reference internal" href="#pyxel-s-output-path">Pyxel’s output path</a></li>
+<li><a class="reference internal" href="#cluster-complications">Cluster complications</a></li>
+</ul>
+</li>
+</ul>
+</div>
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">MARVELsim</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+<div class="git-ribbon">
+  <a href="http://github.com/SwissDataScienceCenter" rel="me">Join us on GitHub</a>
+</div>
+
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Troubleshooting</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/source/troubleshooting.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <section id="troubleshooting">
+<h1>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permalink to this headline">¶</a></h1>
+<p>Please report bugs and issue via a GitHub issues through the <a class="reference external" href="https://github.com/nicholasjannsen/MARVELsim">MARVELsim repository</a>.</p>
+<section id="pyxel-s-output-path">
+<h2>Pyxel’s output path<a class="headerlink" href="#pyxel-s-output-path" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Note that while working in a python prompt/environment, Pyxel currently has a bug for overwriting the output file directory stated in the input YAML file. This means that the user needs to manually specify the output path within <code class="docutils literal notranslate"><span class="pre">MARVELsim/inputfiles/inputfile_marvel.yaml</span></code> (see <code class="docutils literal notranslate"><span class="pre">exposure:outputs:output_folder</span></code>). Otherwise the default <code class="docutils literal notranslate"><span class="pre">MARVELsim/output</span></code> folder will be used. If you try to save data</p></li>
+<li><p>The output directory is particular important to set correctly when running simulations on a cluster. Notice that <code class="docutils literal notranslate"><span class="pre">OUTDIR</span></code> within your job script and the <code class="docutils literal notranslate"><span class="pre">ouput_folder</span></code> within the input file <code class="docutils literal notranslate"><span class="pre">inputfiles/inputfile_marvelsim.yaml</span></code> need to match each othe. Furthermore both paths needs to absolute paths, hence, do not use symbolic links like <code class="docutils literal notranslate"><span class="pre">$DATA</span></code>.</p></li>
+</ul>
+</section>
+<section id="cluster-complications">
+<h2>Cluster complications<a class="headerlink" href="#cluster-complications" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>When saving files on a computing cluster you may experience that the symbolic link like <code class="docutils literal notranslate"><span class="pre">$DATA</span></code>, <code class="docutils literal notranslate"><span class="pre">$SCRATCH</span></code>, etc. are not globally accessable to the node-cores for which the simulations are taking place, even if these paths are being exported as part of your job scripts. E.g. on the VSC cluster the <strong>scratch</strong> file location (called <code class="docutils literal notranslate"><span class="pre">VSC_SCRATCH</span></code>) are not recognized on the compute nodes and hence here we need to use the abosule path <code class="docutils literal notranslate"><span class="pre">/scratch/path/to/marvelsim/output</span></code>.</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2022, KU Leuven.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

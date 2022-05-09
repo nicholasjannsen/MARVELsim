@@ -1,0 +1,272 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Extra examples &mdash; MARVELsim 0.1.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/fonts.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> MARVELsim
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">Extra examples</a><ul>
+<li><a class="reference internal" href="#pyechelle-examples">PyEchelle examples</a></li>
+<li><a class="reference internal" href="#pyxel-examples">Pyxel examples</a></li>
+</ul>
+</li>
+</ul>
+</div>
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">MARVELsim</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+<div class="git-ribbon">
+  <a href="http://github.com/SwissDataScienceCenter" rel="me">Join us on GitHub</a>
+</div>
+
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Extra examples</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/source/extra.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <section id="extra-examples">
+<span id="id1"></span><h1>Extra examples<a class="headerlink" href="#extra-examples" title="Permalink to this headline">¶</a></h1>
+<p>This section serves as an extra overview of the functionality of PyEchelle and Pyxel, respectively.</p>
+<section id="pyechelle-examples">
+<h2>PyEchelle examples<a class="headerlink" href="#pyechelle-examples" title="Permalink to this headline">¶</a></h2>
+<p>The following examples shows the ease of using PyEchelle from bash. Notice that if you run <code class="docutils literal notranslate"><span class="pre">pyechelle</span></code> from a folder different that the base of MARVELsim, a new <code class="docutils literal notranslate"><span class="pre">model</span></code> folder will created in order to download the spectrograph model. Here we show a few example while using model of the MARVEL spectrograph and we here include a bias level of 10,000 e- including a root-mean-square read noise of 25 e- (which are equivalent ot 2000 ADU and 5 ADU, respectively, with a CCD gain of 5 e-/ADU):</p>
+<p><strong>Bias images:</strong></p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pyechelle --fiber <span class="m">1</span>-5 -s MARVEL_2021_11_22 --sources Constant -t <span class="m">0</span>.0 --bias <span class="m">10000</span> --read_noise <span class="m">25</span> -o marvel_bias.fits
+</pre></div>
+</div>
+<p><strong>Spectral flats:</strong></p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pyechelle --fiber <span class="m">1</span>-5 -s MARVEL_2021_11_22 --sources Constant Constant Constant Constant -t <span class="m">5</span> --bias <span class="m">10000</span> --read_noise <span class="m">25</span> -o marvel_flat.fits
+</pre></div>
+</div>
+<p><strong>ThAr or ThNe Arc:</strong></p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pyechelle --fiber <span class="m">1</span>-5 -s MARVEL_2021_11_22 --sources ThAr ThAr ThAr ThAr -t <span class="m">5</span> --bias <span class="m">10000</span> --read_noise <span class="m">25</span> -o marvel_thar.fits
+pyechelle --fiber <span class="m">1</span>-5 -s MARVEL_2021_11_22 --sources ThNe ThNe ThNe ThNe -t <span class="m">5</span> --bias <span class="m">10000</span> --read_noise <span class="m">25</span> -o marvel_thne.fits
+</pre></div>
+</div>
+<p><strong>Etalon spectra:</strong></p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pyechelle --fiber <span class="m">1</span>-5 -s MARVEL_2021_11_22 --sources Etalon --etalon_d<span class="o">=</span><span class="m">6</span> -t <span class="m">10</span> --bias <span class="m">10000</span> --read_noise <span class="m">25</span> -o marvel_flat.fits
+</pre></div>
+</div>
+<p><strong>Stellar spectra:</strong></p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pyechelle --fiber <span class="m">1</span>-5 -s MARVEL_2021_11_22 --sources Phoenix Phoenix Phoenix Phoenix Etalon --etalon_d<span class="o">=</span><span class="m">6</span> --d_primary <span class="m">0</span>.8 --d_secondary <span class="m">0</span>.1 --phoenix_t_eff <span class="m">5800</span> --phoenix_log_g <span class="m">4</span>.5 --phoenix_z <span class="m">0</span>.0 --phoenix_alpha <span class="m">0</span>.0 --phoenix_magnitude <span class="m">10</span>.0 -t <span class="m">1200</span> -o marvel_science.fits
+</pre></div>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Note that the spectral flat simulates a large amount of photons and thus is the most time consuming. We strongly suggest to use a supported NVIDIA driver for CUDA or split the simulations on several CPUs for parallel computing. Please have a look at the <span class="xref std std-ref">Performance section</span>.</p>
+</div>
+</section>
+<section id="pyxel-examples">
+<h2>Pyxel examples<a class="headerlink" href="#pyxel-examples" title="Permalink to this headline">¶</a></h2>
+<p>Pyxel has a quite ellaborate documentation page, but to make it easier to test what happens if including different modules and CCD effect to the MARVEL spectra, the folder called <code class="docutils literal notranslate"><span class="pre">test_pyxel</span></code> serves as a small testbed. Wihtin there is a very simply Python script called <code class="docutils literal notranslate"><span class="pre">test.py</span></code> which includes the following code:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/env python3</span>
+
+<span class="kn">import</span> <span class="nn">pyxel</span>
+
+<span class="c1"># Load specific inputfile for MARVEL</span>
+<span class="n">config</span> <span class="o">=</span> <span class="n">pyxel</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">&quot;test.yaml&quot;</span><span class="p">)</span>
+
+<span class="c1"># Setup configurations</span>
+<span class="n">exposure</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">exposure</span>        <span class="c1"># class Observation</span>
+<span class="n">detector</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">ccd_detector</span>    <span class="c1"># class CCD</span>
+<span class="n">pipeline</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">pipeline</span>        <span class="c1"># class DetectionPipeline</span>
+
+<span class="c1"># Run pyxel in exposure mode</span>
+<span class="n">pipeline</span><span class="o">.</span><span class="n">charge_generation</span><span class="o">.</span><span class="n">load_charge</span><span class="o">.</span><span class="n">arguments</span><span class="o">.</span><span class="n">filename</span>   <span class="o">=</span> <span class="s1">&#39;science.fits&#39;</span>
+<span class="n">pipeline</span><span class="o">.</span><span class="n">charge_generation</span><span class="o">.</span><span class="n">load_charge</span><span class="o">.</span><span class="n">arguments</span><span class="o">.</span><span class="n">time_scale</span> <span class="o">=</span> <span class="mi">5</span>
+<span class="n">pipeline</span><span class="o">.</span><span class="n">charge_generation</span><span class="o">.</span><span class="n">tars</span><span class="o">.</span><span class="n">arguments</span><span class="o">.</span><span class="n">seed</span>              <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mf">1e9</span><span class="p">)</span>
+
+<span class="n">results</span> <span class="o">=</span> <span class="n">pyxel</span><span class="o">.</span><span class="n">exposure_mode</span><span class="p">(</span><span class="n">exposure</span><span class="o">=</span><span class="n">exposure</span><span class="p">,</span> <span class="n">detector</span><span class="o">=</span><span class="n">detector</span><span class="p">,</span> <span class="n">pipeline</span><span class="o">=</span><span class="n">pipeline</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Seen above scirpt simply initializes Pyxel and reads the <code class="docutils literal notranslate"><span class="pre">test.yaml</span></code> inputfile configuration file. We here here show an example of running Pyxel in exposure mode and changing a few parameters, but this can also easily be done directly from within the configuration yaml file. To lower the computation time, running this test script will return a Pyxel fits images of 300x300 pixels.</p>
+</section>
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2022, KU Leuven.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
