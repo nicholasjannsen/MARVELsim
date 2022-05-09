@@ -14,12 +14,12 @@ POETRY=$VSC_DATA/poetry/virtualenvs/marvelsim-3qcQCF7a-py3.8/bin/activate
 export POETRY
 SIMDIR=$VSC_DATA/marvelsim/marvelsim
 export SIMDIR
-OUTDIR=$VSC_SCRATCH/marvelsim/output
+OUTDIR=/scratch/leuven/341/vsc34166/marvelsim/output
 export OUTDIR
 
 # Activate poetry shell
 source $POETRY
 
 # Run star spectrum
-python $SIMDIR/marvelsim.py --science --time 900 --mag 10.0 --teff 5800 --logg 4.5 --z 0.0 --alpha 0.0 --data data.txt --cuda -o $OUTDIR
+python $SIMDIR/marvelsim.py --science --time 300 --mag 10.0 --teff 5800 --logg 4.5 --z 0.0 --alpha 0.0 --data rv_data.txt --cuda --zip -o $OUTDIR
 

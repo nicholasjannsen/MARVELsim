@@ -268,6 +268,7 @@ class marvelsim(object):
             # pipeline.charge_generation.dark_current.arguments.dark_rate *= float(exptime_bais)
             # pyxel.exposure_mode(exposure=exposure, detector=detector, pipeline=pipeline)
             if imgtype == 'bias':
+                print('Adding fits-header')
                 add_fitsheader(filepath, fitstype, 0)
                 # Compress file
                 if args.zip:
@@ -295,7 +296,7 @@ class marvelsim(object):
             os.remove(filepath)
             os.system(f'mv {self.pyxel_file} {filepath}')
             # Add fits header
-            print('Adding fits-header')         
+            print('Adding fits-header')
             add_fitsheader(filepath, fitstype, args.time)
             # Give full read/write permission
             os.system(f'chmod 755 {filepath}')

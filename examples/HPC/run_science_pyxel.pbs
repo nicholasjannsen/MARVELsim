@@ -8,15 +8,16 @@
 
 cd $PBS_O_WORKDIR
 
-PYTHONPATH=$VSC_DATA/MARVELsim/marvelsim/bin/python
-export PYTHONPATH
-SIMDIR=$VSC_DATA/MARVELsim
+# Export paths
+POETRY=$VSC_DATA/poetry/virtualenvs/marvelsim-3qcQCF7a-py3.8/bin/activate
+export POETRY
+SIMDIR=$VSC_DATA/marvelsim/marvelsim
 export SIMDIR
-OUTDIR=/scratch/leuven/341/vsc34166/marvelsim/sim0_200kms
+OUTDIR=/scratch/leuven/341/vsc34166/marvelsim/output
+export OUTDIR
 
-# Make sure to activate environment 
-source marvelsim/bin/activate
+# Activate poetry shell
+source $POETRY
 
 # Run star spectrum
-cd $SIMDIR
-python simulator-marvel.py --time 900 --dex $index --zip -o $OUTDIR
+python simulator-marvel.py --time 300 --dex $index --zip -o $OUTDIR

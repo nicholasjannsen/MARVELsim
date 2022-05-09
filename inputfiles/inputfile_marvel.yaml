@@ -23,7 +23,7 @@ exposure:
 
   readout:
     non_destructive:  true
-    times: '[1]'
+    times: '[2.18]'
 
   outputs:
     output_folder: "output"
@@ -82,7 +82,7 @@ pipeline:
         particles_per_second: 100  # [p/s]
         incident_angles:
         starting_position:
-        spectrum_file: "/inputfiles/proton_L2_solarMax_11mm_Shielding.txt"
+        spectrum_file: "inputfiles/proton_L2_solarMax_11mm_Shielding.txt"
         seed: 4321
 
   # photon -> charge
@@ -128,7 +128,7 @@ pipeline:
   charge_transfer:
     - name: cdm
       func: pyxel.models.charge_transfer.cdm
-      enabled: true
+      enabled: false
       arguments:
         direction: parallel
         trap_release_times: [3.e-2]
