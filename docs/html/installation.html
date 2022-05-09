@@ -96,9 +96,8 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Installation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#downlod-from-source">1. Downlod from source</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#create-conda-environment">2. Create Conda environment</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#install-with-poetry">3. Install with Poetry</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#install-with-poetry-on-hpc">3. Install with Poetry on HPC</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#install-with-a-python3-venv">Install with a python3-venv</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#local-poetry-installation">3. Local (Poetry) installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#cluster-poetry-installation">3. Cluster (Poetry) installation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#extra-tools">Extra tools</a></li>
 </ul>
 </li>
@@ -183,7 +182,7 @@
 <p>In this tutorial we cover how to setup an Python environment that allows you quickly get started to run simulations of MARVEL spectra.</p>
 <div class="admonition important">
 <p class="admonition-title">Important</p>
-<p>At the moment this software is only supported for Python 3.8.</p>
+<p>We recommend to follow the installation instructions below and using <a class="reference external" href="https://python-poetry.org/">Poetry</a> to install MARVELsim. While using Python 3.8 and Poetry you will get a direct freeze of the software which successfully will build across any platform.</p>
 </div>
 <section id="downlod-from-source">
 <h2>1. Downlod from source<a class="headerlink" href="#downlod-from-source" title="Permalink to this headline">¶</a></h2>
@@ -194,8 +193,8 @@
 </section>
 <section id="create-conda-environment">
 <h2>2. Create Conda environment<a class="headerlink" href="#create-conda-environment" title="Permalink to this headline">¶</a></h2>
-<p>We strongly recommend to install Poetry through a Anaconda environment. This is especially handy when installing on a computing cluster since these typically only have limited versions of Python installed by default. While using Anaconda all Python versions can be installed and thus an exact freeze of the poetry installation can be made. Thus first install Anaconda or miniconda and the create a new virtuel environment called <code class="docutils literal notranslate"><span class="pre">marvelsim</span></code>:</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>conda create -n marvelsim <span class="nv">python</span><span class="o">=</span><span class="m">3</span>.8 numpy scipy matplotlib
+<p>We strongly recommend to install Poetry through a <a class="reference external" href="https://docs.conda.io/en/latest/">Conda</a> environment. This is especially handy when installing on a computing cluster since these typically only have limited versions of Python installed by default. While using Conda all Python versions can be installed and thus an exact freeze of the poetry installation can be made. Thus first install Conda (or <em>Miniconda</em>) and the create a new environment called <code class="docutils literal notranslate"><span class="pre">marvelsim</span></code>:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>conda create -n marvelsim <span class="nv">python</span><span class="o">=</span><span class="m">3</span>.8
 </pre></div>
 </div>
 <p>Now activate your new conda environment:</p>
@@ -203,62 +202,42 @@
 </pre></div>
 </div>
 </section>
-<section id="install-with-poetry">
-<h2>3. Install with Poetry<a class="headerlink" href="#install-with-poetry" title="Permalink to this headline">¶</a></h2>
-<p>Since the most commen use case for MARVELsim is to run with HPC, we use <a class="reference external" href="https://python-poetry.org/">Poetry</a> to manage and install out Python libraries. First <a class="reference external" href="https://python-poetry.org/docs/master/">install Poetry</a> from the <strong>master</strong> branch</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>curl -sSL https://install.python-poetry.org <span class="p">|</span> python -
+<section id="local-poetry-installation">
+<h2>3. Local (Poetry) installation<a class="headerlink" href="#local-poetry-installation" title="Permalink to this headline">¶</a></h2>
+<p>Since the most commen use case for MARVELsim is to run with HPC, it is recommended to use <a class="reference external" href="https://python-poetry.org/">Poetry</a> to manage and install Python libraries. First <a class="reference external" href="https://python-poetry.org/docs/master/">install Poetry</a> from the <strong>master</strong> branch</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pip install --user poetry
 </pre></div>
 </div>
-<p>Verify that poetry was installed successfully by typing</p>
-<p><code class="docutils literal notranslate"><span class="pre">poetry</span> <span class="pre">--version</span></code></p>
-<p>We commanded to include the following path to your <code class="docutils literal notranslate"><span class="pre">~/.bashrc</span></code> file:</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span> <span class="nv">PATH</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$HOME</span><span class="s2">/.poetry/bin:</span><span class="nv">$PATH</span><span class="s2">&quot;</span>
+<p>Verify that poetry was installed successfully by typing <code class="docutils literal notranslate"><span class="pre">poetry</span> <span class="pre">--version</span></code>. Next include the following path to your <code class="docutils literal notranslate"><span class="pre">~/.bashrc</span></code> file:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="nv">POETRY</span><span class="o">=</span><span class="nv">$HOME</span>/.poetry/bin
+<span class="nb">export</span> POETRY
 </pre></div>
 </div>
-<p>Deactivate your conda environment and install with poetry:</p>
+<p>Deactivate your conda environment (or any other active Python environment) and install with your new poetry environment:</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>conda deactivate
 poetry install
 </pre></div>
 </div>
 </section>
-<section id="install-with-poetry-on-hpc">
-<h2>3. Install with Poetry on HPC<a class="headerlink" href="#install-with-poetry-on-hpc" title="Permalink to this headline">¶</a></h2>
-<p>Here we show how to install Poetry on the VSC. When installing on a computing cluster you should typically want to avoid installing software directly to your <code class="docutils literal notranslate"><span class="pre">$HOME</span></code> space since this has a very limited amount of available space. Must clusters recommend to install software in your <code class="docutils literal notranslate"><span class="pre">$DATA</span></code> directory. Hence:</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>curl -sSL https://install.python-poetry.org <span class="p">|</span> <span class="nv">POETRY_HOME</span><span class="o">=</span><span class="nv">$VSC_DATA</span>/poetry python -
+<section id="cluster-poetry-installation">
+<h2>3. Cluster (Poetry) installation<a class="headerlink" href="#cluster-poetry-installation" title="Permalink to this headline">¶</a></h2>
+<p>Here we show how to install Poetry on the VSC, however, the general workflow can most likely be followed for installing MARVELsim on any cluster. On a computing cluster you typically want to avoid installing software directly to your <code class="docutils literal notranslate"><span class="pre">$HOME</span></code> workspace since this has a very limited amount of available storage memory. Thus, for clusters we recommend to install software in your <code class="docutils literal notranslate"><span class="pre">$DATA</span></code> directory. Hence, we need to tell where to install Poetry:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>conda activate marvelsim
+pip install --user poetry <span class="p">|</span> <span class="nv">POETRY_HOME</span><span class="o">=</span><span class="nv">$VSC_DATA</span>/poetry python -
 </pre></div>
 </div>
-<p>Verify that poetry was installed successfully by typing <code class="docutils literal notranslate"><span class="pre">poetry</span> <span class="pre">--version</span></code>. In order for Poetry to available from any compute node you need to include the following path to your <code class="docutils literal notranslate"><span class="pre">~/.bashrc</span></code> file:</p>
+<p>Verify that poetry was installed successfully by typing <code class="docutils literal notranslate"><span class="pre">poetry</span> <span class="pre">--version</span></code> and verify that installation location with <code class="docutils literal notranslate"><span class="pre">which</span> <span class="pre">poetry</span></code>. Next change the installation location of the virtuel poetry eironment to:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>poetry config virtualenvs.path <span class="nv">$VSC_DATA</span>/poetry/virtualenvs
+</pre></div>
+</div>
+<p>In order for Poetry to be available from any compute node, you need to include the following path to your <code class="docutils literal notranslate"><span class="pre">~/.bashrc</span></code> file:</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="nv">POETRY</span><span class="o">=</span><span class="nv">$VSC_DATA</span>/poetry/bin
 <span class="nb">export</span> POETRY
 </pre></div>
 </div>
-<p>Next change the installation location of the virtuel poetry environment to:</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>poetry config virtualenvs.path <span class="nv">$VSC_DATA</span>/poetry/virtualenvs
-</pre></div>
-</div>
-<p>Finally deactiavte your conda environment and install MARVELsim from the base directory using:</p>
+<p>Finally deactiavte your Conda environment and install MARVELsim from the base directory using:</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>conda deactivate
 poetry install
-</pre></div>
-</div>
-<div class="admonition warning">
-<p class="admonition-title">Warning</p>
-<p>It is important that the conda environment is deactivated before running <code class="docutils literal notranslate"><span class="pre">poetry</span> <span class="pre">install</span></code>. If not done all packages will be installed within your conda <code class="docutils literal notranslate"><span class="pre">bin</span></code> folder and poetry cannot find your packges when using either <code class="docutils literal notranslate"><span class="pre">poetry</span> <span class="pre">shell</span></code> to spawn a shell environment or <code class="docutils literal notranslate"><span class="pre">poetry</span> <span class="pre">run</span> <span class="pre">python</span> <span class="pre">marvelsim.py</span></code> for running a script directly.</p>
-</div>
-</section>
-<section id="install-with-a-python3-venv">
-<h2>Install with a python3-venv<a class="headerlink" href="#install-with-a-python3-venv" title="Permalink to this headline">¶</a></h2>
-<p>Another method is use a control all dependencies with a python3-venv environment. First install the python3-venv package</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>sudo apt install python3-venv
-</pre></div>
-</div>
-<p>Next create a virtual environment called <code class="docutils literal notranslate"><span class="pre">marvelsim</span></code> within the base of the cloned repositry</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>python -m venv marvelsim
-</pre></div>
-</div>
-<p>To activate and deactivate the environment simply use</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="nb">source</span> marvelsim/bin/activate
-deactivate
 </pre></div>
 </div>
 </section>
