@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "MARVELsim"
+version = "0.1.0"
+description = "Spectrum simulator for the MARVEL project."
+authors = ["Nicholas Jannsen <nicholas.jannsen@kuleuven.be>"]
+
+[tool.poetry.dependencies]
+python = ">=3.8,<3.10"
+pyechelle = "^0.2.3"
+pyxel-sim = "^1.0.0"
+colorama = "^0.4.4"
+celerite = "^0.4.2"
+radvel = "^1.4.9"
+renku-sphinx-theme = "^0.2.2"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
