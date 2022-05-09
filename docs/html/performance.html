@@ -4,7 +4,8 @@
 <html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8" />
-  
+  <meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
   <title>Performance &mdash; MARVELsim 0.1.0 documentation</title>
@@ -94,7 +95,13 @@
 <li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Performance</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Performance</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#job-script-for-calibration-mode">Job script for calibration mode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#job-script-for-science-mode">Job script for science mode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#step-by-step-guide">Step-by-step guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#vsc-information">VSC information</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="extra.html">Extra examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="troubleshooting.html">Troubleshooting</a></li>
 <li class="toctree-l1"><a class="reference internal" href="acknowledgements.html">Acknowledgements</a></li>
@@ -169,10 +176,13 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="performance">
+  <section id="performance">
 <span id="id1"></span><h1>Performance<a class="headerlink" href="#performance" title="Permalink to this headline">¶</a></h1>
-<p>In order to speed up the simulations in order obtain a set of calibrated data or a time series of stellar spectra with RV variations, we here demonstrate how to run MARVELsim on a High Performace Computing (HPC) facility. We note that MARVELsim is specifically designed to run with CUDA NVIDIA hardware which typically is available for GPU nodes on most computing clusters. Since PyEchelle are the bottleneck for running large simulations using CUDA or running the simulations on multiple CPUs has a dramatic decrease of the computational time. We specifically refer to <a class="reference external" href="https://stuermer.gitlab.io/pyechelle/benchmark.html">PyEchelle’s documentation on performance</a> for more information.</p>
-<p>We will use the Vlaams Supercomputing Centre (VSC) as example on how to create a job script that runs with GPUs. We likewise provide two job script examples in the <code class="docutils literal notranslate"><span class="pre">MARVELsim/hpc</span></code> folder for your convenience. The first (<code class="docutils literal notranslate"><span class="pre">run_calibs.pbs</span></code>) shows a typical job script for running a full set of calibrated data:</p>
+<p>In order to speed up the simulations we here demonstrate how to run MARVELsim on a High Performace Computing (HPC) facility. We note that MARVELsim is specifically designed to run with CUDA NVIDIA hardware which typically is available for GPU nodes on most computing clusters. Since PyEchelle is the natural bottleneck w.r.t. computation time, running large simulations using CUDA, or running the simulation on multiple CPUs, decrease the computational time dramatically. We specifically refer to <a class="reference external" href="https://stuermer.gitlab.io/pyechelle/benchmark.html">PyEchelle’s documentation on performance</a> for more information.</p>
+<p>(and standard CPU parallelisation)</p>
+<section id="job-script-for-calibration-mode">
+<h2>Job script for calibration mode<a class="headerlink" href="#job-script-for-calibration-mode" title="Permalink to this headline">¶</a></h2>
+<p>We will use the Vlaams Supercomputing Centre (VSC) as example on how to create a job script that runs with GPUs. We likewise provide two job script examples in the <code class="docutils literal notranslate"><span class="pre">MARVELsim/examples/HPC</span></code> folder for your convenience. The first (<code class="docutils literal notranslate"><span class="pre">run_calibs.pbs</span></code>) shows a typical job script for running a full set of calibrated data:</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/bin/bash</span>
 
 <span class="c1">#PBS -N output</span>
@@ -189,15 +199,15 @@
 <span class="nv">SIMDIR</span><span class="o">=</span><span class="nv">$VSC_DATA</span>/MARVELsim
 <span class="nb">export</span> SIMDIR
 
-<span class="c1"># Activate environment</span>
-<span class="nb">source</span> marvelsim/bin/activate
-
 <span class="c1"># Run MARVELsim</span>
-<span class="nb">cd</span> <span class="nv">$SIMDIR</span>
-python simulator-marvel.py --calibs --cuda --zip -o <span class="nv">$SIMDIR</span>/output
+. <span class="nv">$POETRY</span>
+python marvelsim.py --calibs --cuda --zip -o <span class="nv">$SIMDIR</span>/output
 </pre></div>
 </div>
 <p>Illustrated here we request a single node with 4 GPUs using each using 9 CPU claves (hence 36 in total) to execute the job. We request 2 GB of memory RAM to be on the safe side since a single 10,560 x 10,560 pixel full frame image occupy 851 Mb. Notice that it is possible to compress each image on the fly by enabling the flag <code class="docutils literal notranslate"><span class="pre">zip</span></code> as done in this example. Typical deflation rates per image are around 80%, hence, it is highly recommended to invoke this flag for faster data transfer after end job. For the job script show above the total run time (walltime) was 2 hours and 40 minutes.</p>
+</section>
+<section id="job-script-for-science-mode">
+<h2>Job script for science mode<a class="headerlink" href="#job-script-for-science-mode" title="Permalink to this headline">¶</a></h2>
 <p>The following example (<code class="docutils literal notranslate"><span class="pre">run_science.pbs</span></code>) shows a job script for running 300 stellar spectra using a generated RV time series called <code class="docutils literal notranslate"><span class="pre">rv_data.txt</span></code>:</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/bin/bash</span>
 
@@ -215,16 +225,38 @@ python simulator-marvel.py --calibs --cuda --zip -o <span class="nv">$SIMDIR</sp
 <span class="nv">SIMDIR</span><span class="o">=</span><span class="nv">$VSC_DATA</span>/MARVELsim
 <span class="nb">export</span> SIMDIR
 
-<span class="c1"># Activate environment</span>
-<span class="nb">source</span> marvelsim/bin/activate
-
 <span class="c1"># Run MARVELsim</span>
-<span class="nb">cd</span> <span class="nv">$SIMDIR</span>
-python simulator-marvel.py --time <span class="m">900</span> --mag <span class="m">10</span>.0 --teff <span class="m">5800</span> --logg <span class="m">4</span>.5 --z <span class="m">0</span>.0 --alpha <span class="m">0</span>.0 --data rv_data.txt --cuda --zip -o <span class="nv">$SIMDIR</span>/output
+. <span class="nv">$POETRY</span>
+python marvelsim.py --time <span class="m">900</span> --mag <span class="m">10</span>.0 --teff <span class="m">5800</span> --logg <span class="m">4</span>.5 --z <span class="m">0</span>.0 --alpha <span class="m">0</span>.0 --data rv_data.txt --cuda --zip -o <span class="nv">$SIMDIR</span>/output
 </pre></div>
 </div>
 <p>Compared to the previous job script we here use the same computational resources, however, with the exception of increasing the walltime. Notice that adding more nodes will not speed up the computations, however, some cluster do provide more GPUs which will decrease the run time. We recommend to debug and test the computational resources needed for your jobs adding <code class="docutils literal notranslate"><span class="pre">#PBS</span> <span class="pre">-l</span> <span class="pre">qos=debugging</span></code> to the PSB details in the scripts shown above.</p>
-</div>
+</section>
+<section id="step-by-step-guide">
+<h2>Step-by-step guide<a class="headerlink" href="#step-by-step-guide" title="Permalink to this headline">¶</a></h2>
+<p>In order to run a simulation on the HPC the following needs to be secured:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Use the workflow script</p></li>
+<li><p>Change the name of the data.txt file used to run with worker</p></li>
+<li><p>Change the information within <code class="docutils literal notranslate"><span class="pre">run_science_pyechelle.pbs</span></code> and <code class="docutils literal notranslate"><span class="pre">run_science_pyxel.pbs</span></code></p></li>
+<li><p>Change the <code class="docutils literal notranslate"><span class="pre">ouput_folder</span></code> within the file <code class="docutils literal notranslate"><span class="pre">inputfiles/inputfile_marvelsim.yaml</span></code></p></li>
+<li><p>If saving the files to VSC scratch (as recommended) never use <code class="docutils literal notranslate"><span class="pre">$VSC_SCRATCH</span></code> but use e.g. <code class="docutils literal notranslate"><span class="pre">/scratch/leuven/341/vsc34166/marvelsim/sim0</span></code></p></li>
+</ul>
+</div></blockquote>
+</section>
+<section id="vsc-information">
+<h2>VSC information<a class="headerlink" href="#vsc-information" title="Permalink to this headline">¶</a></h2>
+<p>We note that the aboved resources w.r.t. skylake GPU nodes are the maximum and, hence, the computation times stated above using the VSC are at their minimum.</p>
+<dl class="simple">
+<dt>To get started using the VSC infrastrutrue we recommend reading:</dt><dd><ul class="simple">
+<li><p><a class="reference external" href="https://vlaams-supercomputing-centrum-vscdocumentation.readthedocs-hosted.com/en/latest/leuven/genius_quick_start.html#submit-to-genius-gpu-node">Genius quickstart guide</a></p></li>
+<li><p><a class="reference external" href="https://vlaams-supercomputing-centrum-vscdocumentation.readthedocs-hosted.com/en/latest/leuven/tier2_hardware/genius_hardware.html">Genius hardware</a></p></li>
+</ul>
+</dd>
+</dl>
+</section>
+</section>
 
 
            </div>
