@@ -29,6 +29,11 @@ from utilities import errorcode, add_fitsheader
 from pathlib import Path
 from zipfile import ZipFile
 
+# PyEchelle
+from pyechelle.simulator import Simulator
+from pyechelle.sources import Constant
+from pyechelle.spectrograph import ZEMAX
+
 # Turn off warnings
 import warnings
 warnings.filterwarnings("ignore")
@@ -95,8 +100,10 @@ class marvelsim(object):
         """
         Module to initialise PyEchelle
         """
+
+        
         # Snippet command for pyechelle
-        self.run_marvel = f'pyechelle -s MARVEL_2021_11_22 --fiber 1-5 --bias {self.bias_level} --read_noise {self.read_noise}' 
+        self.run_marvel = f'pyechelle -s MARVEL_2021_11_22 --fiber 1-5 --order 30-98 --bias {self.bias_level} --read_noise {self.read_noise}' 
 
         # Run with normal CPU cores
         if args.cpu:
@@ -220,7 +227,7 @@ class marvelsim(object):
     def cmd_pyechelle(self, imgtype, filepath, i):
 
         if imgtype == 'bias':
-            cmd = (f'pyechelle -s MARVEL_2021_11_22 --sources Constant -t 0' +
+            cmd = (f'pyechelle -s MARVEL_2021_11_22 --order 30-98 --sources Constant -t 0' +
                    f' --bias {self.bias_level} --read_noise {self.read_noise} -o {filepath}')
         if imgtype == 'flat':
             cmd = (self.run_marvel +

@@ -1575,7 +1575,7 @@ tests = ["flake8", "pytest"]
 
 [[package]]
 name = "pyechelle"
-version = "0.2.3"
+version = "0.3.1"
 description = "A fast generic spectrum simulator"
 category = "main"
 optional = false
@@ -1586,7 +1586,7 @@ astropy = ">=5.0,<6.0"
 astroquery = ">=0.4.4,<0.5.0"
 h5py = ">=3.1.0,<4.0.0"
 joblib = ">=1.1.0,<2.0.0"
-matplotlib = ">=3.3.2,<4.0.0"
+matplotlib = ">=3.5.1,<4.0.0"
 numba = ">=0.55.0,<0.56.0"
 numpy = "<=1.21"
 pandas = ">=1.3.4,<2.0.0"
@@ -2375,7 +2375,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<3.10"
-content-hash = "7be78d319576bc796474e3b65cf65244c86426bf75ef96fce9df64827fb84af2"
+content-hash = "5799f6e50ad630f86f5e5653daabe8cf6c422625f67b5cb3ce15081c6f9b5b6f"
 
 [metadata.files]
 aiohttp = [
@@ -3558,8 +3558,8 @@ pyct = [
     {file = "pyct-0.4.8.tar.gz", hash = "sha256:23d7525b5a1567535c093aea4b9c33809415aa5f018dd77f6eb738b1226df6f7"},
 ]
 pyechelle = [
-    {file = "pyechelle-0.2.3-py3-none-any.whl", hash = "sha256:2498c281ce5b799a5efc5848585774ec133d29bdde5eb9e90decf52c8d276007"},
-    {file = "pyechelle-0.2.3.tar.gz", hash = "sha256:6ba2d9746aabd0ae483179f98a694a3c644f0c38c6fa67e1c81aacf6ce3cf613"},
+    {file = "pyechelle-0.3.1-py3-none-any.whl", hash = "sha256:79e05b503cae76f4210271aa9430f7b96d07442ef38016657b018320282597ff"},
+    {file = "pyechelle-0.3.1.tar.gz", hash = "sha256:5631d9114eb5c3f1b4785490560f84a82ac8677ca961f3809e741926ce3b71e3"},
 ]
 pyerfa = [
     {file = "pyerfa-2.0.0.1-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:278832de7803f2fb0ef4b14263200f98dfdb3eaa78dc63835d93796fd8fc42c6"},
