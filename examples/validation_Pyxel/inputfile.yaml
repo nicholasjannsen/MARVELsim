@@ -22,9 +22,8 @@ exposure:
 #--------------------------------------------------------------
 
   readout:
-    non_destructive:  true
+    non_destructive: true
     times: '[1]'
-
 
   outputs:
     output_folder: "output"
@@ -99,8 +98,8 @@ pipeline:
         align: "center"
         time_scale: 300  # [s] NOTE will be overwritten
 
-    - name: dark_current
-      func: pyxel.models.charge_generation.dark_current
+    - name: simple_dark_current
+      func: pyxel.models.charge_generation.simple_dark_current
       enabled: true
       arguments:
         dark_rate: 0.1   # [e/pix/s] NOTE will be overwritten
