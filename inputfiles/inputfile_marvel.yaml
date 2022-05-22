@@ -76,10 +76,10 @@ pipeline:
       func: pyxel.models.charge_generation.load_charge
       enabled: true
       arguments:
-        filename: science_0001.fits  # NOTE will be overwritten
+        filename: filename           # NOTE will be overwritten
         position: [0,0]
         align: "center"
-        time_scale: 1            # NOTE will be overwritten
+        time_scale: 1                # NOTE will be overwritten
 
     - name: dark_current
       func: pyxel.models.charge_generation.dark_current

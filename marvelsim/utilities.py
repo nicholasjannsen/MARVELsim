@@ -35,7 +35,7 @@ def add_fitsheader(filename, obsmode, exptime, readmode, bias, gain, speed):
     # Get software versions
     marvelsim_version = pkg_resources.get_distribution('MARVELsim').version
     pyechelle_version = pkg_resources.get_distribution('pyechelle').version
-    # Add headers
+    # Add headers (pyxel version is added automatically)
     hdr.append(('PYECHE_V', f'{pyechelle_version}', 'PyEchelle version'), end=True)
     hdr.append(('MARVEL_V', f'{marvelsim_version}', 'MARVELsim version'), end=True)
     hdr.append(('ORIGIN', 'Instituut voor Sterrenkunde, KU Leuven', 'Institution'), end=True)

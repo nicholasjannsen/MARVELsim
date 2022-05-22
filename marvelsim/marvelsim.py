@@ -10,11 +10,6 @@ the Pyxel code that adds various important CCD effects. Seen above this
 software can be used to simulate standard calibrated spectra and stellar
 spectra including a RV signal. Used in combination with High Performance
 Computing (HPC) this makes it easy to simulate a time series of spectra.
-
-User examples:
-  $ python marvelsim.py --calibs -o </path/to/outdir>
-  $ python marvelsim.py --time 300 --mag 10.0 --teff 5800 --logg 4.5 --z 0.0 --alpha 0.0 --rv 5.5 -o </path/to/outdir>
-  $ python marvelsim.py --time 300 --mag 10.0 --teff 5800 --logg 4.5 --z 0.0 --alpha 0.0 --data <rv_data.txt> --cuda -o </path/to/outdir> 
 """
 
 import os
@@ -75,7 +70,7 @@ class marvelsim(object):
         # Bias offset and bias level
         self.bias       = 1000                        # [ADU]
         self.bias_level = int(self.bias * self.gain)  # [e-]
-        
+
         # Read noise RMS [e-]
         if   self.readmode == 'fast':    self.read_noise = 2.5  # Nominal fast-readout
         elif self.readmode == 'fastmax': self.read_noise = 4.0  # Maximum fast-readout
