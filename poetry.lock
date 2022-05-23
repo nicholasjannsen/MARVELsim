@@ -1734,19 +1734,19 @@ python-versions = ">=3.6"
 
 [[package]]
 name = "pyxel-sim"
-version = "1.0.0"
+version = "1.1.1"
 description = "Pyxel detector simulation framework."
 category = "main"
 optional = false
 python-versions = ">=3.7"
 
 [package.dependencies]
-astropy = "<=5.0"
+astropy = "*"
 bokeh = "*"
 click = "*"
 dask = "*"
 distributed = "*"
-fsspec = {version = "*", extras = ["http"]}
+fsspec = {version = ">=2021", extras = ["http"]}
 h5py = "*"
 holoviews = "*"
 ipywidgets = ">=7.5"
@@ -1770,9 +1770,9 @@ xarray = "*"
 xlrd = "*"
 
 [package.extras]
-all = ["pygmo (>=2.16.1)", "poppy"]
+all = ["pygmo (>=2.16.1)", "poppy (>=1.0.2)"]
 calibration = ["pygmo (>=2.16.1)"]
-model = ["poppy"]
+model = ["poppy (>=1.0.2)"]
 
 [[package]]
 name = "pyyaml"
@@ -3710,8 +3710,8 @@ pywinpty = [
     {file = "pywinpty-1.1.6.tar.gz", hash = "sha256:8808f07350c709119cc4464144d6e749637f98e15acc1e5d3c37db1953d2eebc"},
 ]
 pyxel-sim = [
-    {file = "pyxel-sim-1.0.0.tar.gz", hash = "sha256:6dc30a1f1f01ec490bc31f496d75da60dde5696903fdb3d136d9bacff018dc21"},
-    {file = "pyxel_sim-1.0.0-py3-none-any.whl", hash = "sha256:b70a6d0f05d9dfd9da66700e77444f3d64a111fbd8851c5299cff0ff8d483506"},
+    {file = "pyxel-sim-1.1.1.tar.gz", hash = "sha256:b399a2e3d4efdac4b3f22991d55f89354b45d98dd547b1118918304d978c5afd"},
+    {file = "pyxel_sim-1.1.1-py3-none-any.whl", hash = "sha256:b9accc1b8d9854043a415c2e627b1273734d7ae60a38bd356289368aee35fe25"},
 ]
 pyyaml = [
     {file = "PyYAML-6.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:d4db7c7aef085872ef65a8fd7d6d09a14ae91f691dec3e87ee5ee0539d516f53"},

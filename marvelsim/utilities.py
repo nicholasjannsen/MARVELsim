@@ -4,8 +4,9 @@
 Placeholder for all the small utilities in this repo.
 """
 
-from colorama import Fore, Style
+import pkg_resources
 from astropy.io import fits
+from colorama import Fore, Style
 
 #==============================================================#
 #                           UTILITIES                          #
@@ -27,11 +28,16 @@ def errorcode(API, message):
 
 
 
-def add_fitsheader(filename, obsmode, exptime):
+def add_fitsheader(filename, obsmode, exptime, readmode, bias, gain, speed):
     # Load and open file
     hdul = fits.open(filename)
     hdr = hdul[0].header
-    # Add headers
+    # Get software versions
+    marvelsim_version = pkg_resources.get_distribution('MARVELsim').version
+    pyechelle_version = pkg_resources.get_distribution('pyechelle').version
+    # Add headers (pyxel version is added automatically)
+    hdr.append(('PYECHE_V', f'{pyechelle_version}', 'PyEchelle version'), end=True)
+    hdr.append(('MARVEL_V', f'{marvelsim_version}', 'MARVELsim version'), end=True)
     hdr.append(('ORIGIN', 'Instituut voor Sterrenkunde, KU Leuven', 'Institution'), end=True)
     hdr.append(('OBSERVAT', 'LaPalma', 'Observatory name'), end=True)
     hdr.append(('TELESCOP', 'MARVEL', 'Telescope name'), end=True)
@@ -78,10 +84,10 @@ def add_fitsheader(filename, obsmode, exptime):
     hdr.append(('PCIFILE', 'None', 'PCI card setup file'), end=True)
     hdr.append(('TIMFILE', '/home/mocs/mocs/config/mocs/marvel/tim-MARVEL-20130205-sp_idle.lod', ''), end=True)
     hdr.append(('UTILFILE', 'None', 'Utility board setup file'), end=True)
-    hdr.append(('DETMODE', 'LGN', 'Controller readout speed/gain setting'), end=True)
-    hdr.append(('READMODE', 'L', 'Detector readout mode'), end=True)
-    hdr.append(('DETGAIN', '1.2', '[e-/ADU] Detector gain'), end=True)
-    hdr.append(('DETBIAS', '2180.0', '[ADU] Expected bias level'), end=True)
+    hdr.append(('READMODE', f'{readmode}', 'Detector readout mode'), end=True)
+    hdr.append(('DETSPEED', f'{speed}', '[MHz] Controller readout speed'), end=True)
+    hdr.append(('DETGAIN',  f'{gain}', '[e-/ADU] Detector gain'), end=True)
+    hdr.append(('DETBIAS',  f'{bias}', '[ADU] Expected bias level'), end=True)
     hdr.append(('BINX', '1', 'Binning factor in x'), end=True)
     hdr.append(('BINY', '1', 'Binning factor in y'), end=True)
     hdr.append(('DTM1_1', '1', 'Binning factor in x'), end=True)
