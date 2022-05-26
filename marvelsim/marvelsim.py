@@ -21,21 +21,20 @@ import subprocess
 import numpy as np
 import matplotlib.pyplot as plt
 from astropy.io import fits
-from utilities import errorcode, add_fitsheader
 from pathlib import Path
 from zipfile import ZipFile
+from utilities import errorcode, add_fitsheader
 
 # PyEchelle
 from pyechelle.simulator import Simulator
-from pyechelle.sources import Constant
+from pyechelle.sources import Constant, Etalon, Phoenix
 from pyechelle.spectrograph import ZEMAX
+from pyechelle.telescope import Telescope
+from pyechelle.CCD import CCD
 
 # Turn off warnings
 import warnings
 warnings.filterwarnings("ignore")
-
-# Random number generator after clock
-rng = np.random.default_rng()
 
 # Monitor script speed
 tic = datetime.datetime.now()
@@ -64,14 +63,15 @@ class marvelsim(object):
         if args.readmode is None: self.readmode = 'fast'
         else: self.readmode = args.readmode
         
-        # Gain [e/ADU] and Readout speed [MHz]
+        # Gain [e/ADU] and Readout speed [kHz]
         if self.readmode in {'fast', 'fastmax'}:
             self.gain  = 9.4
-            self.speed = 1.0 
+            self.speed = 50
         elif self.readmode in {'slow', 'slowmax'}:
             self.gain  = 3.0
-            self.speed = 0.1
-        else: errorcode('error', f'Invalid readout mode: {args.readmode}')
+            self.speed = 1000
+        else:
+            errorcode('error', f'Invalid readout mode: {args.readmode}')
 
         # Bias offset and bias level
         self.bias       = 1000                        # [ADU]
@@ -82,6 +82,12 @@ class marvelsim(object):
         elif self.readmode == 'fastmax': self.read_noise = 4.0  # Maximum fast-readout
         elif self.readmode == 'slow':    self.read_noise = 5.0  # Nominal slow-readout
         elif self.readmode == 'slowmax': self.read_noise = 7.0  # Maximum slow-readout
+
+        # Initialise random number generator
+        # NOTE if not parsed it use after the clock
+        if not args.seed: rng = np.random.default_rng()
+        else:             rng = np.random.default_rng(args.seed)
+        self.seed = rng.integers(1e9, size=1)[0]
         
         # PARSED ARGUMENTS
         
@@ -91,13 +97,15 @@ class marvelsim(object):
         # Output paths
         if args.outdir == '.':
             self.outdir = Path.cwd()
-        else:
+        elif args.outdir:
             self.outdir = Path(args.outdir).resolve()
-
+        else:
+            errorcode('error', f'Provide a output path! Use -o </path/to/output>')
+            
         # Default stellar parameters of a Sun-like star
         if args.time  is None: args.time  = 900.
         if args.mag   is None: args.mag   = 10.
-        if args.teff  is None: args.teff  = 5800
+        if args.teff  is None: args.teff  = 5800.
         if args.logg  is None: args.logg  = 4.5
         if args.z     is None: args.z     = 0.
         if args.alpha is None: args.alpha = 0.
@@ -112,22 +120,87 @@ class marvelsim(object):
         if args.nwave is None: args.nwave = 5
 
         # Control exposure time of calibration images [s]
-        if args.tdark is None: args.tdark = args.time
+        if args.tdark is None: args.tdark = 900
         if args.tflat is None: args.tflat = 5
         if args.tthar is None: args.tthar = 30
         #if args.tthne is None: args.tthne = 30
         if args.twave is None: args.twave = 5
         
+    
+        
+    def fetch_nimg(self, imgtype):
+        """
+        Module fetch the number of exposure of image type.
+        """
+        if imgtype == 'bias':    nimg = args.nbias
+        if imgtype == 'dark':    nimg = args.ndark
+        if imgtype == 'flat':    nimg = args.nflat
+        if imgtype == 'thar':    nimg = args.nthar
+        if imgtype == 'wave':    nimg = args.nwave
+        if imgtype == 'science': nimg = len(args.rv)
+        # Finito!
+        return nimg
+
+
+    
+    def fetch_exptime(self, imgtype):
+        """
+        Module fetch the exposure time of image type.
+        """
+        if imgtype == 'bias':    exptime = 0
+        if imgtype == 'dark':    exptime = args.tdark
+        if imgtype == 'flat':    exptime = args.tflat
+        if imgtype == 'thar':    exptime = args.tthar
+        if imgtype == 'wave':    exptime = args.twave
+        if imgtype == 'science': exptime = args.time
+        # Finito!
+        return exptime
+
+
+    
+    def compress_data(self, filename, filepath):
+        print(f'Compressing {filename}')
+        filepath = str(filepath)
+        # Open and write zip file
+        with ZipFile(f'{filepath[:-5]}.zip', 'w') as zipfile:
+            zipfile.write(filepath, filename)
+            # Give full read/write permission
+            os.system(f'chmod 755 {filepath[:-5]}.zip')
+        # Remove uncompressed file
+        os.remove(filepath)
 
         
-    def init_pyechelle(self):
+    #--------------------------------------------#
+    #            PYECHELLE COMMAND LINE          #  
+    #--------------------------------------------#
+
+
+    def run_bias_dark(self, imgtype, fitstype):
+        """
+        Module to generate both bias and dark data arrays.
+        Dark arrays are here identical to bias arrays but darks will be
+        post-processed later on.
+        """
+        for i in range(1, self.fetch_nimg(imgtype)+1):
+            errorcode('message', f'\nSimulating {imgtype} with Numpy')
+            # Setup paths
+            filename = f'{imgtype}_'+f'{i}'.zfill(4)+'.fits'
+            filepath = f'{args.outdir}/{filename}'
+            # Create data array
+            image = rng.normal(self.bias_level, self.read_noise, size=(self.dim, self.dim)).astype(int)
+            # Save to fits file
+            hdul = fits.HDUList([fits.PrimaryHDU(image)])
+            hdul.writeto(filepath)
+
+    
+    def init_pyechelle_bash(self):
         """
         Module to initialise PyEchelle
         """
 
-        
         # Snippet command for pyechelle
-        self.run_marvel = f'pyechelle -s MARVEL_2021_11_22 --fiber 1-5 --order 30-98 --bias {self.bias_level} --read_noise {self.read_noise}' 
+        self.run_marvel = (f'pyechelle -s MARVEL_2021_11_22 --fiber 1-5 --order 30-98 '
+                           f'--bias {self.bias_level} --read_noise {self.read_noise}' )
 
         # Run with normal CPU cores
         if args.cpu:
@@ -153,132 +226,12 @@ class marvelsim(object):
             args.rv = [0]
 
 
-    
-    def init_pyxel(self):
-        """
-        Module to initialise Pyxel.
-        """        
-        
-        # Create an instance of the pyxel class from the MARVEL specific inputfile
-        filename_inputfile = self.cwd / "../inputfiles/inputfile_marvel.yaml"
-        config = pyxel.load(filename_inputfile)
-        self.exposure = config.exposure
-        self.detector = config.ccd_detector
-        self.pipeline = config.pipeline
-
-        # Set output directory for pyxel
-        # NOTE the folder "pyxel_dir" cannot be avoided at the moment..
-        # and nor is it possible to rename the pyxel output files..
-        output_dir = str(self.exposure.outputs.output_dir)
-        self.pyxel_dir  = output_dir.split('/')[-1]
-        self.pyxel_path = self.outdir / self.pyxel_dir
-        self.pyxel_file = self.pyxel_path / 'detector_image_array_1.fits'
-        self.exposure.outputs.output_dir = self.pyxel_path
-
-        # Finito!
-        return self.pyxel_path
-
-    
-    
-    def enable_cosmics(self, exptime):
-        """
-        Module to draw cosmic rays from a Poisson distibution scaled to the exposure time.
-        """
-        # Make sure cosmics are being added
-        self.pipeline.photon_generation.cosmix.enabled = True
-        # Use spacecraft model for cosmis
-        filename_cosmix = self.cwd / '../inputfiles/proton_L2_solarMax_11mm_Shielding.txt'
-        self.pipeline.photon_generation.cosmix.arguments.spectrum_file = filename_cosmix
-        # Set random seed for cosmic rays
-        self.pipeline.photon_generation.cosmix.arguments.seed = np.random.randint(1e9)
-        # Benchmark 100 cosmics to an exposure time of 300 seconds
-        #--------- testing
-        #r = 100/300  # Rate
-        #k = np.random.randint(100)
-        #l = r * exptime
-        #Ncosmics = l**k * np.exp(-l) / np.math.factorial(k)
-        #print(Ncosmics)
-        #exit()
-        rate = 100/300.
-        ncosmics = int(rate * exptime + np.random.randint(500) * rate)
-        self.pipeline.photon_generation.cosmix.arguments.particles_per_second = ncosmics
-
-        
-
-    def fetch_nimg(self, imgtype):
-        """
-        Module fetch the number of exposure of image type.
-        """
-        if imgtype == 'bias':    nimg = args.nbias
-        if imgtype == 'dark':    nimg = args.ndark
-        if imgtype == 'flat':    nimg = args.nflat
-        if imgtype == 'thar':    nimg = args.nthar
-        if imgtype == 'wave':    nimg = args.nwave
-        if imgtype == 'science': nimg = len(args.rv)
-        # Finito!
-        return nimg
-
-
-    
-    def fetch_exptime(self, imgtype):
-        """
-        Module fetch the exposure time of image type.
-        """
-        if imgtype == 'bias':    exptime = 0.01
-        if imgtype == 'dark':    exptime = args.tdark
-        if imgtype == 'flat':    exptime = args.tflat
-        if imgtype == 'thar':    exptime = args.tthar
-        if imgtype == 'wave':    exptime = args.twave
-        if imgtype == 'science': exptime = args.time
-        # Finito!
-        return exptime
-
-    
-
-    def compress_data(self, filename, filepath):
-        print(f'Compressing {filename}')
-        filepath = str(filepath)
-        # Open and write zip file
-        with ZipFile(f'{filepath[:-5]}.zip', 'w') as zipfile:
-            zipfile.write(filepath, filename)
-            # Give full read/write permission
-            os.system(f'chmod 755 {filepath[:-5]}.zip')
-        # Remove uncompressed file
-        os.remove(filepath)
-
-
-    #--------------------------------------------#
-    #                  BIAS IMAGES               #  
-    #--------------------------------------------#
-
-    
-    def run_bias_dark(self, imgtype, fitstype):
-        """
-        Module to generate both bias and dark data arrays.
-        Dark arrays are here identical to bias arrays but darks will be
-        post-processed later on.
-        """        
-        for i in range(1, self.fetch_nimg(imgtype)+1):
-            errorcode('message', f'\nSimulating {imgtype} with Numpy')
-            # Setup paths
-            filename = f'{imgtype}_'+f'{i}'.zfill(4)+'.fits'
-            filepath = f'{args.outdir}/{filename}'
-            # Create data array
-            image = rng.normal(self.bias_level, self.read_noise, size=(self.dim, self.dim)).astype(int)
-            # Save to fits file
-            hdul = fits.HDUList([fits.PrimaryHDU(image)])
-            hdul.writeto(filepath)
-
-        
-    #--------------------------------------------#
-    #                  PYECHELLE                 #  
-    #--------------------------------------------#
 
     def cmd_pyechelle(self, imgtype, filepath, i):
 
-        if imgtype == 'bias':
-            cmd = (f'pyechelle -s MARVEL_2021_11_22 --order 30-98 --sources Constant -t 0' +
-                   f' --bias {self.bias_level} --read_noise {self.read_noise} -o {filepath}')
+        # if imgtype == 'bias':
+        #     cmd = (f'pyechelle -s MARVEL_2021_11_22 --order 30-98 --sources Constant -t 0' +
+        #            f' --bias {self.bias_level} --read_noise {self.read_noise} -o {filepath}')
 
         if imgtype == 'flat':
             cmd = (self.run_marvel +
@@ -288,6 +241,7 @@ class marvelsim(object):
         if imgtype == 'thar':
             cmd = (self.run_marvel +
                    f' --sources ThAr -t {args.tthar} -o {filepath}')
+            
         # if imgtype == 'thne':
         #     cmd = (run_marvel +
         #            f' --sources ThNe -t {args.tthne} -o {filepath}')
@@ -320,6 +274,7 @@ class marvelsim(object):
             # Run pyechelle
             filename = f'{imgtype}_'+f'{i}'.zfill(4)+'.fits'
             filepath = self.outdir / filename
+            print(self.cmd_pyechelle(imgtype, filepath, i-1))
             os.system(self.cmd_pyechelle(imgtype, filepath, i-1))
 
             # TODO can we do it faster with Pyxel?
@@ -336,10 +291,154 @@ class marvelsim(object):
                 if args.zip:
                     self.compress_data(filename, filepath)
 
+
+    #--------------------------------------------#
+    #         PYECHELLE PYTHON INTERFACE         #  
+    #--------------------------------------------#
+            
+
+    def init_pyechelle_python(self):
+        """
+        Module to initialise PyEchelle
+        """
+
+        # Activate multiple fibers
+        self.sim = Simulator(ZEMAX('MARVEL_2021_11_22'))
+        self.sim.set_ccd(1)
+        self.sim.set_fibers([1, 2, 3, 4, 5])
+
+        # Add bias level and read noise
+        CCD.add_bias = self.bias_level
+        CCD.add_readnoise = self.read_noise
+
+        # Run with CUDA requiring NVIDIA hardware and GPUs
+        if args.cuda:
+            self.sim.set_cuda(True, self.seed)
+
+        # Check for RV inputfile
+        if args.data:
+            try:
+                data = np.loadtxt(args.data, delimiter=',', skiprows=1)
+            except:
+                errorcode('error', r'File do not exist: {args.data}')
+            else:
+                # TODO not used yet but integrate
+                #self.texp = data[:,1]
+                args.rv   = data[:,2]
+        elif args.rv:
+            args.rv = [float(args.rv)]
+        else:
+            args.rv = [0]
+
+            
+
+    
+    def run_pyechelle_python(self, imgtype, fitstype):
+        """
+        Module to generate spectra with PyEchelle.
+        """        
+        for i in range(1, self.fetch_nimg(imgtype)+1):
+            errorcode('message', f'\nSimulating {imgtype} with PyEchelle')
+
+            if imgtype == 'bias':
+                self.sim.set_sources(Constant())
+
+            if imgtype == 'dark':
+                self.sim.set_sources(Constant(intensity=0.0))
+                
+            if imgtype == 'flat':
+                self.sim.set_sources(Constant(intensity=0.01))
+            
+            if imgtype == 'thar':
+                self.sim.set_sources([ThAr()])
+                
+            if imgtype == 'wave':
+                self.sim.set_sources([ThAr(), ThAr(), ThAr(), ThAr(), Etalon(d=6, n_photons=1e5)])
+
+            if imgtype == 'science':
+                # Set primary and secondary mirror size [m]
+                self.sim.set_telescope(Telescope(0.8, 0.1))
+                # Set stellar target spectra
+                self.sim.set_sources([Phoenix(t_eff=args.teff, log_g=args.logg, z=args.z, alpha=args.alpha, magnitude=args.mag),
+                                      Phoenix(t_eff=args.teff, log_g=args.logg, z=args.z, alpha=args.alpha, magnitude=args.mag),
+                                      Phoenix(t_eff=args.teff, log_g=args.logg, z=args.z, alpha=args.alpha, magnitude=args.mag),
+                                      Phoenix(t_eff=args.teff, log_g=args.logg, z=args.z, alpha=args.alpha, magnitude=args.mag),
+                                      Etalon(d=6, n_photons=1e5)])
+                # Activate atmospheric transmission for targets
+                self.sim.set_atmospheres([True, True, True, True, False])
+                # Set radial velocity of stellar target to 42 m/s
+                j = i - 1
+                self.sim.set_radial_velocities([args.rv[j], args.rv[j], args.rv[j], args.rv[j], 0.])
+                
+            # Set exposure times
+            exptime = self.fetch_exptime(imgtype)
+            self.sim.set_exposure_time(exptime)
+
+            # Set outputfile location
+            filename = f'{imgtype}_'+f'{i}'.zfill(4)+'.fits'
+            filepath = self.outdir / filename
+            self.sim.set_output(filepath, overwrite=True)
+            
+            # Run simulation
+            self.sim.run()
+
+            
     #--------------------------------------------#
     #                    PYXEL                   #  
     #--------------------------------------------#
 
+
+    def init_pyxel(self):
+        """
+        Module to initialise Pyxel.
+        """                
+        # Create an instance of the pyxel class from the MARVEL specific inputfile
+        filename_inputfile = self.cwd / "../inputfiles/inputfile_marvel.yaml"
+        config = pyxel.load(filename_inputfile)
+        self.exposure = config.exposure
+        self.detector = config.ccd_detector
+        self.pipeline = config.pipeline
+
+        # Set output directory for pyxel
+        # NOTE the folder "pyxel_dir" cannot be avoided at the moment..
+        # and nor is it possible to rename the pyxel output files..
+        output_dir = str(self.exposure.outputs.output_dir)
+        self.pyxel_dir  = output_dir.split('/')[-1]
+        self.pyxel_path = self.outdir / self.pyxel_dir
+        self.pyxel_file = self.pyxel_path / 'detector_image_array_1.fits'
+        self.exposure.outputs.output_dir = self.pyxel_path
+
+        # Finito!
+        return self.pyxel_path
+
+    
+    
+    def enable_cosmics(self):
+        """
+        Module to draw cosmic rays from a Poisson distibution scaled to the exposure time.
+        """
+        # Make sure cosmics are being added
+        self.pipeline.photon_generation.cosmix.enabled = True
+
+        # Use spacecraft model for cosmis
+        filename_cosmix = self.cwd / '../inputfiles/proton_L2_solarMax_11mm_Shielding.txt'
+        self.pipeline.photon_generation.cosmix.arguments.spectrum_file = filename_cosmix
+
+        # Set random seed for cosmic rays
+        self.pipeline.photon_generation.cosmix.arguments.seed = self.seed
+
+        # Benchmark 100 cosmics to an exposure time of 300 seconds
+        self.pipeline.photon_generation.cosmix.arguments.particles_per_second = 1/3.
+        #--------- testing
+        #r = 100/300  # Rate
+        #k = np.random.randint(100)
+        #l = r * exptime
+        #Ncosmics = l**k * np.exp(-l) / np.math.factorial(k)
+        #ncosmics = int(rate * exptime + np.random.randint(500) * rate)
+
+
+
+    
     def run_pyxel(self, imgtype, fitstype):
         """
         Module to add CCD effects spectra with Pyxel.
@@ -351,10 +450,11 @@ class marvelsim(object):
             filepath = self.outdir / filename
             # Run pyxel
             exptime = self.fetch_exptime(imgtype)
-            self.enable_cosmics(exptime)
+            if exptime == 0: exptime = 1
+            self.enable_cosmics()
             self.pipeline.charge_generation.load_charge.arguments.filename   = filepath
-            self.pipeline.charge_generation.load_charge.arguments.time_scale = exptime
-            #self.exposure.readout.times = exptime
+            self.pipeline.charge_generation.load_charge.arguments.time_scale = exptime            
+            self.exposure.readout.times = [exptime]
             pyxel.exposure_mode(exposure=self.exposure, detector=self.detector, pipeline=self.pipeline)
             # Swap files -> Remove PyEchelle file and replace with Pyxel file
             os.remove(filepath)
@@ -380,10 +480,10 @@ class marvelsim(object):
         filepath = self.outdir / filename
         # Run pyxel
         exptime = self.fetch_exptime(imgtype)
-        self.enable_cosmics(exptime)
+        self.enable_cosmics()
         self.pipeline.charge_generation.load_charge.arguments.filename   = filepath
         self.pipeline.charge_generation.load_charge.arguments.time_scale = exptime
-        #self.exposure.readout.times = exptime
+        self.exposure.readout.times = [exptime]
         pyxel.exposure_mode(exposure=self.exposure, detector=self.detector, pipeline=self.pipeline)
         # Swap files
         os.remove(filepath)
@@ -414,31 +514,33 @@ obs_group.add_argument('-t', '--time', metavar='SEC', type=float, help='Exposure
 
 sci_group = parser.add_argument_group('SCIENCE MODE')
 sci_group.add_argument('-s', '--science', action='store_true', help='Flag to simulate stellar spectra')
-sci_group.add_argument('--mag',   metavar='VMAG',   type=str, help='Johnson-Cousin V passband magnitude')
-sci_group.add_argument('--teff',  metavar='KELVIN', type=str, help='Stellar effective temperature [K]')
-sci_group.add_argument('--logg',  metavar='DEX',    type=str, help='Stellar surface gravity [relative log10]')
-sci_group.add_argument('--z',     metavar='DEX',    type=str, help='Stellar metallicity [Fe/H]')
-sci_group.add_argument('--alpha', metavar='DEX',    type=str, help='Stellar Alpha element abundance [alpha/H]')
-sci_group.add_argument('--rv',    metavar='M/S',    type=str, help='Radial Velocity shift of star due to exoplanet [m/s]')
+sci_group.add_argument('--mag',   metavar='VMAG',   type=float, help='Johnson-Cousin V passband magnitude')
+sci_group.add_argument('--teff',  metavar='KELVIN', type=int,   help='Stellar effective temperature [K]')
+sci_group.add_argument('--logg',  metavar='DEX',    type=float, help='Stellar surface gravity [relative log10]')
+sci_group.add_argument('--z',     metavar='DEX',    type=float, help='Stellar metallicity [Fe/H]')
+sci_group.add_argument('--alpha', metavar='DEX',    type=float, help='Stellar Alpha element abundance [alpha/H]')
+sci_group.add_argument('--rv',    metavar='M/S',    type=float, help='Radial Velocity shift of star due to exoplanet [m/s]')
 
 cal_group = parser.add_argument_group('CALIBRATION MODE')
 cal_group.add_argument('-c', '--calibs', action='store_true', help='Flag to simulate calibration data')
 cal_group.add_argument('--nbias', metavar='NUM', type=int, help='Number of Bias exposures (default: 10)')
 cal_group.add_argument('--ndark', metavar='NUM', type=int, help='Number of Dark exposures (default: 10)')
-cal_group.add_argument('--nthar', metavar='NUM', type=int, help='Number of ThAr exposures (default: 5)')
-cal_group.add_argument('--nflat', metavar='NUM', type=int, help='Number of Flat exposures (default: 5)')
-cal_group.add_argument('--nwave', metavar='NUM', type=int, help='Number of Etalon + ThAr exposures  (default: 5)')
-cal_group.add_argument('--tdark', metavar='NUM', type=int, help='Exposure time of Dark (default: 300 s)')
-cal_group.add_argument('--tflat', metavar='NUM', type=int, help='Exposure time of Flat (default: 5 s)')
-cal_group.add_argument('--tthar', metavar='NUM', type=int, help='Exposure time of ThAr (default: 30 s)')
-cal_group.add_argument('--twave', metavar='NUM', type=int, help='Exposure time of Etalon + ThAr (default: 30 s)')
+cal_group.add_argument('--nthar', metavar='NUM', type=int, help='Number of ThAr exposures (default:  5)')
+cal_group.add_argument('--nflat', metavar='NUM', type=int, help='Number of Flat exposures (default:  5)')
+cal_group.add_argument('--nwave', metavar='NUM', type=int, help='Number of Etalon + ThAr  (default:  5)')
+cal_group.add_argument('--tdark', metavar='SEC', type=float, help='Exposure time of Dark (default: 300 s)')
+cal_group.add_argument('--tflat', metavar='SEC', type=float, help='Exposure time of Flat (default:   5 s)')
+cal_group.add_argument('--tthar', metavar='SEC', type=float, help='Exposure time of ThAr (default:  30 s)')
+cal_group.add_argument('--twave', metavar='SEC', type=float, help='Exptime Etalon + ThAr (default:  30 s)')
 
 ccd_group = parser.add_argument_group('CCD DETECTOR')
-ccd_group.add_argument('--readmode', metavar='NAME', type=str, help='Readout mode: fast, fastmax, slow, slowmax (default: fast)')
+ccd_group.add_argument('--readmode', metavar='NAME',  type=str, help='Readout mode: fast, fastmax, slow, slowmax (default: fast)')
+#ccd_group.add_argument('--bias',     metavar='COUNT', type=str, help='Bias offset Readout mode: fast, fastmax, slow, slowmax (default: fast)')
 
 hpc_group = parser.add_argument_group('PERFORMANCE')
 hpc_group.add_argument('--data', metavar='PATH', type=str, help='Path RV file created by "rv-generator.py"')
 hpc_group.add_argument('--dex',  metavar='NAME', type=int, help='Index for running Pyxel on CPUs')
+hpc_group.add_argument('--seed', metavar='INT',  type=int, help='Random number seed to reproduce results')
 hpc_group.add_argument('--cpu',  metavar='INT',  type=str, help='Maximum number of CPU cores used order-wise parallel computing')
 hpc_group.add_argument('--cuda', action='store_true', help='Flag to use CUDA NVIDIA hardware for raytracing (makes cpu flag obsolete')
 hpc_group.add_argument('--zip',  action='store_true', help='Flag to zip output files.')
@@ -447,16 +549,18 @@ args = parser.parse_args()
 
 # Create instance of class
 m = marvelsim()
-m.init_pyechelle()
+m.init_pyechelle_python()
 
 if args.calibs:
     # Create bias and darks fits with Numpy
-    m.run_bias_dark('bias', 'BIAS')
-    m.run_bias_dark('dark', 'DARK')
+    #m.run_bias_dark('bias', 'BIAS')
+    #m.run_bias_dark('dark', 'DARK')
     # Run pyechelle
-    m.run_pyechelle('flat', 'FLAT')
-    m.run_pyechelle('thar', 'THAR')
-    m.run_pyechelle('wave', 'WAVE')
+    m.run_pyechelle_python('bias', 'BIAS')
+    m.run_pyechelle_python('dark', 'DARK')
+    m.run_pyechelle_python('flat', 'FLAT')
+    m.run_pyechelle_python('thar', 'THAR')
+    m.run_pyechelle_python('wave', 'WAVE')
     # Run Pyxel
     pyxel_path = m.init_pyxel()
     m.run_pyxel('bias', 'BIAS')
@@ -470,14 +574,14 @@ else:
 
     # Run pyechelle and Pyxel together
     if args.science:
-        m.run_pyechelle('science', 'SCIENCE')
+        m.run_pyechelle_python('science', 'SCIENCE')
         pyxel_path = m.init_pyxel()
         m.run_pyxel('science', 'SCIENCE')
         os.rmdir(pyxel_path)
 
     # Run pyechelle alone with either CUDA or CPUs 
     elif args.cuda or args.cpu:
-        m.run_pyechelle('science', 'SCIENCE')
+        m.run_pyechelle_python('science', 'SCIENCE')
 
     # Run pyxel alone with CPUs
     elif args.dex:

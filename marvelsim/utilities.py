@@ -85,7 +85,7 @@ def add_fitsheader(filename, obsmode, exptime, readmode, bias, gain, speed):
     hdr.append(('TIMFILE', '/home/mocs/mocs/config/mocs/marvel/tim-MARVEL-20130205-sp_idle.lod', ''), end=True)
     hdr.append(('UTILFILE', 'None', 'Utility board setup file'), end=True)
     hdr.append(('READMODE', f'{readmode}', 'Detector readout mode'), end=True)
-    hdr.append(('DETSPEED', f'{speed}', '[MHz] Controller readout speed'), end=True)
+    hdr.append(('DETSPEED', f'{speed}', '[kHz] Controller readout speed'), end=True)
     hdr.append(('DETGAIN',  f'{gain}', '[e-/ADU] Detector gain'), end=True)
     hdr.append(('DETBIAS',  f'{bias}', '[ADU] Expected bias level'), end=True)
     hdr.append(('BINX', '1', 'Binning factor in x'), end=True)
