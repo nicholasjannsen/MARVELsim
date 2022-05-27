@@ -85,10 +85,10 @@ class marvelsim(object):
 
         # Initialise random number generator
         # NOTE if not parsed it use after the clock
-        if not args.seed: rng = np.random.default_rng()
-        else:             rng = np.random.default_rng(args.seed)
-        self.seed = rng.integers(1e9, size=1)[0]
-        
+        if not args.seed: self.rng = np.random.default_rng()
+        else:             self.rng = np.random.default_rng(args.seed)
+        self.seed = self.rng.integers(1e9, size=1)[0]
+
         # PARSED ARGUMENTS
         
         # Input paths
@@ -104,12 +104,12 @@ class marvelsim(object):
             
         # Default stellar parameters of a Sun-like star
         if args.time  is None: args.time  = 900.
-        if args.mag   is None: args.mag   = 10.
-        if args.teff  is None: args.teff  = 5800.
-        if args.logg  is None: args.logg  = 4.5
-        if args.z     is None: args.z     = 0.
-        if args.alpha is None: args.alpha = 0.
-        if args.rv    is None: args.alpha = 0.
+        if args.mag   is None: args.mag   = [10.]
+        if args.teff  is None: args.teff  = [5800.]
+        if args.logg  is None: args.logg  = [4.5]
+        if args.z     is None: args.z     = [0.]
+        if args.alpha is None: args.alpha = [0.]
+        if args.rv    is None: args.rv    = [0.]
 
         # Control number of calibration images
         if args.nbias is None: args.nbias = 10
@@ -169,29 +169,31 @@ class marvelsim(object):
         # Remove uncompressed file
         os.remove(filepath)
 
+    #--------------------------------------------#
+    #                 BIAS IMAGES                #  
+    #--------------------------------------------#
         
-    #--------------------------------------------#
-    #            PYECHELLE COMMAND LINE          #  
-    #--------------------------------------------#
-
-
-    def run_bias_dark(self, imgtype, fitstype):
+    def run_bias(self, imgtype, fitstype):
         """
         Module to generate both bias and dark data arrays.
         Dark arrays are here identical to bias arrays but darks will be
-        post-processed later on.
+        post-processed later on by Pyxel.
         """
         for i in range(1, self.fetch_nimg(imgtype)+1):
             errorcode('message', f'\nSimulating {imgtype} with Numpy')
             # Setup paths
             filename = f'{imgtype}_'+f'{i}'.zfill(4)+'.fits'
-            filepath = f'{args.outdir}/{filename}'
+            filepath = self.outdir / filename
             # Create data array
-            image = rng.normal(self.bias_level, self.read_noise, size=(self.dim, self.dim)).astype(int)
+            bias = self.rng.normal(self.bias_level, self.read_noise, size=(self.dim, self.dim)).astype(int)
             # Save to fits file
-            hdul = fits.HDUList([fits.PrimaryHDU(image)])
+            hdul = fits.HDUList([fits.PrimaryHDU(bias)])
             hdul.writeto(filepath)
 
+        
+    #--------------------------------------------#
+    #            PYECHELLE COMMAND LINE          #  
+    #--------------------------------------------#
     
     def init_pyechelle_bash(self):
         """
@@ -265,7 +267,7 @@ class marvelsim(object):
 
 
     
-    def run_pyechelle(self, imgtype, fitstype):
+    def run_pyechelle_bash(self, imgtype, fitstype):
         """
         Module to generate spectra with PyEchelle.
         """        
@@ -297,7 +299,7 @@ class marvelsim(object):
     #--------------------------------------------#
             
 
-    def init_pyechelle_python(self):
+    def init_pyechelle(self):
         """
         Module to initialise PyEchelle
         """
@@ -315,36 +317,52 @@ class marvelsim(object):
         if args.cuda:
             self.sim.set_cuda(True, self.seed)
 
-        # Check for RV inputfile
-        if args.data:
-            try:
-                data = np.loadtxt(args.data, delimiter=',', skiprows=1)
-            except:
-                errorcode('error', r'File do not exist: {args.data}')
+        # Check for multiple target stars
+        if args.science:
+            if len(args.mag) == 1: args.mag = np.ones(4) * args.mag
+            elif len(args.mag) == 4: pass
+            else: errorcode('error', 'mag takes only 1 or 4 values!')
+
+            if len(args.teff) == 1: args.teff = np.ones(4) * args.teff
+            elif len(args.teff) == 4: pass
+            else: errorcode('error', 'teff takes only 1 or 4 values!')
+
+            if len(args.logg) == 1: args.logg = np.ones(4) * args.logg
+            elif len(args.logg) == 4: pass
+            else: errorcode('error', 'logg takes only 1 or 4 values!')
+            
+            if len(args.z) == 1: args.z = np.ones(4) * args.z
+            elif len(args.z) == 4: pass
+            else: errorcode('error', 'z takes only 1 or 4 values!')
+
+            if len(args.alpha) == 1: args.alpha = np.ones(4) * args.alpha
+            elif len(args.alpha) == 4: pass
+            else: errorcode('error', 'alpha takes only 1 or 4 values!')
+
+            # Check for RV inputfile
+            if args.data:
+                # For CPU parallisation
+                try: data = np.loadtxt(args.data, delimiter=',', skiprows=1)
+                except: errorcode('error', r'File do not exist: {args.data}')
+                else: args.rv = data[:,2:]
+            elif args.rv:
+                # Multiple targets, single CPU
+                if len(args.rv) == 1: args.rv = np.ones(4) * args.rv
+                elif len(args.rv) == 4: pass
+                else: errorcode('error', 'alpha takes only 1 or 4 values!')
             else:
-                # TODO not used yet but integrate
-                #self.texp = data[:,1]
-                args.rv   = data[:,2]
-        elif args.rv:
-            args.rv = [float(args.rv)]
-        else:
-            args.rv = [0]
+                # Default of zero RV amplitude
+                args.rv = [0, 0, 0, 0]
 
             
 
     
-    def run_pyechelle_python(self, imgtype, fitstype):
+    def run_pyechelle(self, imgtype, fitstype):
         """
         Module to generate spectra with PyEchelle.
         """        
         for i in range(1, self.fetch_nimg(imgtype)+1):
             errorcode('message', f'\nSimulating {imgtype} with PyEchelle')
-
-            if imgtype == 'bias':
-                self.sim.set_sources(Constant())
-
-            if imgtype == 'dark':
-                self.sim.set_sources(Constant(intensity=0.0))
                 
             if imgtype == 'flat':
                 self.sim.set_sources(Constant(intensity=0.01))
@@ -359,16 +377,15 @@ class marvelsim(object):
                 # Set primary and secondary mirror size [m]
                 self.sim.set_telescope(Telescope(0.8, 0.1))
                 # Set stellar target spectra
-                self.sim.set_sources([Phoenix(t_eff=args.teff, log_g=args.logg, z=args.z, alpha=args.alpha, magnitude=args.mag),
-                                      Phoenix(t_eff=args.teff, log_g=args.logg, z=args.z, alpha=args.alpha, magnitude=args.mag),
-                                      Phoenix(t_eff=args.teff, log_g=args.logg, z=args.z, alpha=args.alpha, magnitude=args.mag),
-                                      Phoenix(t_eff=args.teff, log_g=args.logg, z=args.z, alpha=args.alpha, magnitude=args.mag),
+                self.sim.set_sources([Phoenix(t_eff=args.teff[0], log_g=args.logg[0], z=args.z[0], alpha=args.alpha[0], magnitude=args.mag[0]),
+                                      Phoenix(t_eff=args.teff[1], log_g=args.logg[1], z=args.z[1], alpha=args.alpha[1], magnitude=args.mag[1]),
+                                      Phoenix(t_eff=args.teff[2], log_g=args.logg[2], z=args.z[2], alpha=args.alpha[2], magnitude=args.mag[2]),
+                                      Phoenix(t_eff=args.teff[3], log_g=args.logg[3], z=args.z[3], alpha=args.alpha[3], magnitude=args.mag[3]),
                                       Etalon(d=6, n_photons=1e5)])
-                # Activate atmospheric transmission for targets
+                # Activate atmospheric transmission for target(s)
                 self.sim.set_atmospheres([True, True, True, True, False])
-                # Set radial velocity of stellar target to 42 m/s
-                j = i - 1
-                self.sim.set_radial_velocities([args.rv[j], args.rv[j], args.rv[j], args.rv[j], 0.])
+                # Set radial velocity of stellar target(s)
+                self.sim.set_radial_velocities([args.rv[0][i-1], args.rv[1][i-1], args.rv[2][i-1], args.rv[3][i-1], 0.])
                 
             # Set exposure times
             exptime = self.fetch_exptime(imgtype)
@@ -445,25 +462,34 @@ class marvelsim(object):
         """
         for i in range(1, self.fetch_nimg(imgtype)+1):
             errorcode('message', f'\nSimulating {imgtype} with Pyxel')
-            # Fetch filenames.
-            filename = f'{imgtype}_'+f'{i}'.zfill(4)+'.fits'
+
+            # Fetch and set filename
+            filename = f'{imgtype}_' + f'{i}'.zfill(4) + '.fits'
             filepath = self.outdir / filename
-            # Run pyxel
+            self.pipeline.charge_generation.load_charge.arguments.filename   = filepath
+            
+            # Set exposure time and time scale (to be identical)
+            # NOTE bias needs a texp=1s
             exptime = self.fetch_exptime(imgtype)
             if exptime == 0: exptime = 1
-            self.enable_cosmics()
-            self.pipeline.charge_generation.load_charge.arguments.filename   = filepath
-            self.pipeline.charge_generation.load_charge.arguments.time_scale = exptime            
             self.exposure.readout.times = [exptime]
+            self.pipeline.charge_generation.load_charge.arguments.time_scale = exptime            
+            
+            # Enable cosmic rays
+            self.enable_cosmics()
+            
+            # Run pyxel
             pyxel.exposure_mode(exposure=self.exposure, detector=self.detector, pipeline=self.pipeline)
             # Swap files -> Remove PyEchelle file and replace with Pyxel file
             os.remove(filepath)
             os.system(f'mv {self.pyxel_file} {filepath}')
+            
             # Add fits header
             print('Adding fits-header')
             add_fitsheader(filepath, fitstype, exptime, self.readmode, self.bias, self.gain, self.speed)
             # Give full read/write permission
             os.system(f'chmod 755 {filepath}')
+            
             # Compress file
             if args.zip:
                 self.compress_data(filename, filepath)
@@ -514,12 +540,18 @@ obs_group.add_argument('-t', '--time', metavar='SEC', type=float, help='Exposure
 
 sci_group = parser.add_argument_group('SCIENCE MODE')
 sci_group.add_argument('-s', '--science', action='store_true', help='Flag to simulate stellar spectra')
-sci_group.add_argument('--mag',   metavar='VMAG',   type=float, help='Johnson-Cousin V passband magnitude')
-sci_group.add_argument('--teff',  metavar='KELVIN', type=int,   help='Stellar effective temperature [K]')
-sci_group.add_argument('--logg',  metavar='DEX',    type=float, help='Stellar surface gravity [relative log10]')
-sci_group.add_argument('--z',     metavar='DEX',    type=float, help='Stellar metallicity [Fe/H]')
-sci_group.add_argument('--alpha', metavar='DEX',    type=float, help='Stellar Alpha element abundance [alpha/H]')
-sci_group.add_argument('--rv',    metavar='M/S',    type=float, help='Radial Velocity shift of star due to exoplanet [m/s]')
+sci_group.add_argument('--mag',   nargs='*', type=float, help='Johnson-Cousin V passband magnitude (max 4 values)')
+sci_group.add_argument('--teff',  nargs='*', type=int,   help='Stellar effective temperature [K] (max 4 values)')
+sci_group.add_argument('--logg',  nargs='*', type=float, help='Stellar surface gravity [relative log10] (max 4 values)')
+sci_group.add_argument('--z',     nargs='*', type=float, help='Stellar metallicity [Fe/H] (max 4 values)')
+sci_group.add_argument('--alpha', nargs='*', type=float, help='Stellar Alpha element abundance [alpha/H] (max 4 values)')
+sci_group.add_argument('--rv',    nargs='*', type=float, help='Radial Velocity shift of star(s) due to exoplanet [m/s] (max 4 values)')
+# sci_group.add_argument('--mag',   metavar='VMAG',   type=float, help='Johnson-Cousin V passband magnitude (max 4 values)')
+# sci_group.add_argument('--teff',  metavar='KELVIN', type=int,   help='Stellar effective temperature [K] (max 4 values)')
+# sci_group.add_argument('--logg',  metavar='DEX',    type=float, help='Stellar surface gravity [relative log10] (max 4 values)')
+# sci_group.add_argument('--z',     metavar='DEX',    type=float, help='Stellar metallicity [Fe/H] (max 4 values)')
+# sci_group.add_argument('--alpha', metavar='DEX',    type=float, help='Stellar Alpha element abundance [alpha/H] (max 4 values)')
+# sci_group.add_argument('--rv',    metavar='M/S',    type=float, help='Radial Velocity shift of star(s) due to exoplanet [m/s] (max 4 values)')
 
 cal_group = parser.add_argument_group('CALIBRATION MODE')
 cal_group.add_argument('-c', '--calibs', action='store_true', help='Flag to simulate calibration data')
@@ -534,35 +566,32 @@ cal_group.add_argument('--tthar', metavar='SEC', type=float, help='Exposure time
 cal_group.add_argument('--twave', metavar='SEC', type=float, help='Exptime Etalon + ThAr (default:  30 s)')
 
 ccd_group = parser.add_argument_group('CCD DETECTOR')
-ccd_group.add_argument('--readmode', metavar='NAME',  type=str, help='Readout mode: fast, fastmax, slow, slowmax (default: fast)')
-#ccd_group.add_argument('--bias',     metavar='COUNT', type=str, help='Bias offset Readout mode: fast, fastmax, slow, slowmax (default: fast)')
+ccd_group.add_argument('--readmode', metavar='NAME', type=str, help='Readout mode: fast, fastmax, slow, slowmax (default: fast)')
+ccd_group.add_argument('--seed',     metavar='INT',  type=int, help='Random number seed to bootstrap/reproduce results (default: random)')
 
 hpc_group = parser.add_argument_group('PERFORMANCE')
 hpc_group.add_argument('--data', metavar='PATH', type=str, help='Path RV file created by "rv-generator.py"')
-hpc_group.add_argument('--dex',  metavar='NAME', type=int, help='Index for running Pyxel on CPUs')
-hpc_group.add_argument('--seed', metavar='INT',  type=int, help='Random number seed to reproduce results')
-hpc_group.add_argument('--cpu',  metavar='INT',  type=str, help='Maximum number of CPU cores used order-wise parallel computing')
-hpc_group.add_argument('--cuda', action='store_true', help='Flag to use CUDA NVIDIA hardware for raytracing (makes cpu flag obsolete')
-hpc_group.add_argument('--zip',  action='store_true', help='Flag to zip output files.')
+hpc_group.add_argument('--dex',  metavar='NAME', type=int, help='Pyxel parallisation: index for running Pyxel on CPUs')
+hpc_group.add_argument('--cpu',  metavar='INT',  type=str, help='PyEchelle parallisation: Number of CPUs for order-wise parallelisation')
+hpc_group.add_argument('--cuda', action='store_true',      help='PyEchelle parallisation: Flag to use CUDA NVIDIA hardware for raytracing (makes cpu flag obsolete')
+hpc_group.add_argument('--zip',  action='store_true',      help='Flag to zip output files.')
 
 args = parser.parse_args()
 
 # Create instance of class
 m = marvelsim()
-m.init_pyechelle_python()
+m.init_pyechelle()
+pyxel_path = m.init_pyxel()
 
 if args.calibs:
     # Create bias and darks fits with Numpy
-    #m.run_bias_dark('bias', 'BIAS')
-    #m.run_bias_dark('dark', 'DARK')
+    m.run_bias('bias', 'BIAS')
+    m.run_bias('dark', 'DARK')
     # Run pyechelle
-    m.run_pyechelle_python('bias', 'BIAS')
-    m.run_pyechelle_python('dark', 'DARK')
-    m.run_pyechelle_python('flat', 'FLAT')
-    m.run_pyechelle_python('thar', 'THAR')
-    m.run_pyechelle_python('wave', 'WAVE')
+    m.run_pyechelle('flat', 'FLAT')
+    m.run_pyechelle('thar', 'THAR')
+    m.run_pyechelle('wave', 'WAVE')
     # Run Pyxel
-    pyxel_path = m.init_pyxel()
     m.run_pyxel('bias', 'BIAS')
     m.run_pyxel('dark', 'DARK')
     m.run_pyxel('flat', 'FLAT')
@@ -574,23 +603,21 @@ else:
 
     # Run pyechelle and Pyxel together
     if args.science:
-        m.run_pyechelle_python('science', 'SCIENCE')
-        pyxel_path = m.init_pyxel()
+        m.run_pyechelle('science', 'SCIENCE')
         m.run_pyxel('science', 'SCIENCE')
         os.rmdir(pyxel_path)
 
     # Run pyechelle alone with either CUDA or CPUs 
     elif args.cuda or args.cpu:
-        m.run_pyechelle_python('science', 'SCIENCE')
+        m.run_pyechelle('science', 'SCIENCE')
 
     # Run pyxel alone with CPUs
     elif args.dex:
-        pyxel_path = m.init_pyxel()
         m.run_pyxel_cpu('science', 'SCIENCE')
         os.rmdir(pyxel_path)
 
     else:
-        errorcode('error', 'Not valid setup for science mode!')
+        errorcode('error', 'Not valid setup for science mode! Use --science if attended')
 
 # Final execution time
 toc = datetime.datetime.now()
