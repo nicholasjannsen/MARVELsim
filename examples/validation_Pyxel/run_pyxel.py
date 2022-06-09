@@ -15,11 +15,11 @@ pipeline = config.pipeline        # class DetectionPipeline
 # Exposure class
 pipeline.photon_generation.cosmix.arguments.spectrum_file          = "../../inputfiles/proton_L2_solarMax_11mm_Shielding.txt"
 pipeline.photon_generation.cosmix.arguments.seed                   = np.random.randint(1e9)
-pipeline.photon_generation.cosmix.arguments.particles_per_second   = 0
-pipeline.charge_generation.load_charge.arguments.filename          = 'bias_slow.fits'
+pipeline.photon_generation.cosmix.arguments.particles_per_second   = 1/3.
+pipeline.charge_generation.load_charge.arguments.filename          = 'science_300s.fits'
 pipeline.charge_generation.simple_dark_current.arguments.dark_rate = 0.01
-pipeline.charge_generation.load_charge.arguments.time_scale        = 1
-exposure.readout.times  = [1]
+pipeline.charge_generation.load_charge.arguments.time_scale        = 300
+exposure.readout.times  = [300]
 
 # Run pyxel in exposure mode
 results = pyxel.exposure_mode(exposure=exposure, detector=detector, pipeline=pipeline)
