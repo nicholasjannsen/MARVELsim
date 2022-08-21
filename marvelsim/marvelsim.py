@@ -436,12 +436,15 @@ class marvelsim(object):
 
     
     
-    def enable_cosmics(self):
+    def enable_cosmics(self, imgtype):
         """
         Module to draw cosmic rays from a Poisson distibution scaled to the exposure time.
         """
         # Make sure cosmics are being added
-        self.pipeline.photon_generation.cosmix.enabled = True
+        if imgtype == 'bias':
+            self.pipeline.photon_generation.cosmix.enabled = False
+        else:
+            self.pipeline.photon_generation.cosmix.enabled = True
 
         # Use spacecraft model for cosmis
         filename_cosmix = self.cwd / '../inputfiles/proton_L2_solarMax_11mm_Shielding.txt'
@@ -482,7 +485,8 @@ class marvelsim(object):
             self.pipeline.charge_generation.load_charge.arguments.time_scale = exptime            
             
             # Enable cosmic rays
-            self.enable_cosmics()
+            #if not imgtype == 'bias':
+            self.enable_cosmics(imgtype)
             
             # Run pyxel
             pyxel.exposure_mode(exposure=self.exposure, detector=self.detector, pipeline=self.pipeline)
@@ -512,7 +516,7 @@ class marvelsim(object):
         filepath = self.outdir / filename
         # Run pyxel
         exptime = self.fetch_exptime(imgtype)
-        self.enable_cosmics()
+        self.enable_cosmics(imgtype)
         self.pipeline.charge_generation.load_charge.arguments.filename   = filepath
         self.pipeline.charge_generation.load_charge.arguments.time_scale = exptime
         self.exposure.readout.times = [exptime]
@@ -552,12 +556,6 @@ sci_group.add_argument('--logg',  nargs='*', type=float, help='Stellar surface g
 sci_group.add_argument('--z',     nargs='*', type=float, help='Stellar metallicity [Fe/H] (max 4 values)')
 sci_group.add_argument('--alpha', nargs='*', type=float, help='Stellar Alpha element abundance [alpha/H] (max 4 values)')
 sci_group.add_argument('--rv',    nargs='*', type=float, help='Radial Velocity shift of star(s) due to exoplanet [m/s] (max 4 values)')
-# sci_group.add_argument('--mag',   metavar='VMAG',   type=float, help='Johnson-Cousin V passband magnitude (max 4 values)')
-# sci_group.add_argument('--teff',  metavar='KELVIN', type=int,   help='Stellar effective temperature [K] (max 4 values)')
-# sci_group.add_argument('--logg',  metavar='DEX',    type=float, help='Stellar surface gravity [relative log10] (max 4 values)')
-# sci_group.add_argument('--z',     metavar='DEX',    type=float, help='Stellar metallicity [Fe/H] (max 4 values)')
-# sci_group.add_argument('--alpha', metavar='DEX',    type=float, help='Stellar Alpha element abundance [alpha/H] (max 4 values)')
-# sci_group.add_argument('--rv',    metavar='M/S',    type=float, help='Radial Velocity shift of star(s) due to exoplanet [m/s] (max 4 values)')
 
 cal_group = parser.add_argument_group('CALIBRATION MODE')
 cal_group.add_argument('-c', '--calibs', action='store_true', help='Flag to simulate calibration data')

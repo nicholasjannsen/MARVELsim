@@ -56,7 +56,7 @@ ccd_detector:
     quantum_efficiency:        0.9         # QE approximation
     charge_to_volt_conversion: 7.0e-6      # [V/e] Charge readout sensitivity
     pre_amplification:         11          # [V/V] Gain of output amplifier
-    adc_voltage_range:         [0., 10.]   # [V] Output DC Level
+    adc_voltage_range:         [0., 16.]   # [V] Output DC Level
     adc_bit_resolution:        16
     full_well_capacity:        800000      # [e] Full-well capacity
 
