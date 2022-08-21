@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [0.1.1]: 2022-06-01
 
-### Added
+#### Added
 
 * Updated to PyEchelle v. 0.3.1
 * It is now possible to make multi-target simulations 
@@ -14,7 +14,7 @@ All notable changes to this project will be documented in this file. The format 
 * New example: A Pyxel validation Jupyter notebook
 * New example: Scripts to simulate using High Performance Computing (HPC)
 
-### Changed
+#### Changed
 
 * PyEchelle's new Python interface is used instead the previous bash interface
 * New parse arguments to select the fast and slow CCD readout mode
@@ -23,7 +23,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [0.1.0]: 2021-06-01
 
-### Added
+#### Added
 
 * Initial release of MARVELsim
 * Usage of PyEchelle v. 0.2.0
