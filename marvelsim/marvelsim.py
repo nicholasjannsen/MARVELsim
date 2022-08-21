@@ -27,7 +27,7 @@ from utilities import errorcode, add_fitsheader
 
 # PyEchelle
 from pyechelle.simulator import Simulator
-from pyechelle.sources import Constant, Etalon, Phoenix
+from pyechelle.sources import Constant, ThAr, ThNe, Etalon, Phoenix
 from pyechelle.spectrograph import ZEMAX
 from pyechelle.telescope import Telescope
 from pyechelle.CCD import CCD
@@ -78,10 +78,10 @@ class marvelsim(object):
         self.bias_level = int(self.bias * self.gain)  # [e-]
 
         # Read noise RMS [e-]
-        if   self.readmode == 'fast':    self.read_noise = 2.5  # Nominal fast-readout
-        elif self.readmode == 'fastmax': self.read_noise = 4.0  # Maximum fast-readout
-        elif self.readmode == 'slow':    self.read_noise = 5.0  # Nominal slow-readout
-        elif self.readmode == 'slowmax': self.read_noise = 7.0  # Maximum slow-readout
+        if   self.readmode == 'fast':    self.read_noise = 2.5  # Nominal fast-readout [e-]
+        elif self.readmode == 'fastmax': self.read_noise = 4.0  # Maximum fast-readout [e-]
+        elif self.readmode == 'slow':    self.read_noise = 5.0  # Nominal slow-readout [e-]
+        elif self.readmode == 'slowmax': self.read_noise = 7.0  # Maximum slow-readout [e-]
 
         # Initialise random number generator
         # NOTE if not parsed it use after the clock
@@ -159,6 +159,9 @@ class marvelsim(object):
 
     
     def compress_data(self, filename, filepath):
+        """
+        Module to give full file access and compress a fits file.
+        """
         print(f'Compressing {filename}')
         filepath = str(filepath)
         # Open and write zip file
@@ -304,15 +307,15 @@ class marvelsim(object):
         Module to initialise PyEchelle
         """
 
-        # Activate multiple fibers
+        # Configure setup for MARVEL
         self.sim = Simulator(ZEMAX('MARVEL_2021_11_22'))
         self.sim.set_ccd(1)
         self.sim.set_fibers([1, 2, 3, 4, 5])
 
         # Add bias level and read noise
-        CCD.add_bias = self.bias_level
-        CCD.add_readnoise = self.read_noise
-
+        self.sim.set_bias(self.bias_level)
+        self.sim.set_read_noise(self.read_noise)
+        
         # Run with CUDA requiring NVIDIA hardware and GPUs
         if args.cuda:
             self.sim.set_cuda(True, self.seed)
@@ -368,7 +371,7 @@ class marvelsim(object):
                 self.sim.set_sources(Constant(intensity=0.01))
             
             if imgtype == 'thar':
-                self.sim.set_sources([ThAr()])
+                self.sim.set_sources(ThAr())
                 
             if imgtype == 'wave':
                 self.sim.set_sources([ThAr(), ThAr(), ThAr(), ThAr(), Etalon(d=6, n_photons=1e5)])
@@ -386,7 +389,10 @@ class marvelsim(object):
                 self.sim.set_atmospheres([True, True, True, True, False])
                 # Set radial velocity of stellar target(s)
                 self.sim.set_radial_velocities([args.rv[0][i-1], args.rv[1][i-1], args.rv[2][i-1], args.rv[3][i-1], 0.])
-                
+
+            # Add bias level
+            
+            
             # Set exposure times
             exptime = self.fetch_exptime(imgtype)
             self.sim.set_exposure_time(exptime)
@@ -469,7 +475,7 @@ class marvelsim(object):
             self.pipeline.charge_generation.load_charge.arguments.filename   = filepath
             
             # Set exposure time and time scale (to be identical)
-            # NOTE bias needs a texp=1s
+            # NOTE bias needs a texp=1s since Pyxel makes a scaling to 
             exptime = self.fetch_exptime(imgtype)
             if exptime == 0: exptime = 1
             self.exposure.readout.times = [exptime]
