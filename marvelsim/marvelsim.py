@@ -15,6 +15,7 @@ Computing (HPC) this makes it easy to simulate a time series of spectra.
 import os
 import yaml
 import pyxel
+import shutil
 import datetime
 import argparse
 import subprocess
@@ -101,6 +102,9 @@ class marvelsim(object):
             self.outdir = Path(args.outdir).resolve()
         else:
             errorcode('error', f'Provide a output path! Use -o </path/to/output>')
+
+        # Create output path if it doesn't exist
+        self.outdir.mkdir(parents=True, exist_ok=True)
             
         # Default stellar parameters of a Sun-like star
         if args.time  is None: args.time  = 900.
@@ -414,14 +418,31 @@ class marvelsim(object):
     def init_pyxel(self):
         """
         Module to initialise Pyxel.
-        """                
+        """
+        # We copy and alter the YAML file to correct the "output_folder" location
+        # Define orginal YAML file and the copy output YAML file
+        ifile = self.cwd / "../inputfiles/inputfile_marvel.yaml"
+        ofile = self.outdir / "inputfile_marvel.yaml"
+        # First copy YAML to avoid overwriting the original file
+        shutil.copy2(ifile, ofile)
+        # Load the data within the YAML file
+        stream = open(str(ofile), 'r')
+        data   = yaml.full_load(stream)
+        # Alter the output file location
+        data['exposure']['outputs']['output_folder'] = str(self.outdir)
+        # Overwrite YAML file
+        with open(str(ofile), 'w') as yaml_file:
+            yaml_file.write(yaml.dump(data, default_flow_style=False))
+            
         # Create an instance of the pyxel class from the MARVEL specific inputfile
-        filename_inputfile = self.cwd / "../inputfiles/inputfile_marvel.yaml"
-        config = pyxel.load(filename_inputfile)
+        config = pyxel.load(str(ofile))
         self.exposure = config.exposure
         self.detector = config.ccd_detector
         self.pipeline = config.pipeline
 
+        # Remove YAML input file again (pathlib syntax)
+        ofile.unlink()
+        
         # Set output directory for pyxel
         # NOTE the folder "pyxel_dir" cannot be avoided at the moment..
         # and nor is it possible to rename the pyxel output files..
@@ -430,7 +451,7 @@ class marvelsim(object):
         self.pyxel_path = self.outdir / self.pyxel_dir
         self.pyxel_file = self.pyxel_path / 'detector_image_array_1.fits'
         self.exposure.outputs.output_dir = self.pyxel_path
-
+        
         # Finito!
         return self.pyxel_path
 
