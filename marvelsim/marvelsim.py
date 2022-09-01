@@ -16,6 +16,7 @@ import os
 import yaml
 import pyxel
 import shutil
+import zipfile
 import datetime
 import argparse
 import subprocess
@@ -23,7 +24,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from astropy.io import fits
 from pathlib import Path
-from zipfile import ZipFile
 from utilities import errorcode, add_fitsheader
 
 # PyEchelle
@@ -125,7 +125,7 @@ class marvelsim(object):
 
         # Control exposure time of calibration images [s]
         if args.tdark is None: args.tdark = 900
-        if args.tflat is None: args.tflat = 5
+        if args.tflat is None: args.tflat = 10
         if args.tthar is None: args.tthar = 30
         #if args.tthne is None: args.tthne = 30
         if args.twave is None: args.twave = 5
@@ -169,8 +169,8 @@ class marvelsim(object):
         print(f'Compressing {filename}')
         filepath = str(filepath)
         # Open and write zip file
-        with ZipFile(f'{filepath[:-5]}.zip', 'w') as zipfile:
-            zipfile.write(filepath, filename)
+        with zipfile.ZipFile(f'{filepath[:-5]}.zip', 'w', compression=zipfile.ZIP_DEFLATED) as fzip:
+            fzip.write(filepath, filename)
             # Give full read/write permission
             os.system(f'chmod 755 {filepath[:-5]}.zip')
         # Remove uncompressed file
@@ -305,7 +305,6 @@ class marvelsim(object):
     #         PYECHELLE PYTHON INTERFACE         #  
     #--------------------------------------------#
             
-
     def init_pyechelle(self):
         """
         Module to initialise PyEchelle
