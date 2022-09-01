@@ -15,6 +15,7 @@ radvel = "^1.4.9"
 pyarrow = "^9.0.0"
 docutils = "0.16"
 renku-sphinx-theme = "^0.2.2"
+Flask = "^2.2.2"
 
 [tool.poetry.dev-dependencies]
 
