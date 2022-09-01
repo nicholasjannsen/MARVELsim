@@ -68,7 +68,7 @@ Here we show how to install Poetry on the VSC, however, the general workflow can
    conda activate marvelsim
    pip install --user poetry | POETRY_HOME=$VSC_DATA/poetry python -
    
-Verify that poetry was installed successfully by typing ``poetry --version`` and verify that installation location with ``which poetry``. Next change the installation location of the virtuel poetry eironment to:
+Verify that poetry was installed successfully by typing ``poetry --version`` and verify that installation location with ``which poetry``. Next change the installation location of the virtuel poetry enironment to:
    
 .. code-block:: shell
 
@@ -87,6 +87,13 @@ Finally deactiavte your Conda environment and install MARVELsim from the base di
 
    conda deactivate
    poetry install
+
+
+
+.. raw:: html
+
+   <hr>
+
    
    
 Extra tools

@@ -26,7 +26,7 @@ exposure:
     times: '[1]'
 
   outputs:
-    output_folder: "output"
+    output_folder: ""   # Will be overwritten
     save_data_to_file:
       - detector.image.array: ['fits']
 

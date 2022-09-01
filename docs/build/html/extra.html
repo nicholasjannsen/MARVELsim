@@ -4,7 +4,8 @@
 <html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8" />
-  
+  <meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
   <title>Extra examples &mdash; MARVELsim 0.1.0 documentation</title>
@@ -173,10 +174,10 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="extra-examples">
+  <section id="extra-examples">
 <span id="id1"></span><h1>Extra examples<a class="headerlink" href="#extra-examples" title="Permalink to this headline">¶</a></h1>
 <p>This section serves as an extra overview of the functionality of PyEchelle and Pyxel, respectively.</p>
-<div class="section" id="pyechelle-examples">
+<section id="pyechelle-examples">
 <h2>PyEchelle examples<a class="headerlink" href="#pyechelle-examples" title="Permalink to this headline">¶</a></h2>
 <p>The following examples shows the ease of using PyEchelle from bash. Notice that if you run <code class="docutils literal notranslate"><span class="pre">pyechelle</span></code> from a folder different that the base of MARVELsim, a new <code class="docutils literal notranslate"><span class="pre">model</span></code> folder will created in order to download the spectrograph model. Here we show a few example while using model of the MARVEL spectrograph and we here include a bias level of 10,000 e- including a root-mean-square read noise of 25 e- (which are equivalent ot 2000 ADU and 5 ADU, respectively, with a CCD gain of 5 e-/ADU):</p>
 <p><strong>Bias images:</strong></p>
@@ -202,10 +203,10 @@ pyechelle --fiber <span class="m">1</span>-5 -s MARVEL_2021_11_22 --sources ThNe
 </div>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
-<p>Note that the spectral flat simulates a large amount of photons and thus is the most time consuming. We strongly suggest to use a supported NVIDIA driver for CUDA or split the simulations on several CPUs for parallel computing. Please have a look at the <a class="reference internal" href="performance.html#performance"><span class="std std-ref">Performance section</span></a>.</p>
+<p>Note that the spectral flat simulates a large amount of photons and thus is the most time consuming. We strongly suggest to use a supported NVIDIA driver for CUDA or split the simulations on several CPUs for parallel computing. Please have a look at the <span class="xref std std-ref">Performance section</span>.</p>
 </div>
-</div>
-<div class="section" id="pyxel-examples">
+</section>
+<section id="pyxel-examples">
 <h2>Pyxel examples<a class="headerlink" href="#pyxel-examples" title="Permalink to this headline">¶</a></h2>
 <p>Pyxel has a quite ellaborate documentation page, but to make it easier to test what happens if including different modules and CCD effect to the MARVEL spectra, the folder called <code class="docutils literal notranslate"><span class="pre">test_pyxel</span></code> serves as a small testbed. Wihtin there is a very simply Python script called <code class="docutils literal notranslate"><span class="pre">test.py</span></code> which includes the following code:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/env python3</span>
@@ -229,8 +230,8 @@ pyechelle --fiber <span class="m">1</span>-5 -s MARVEL_2021_11_22 --sources ThNe
 </pre></div>
 </div>
 <p>Seen above scirpt simply initializes Pyxel and reads the <code class="docutils literal notranslate"><span class="pre">test.yaml</span></code> inputfile configuration file. We here here show an example of running Pyxel in exposure mode and changing a few parameters, but this can also easily be done directly from within the configuration yaml file. To lower the computation time, running this test script will return a Pyxel fits images of 300x300 pixels.</p>
-</div>
-</div>
+</section>
+</section>
 
 
            </div>

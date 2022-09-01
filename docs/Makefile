@@ -3,10 +3,15 @@
 
 # You can set these variables from the command line, and also
 # from the environment for the first two.
-SPHINXOPTS    ?=
-SPHINXBUILD   ?= sphinx-build
-SOURCEDIR     = .
-BUILDDIR      = _build
+SPHINXOPTS    =
+SPHINXBUILD   = sphinx-build
+SOURCEDIR     = source
+BUILDDIR      = build
+
+# NOTE: USE THIS WHEN PUSHING TO GITHUB!
+# SOURCEDIR     = .
+# BUILDDIR      = _build
+
 
 # Put it first so that "make" without argument is like "make help".
 help:
@@ -20,6 +25,5 @@ help:
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
 github:
-
 	@make html
 	@cp -a build/html/. ../docs
