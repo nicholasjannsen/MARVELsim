@@ -372,7 +372,8 @@ class marvelsim(object):
         
         for i in range(1, self.fetch_nimg(imgtype)+1):
             errorcode('message', f'\nSimulating {imgtype} with PyEchelle')
-                
+            self.init_pyechelle()
+            
             if imgtype == 'flat':
                 self.sim.set_sources(Constant(intensity=0.01))
             
@@ -611,7 +612,7 @@ args = parser.parse_args()
 
 # Create instance of class
 m = marvelsim()
-m.init_pyechelle()
+#m.init_pyechelle()
 pyxel_path = m.init_pyxel()
 
 if args.calibs:
