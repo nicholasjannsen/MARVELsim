@@ -109,7 +109,7 @@ class marvelsim(object):
         # Default stellar parameters of a Sun-like star
         if args.time  is None: args.time  = 900.
         if args.mag   is None: args.mag   = [10.]
-        if args.teff  is None: args.teff  = [5800.]
+        if args.teff  is None: args.teff  = [5800]
         if args.logg  is None: args.logg  = [4.5]
         if args.z     is None: args.z     = [0.]
         if args.alpha is None: args.alpha = [0.]
@@ -314,7 +314,8 @@ class marvelsim(object):
         self.sim = Simulator(ZEMAX('MARVEL_2021_11_22'))
         self.sim.set_ccd(1)
         self.sim.set_fibers([1, 2, 3, 4, 5])
-
+        self.sim.set_telescope(Telescope(0.8, 0.1))
+        
         # Add bias level and read noise
         self.sim.set_bias(self.bias_level)
         self.sim.set_read_noise(self.read_noise)
@@ -332,7 +333,9 @@ class marvelsim(object):
             if len(args.teff) == 1: args.teff = np.ones(4) * args.teff
             elif len(args.teff) == 4: pass
             else: errorcode('error', 'teff takes only 1 or 4 values!')
-
+            # Make sure that Teff is expressed as integers (PyEchelle requirement)
+            args.teff = [int(i) for i in args.teff]
+            
             if len(args.logg) == 1: args.logg = np.ones(4) * args.logg
             elif len(args.logg) == 4: pass
             else: errorcode('error', 'logg takes only 1 or 4 values!')
@@ -347,26 +350,26 @@ class marvelsim(object):
 
             # Check for RV inputfile
             if args.data:
-                # For CPU parallisation
+                # For parallisation
                 try: data = np.loadtxt(args.data, delimiter=',', skiprows=1)
                 except: errorcode('error', r'File do not exist: {args.data}')
                 else: args.rv = data[:,2:]
             elif args.rv:
                 # Multiple targets, single CPU
                 if len(args.rv) == 1: args.rv = np.ones(4) * args.rv
-                elif len(args.rv) == 4: pass
+                elif len(args.rv) == 4: args.rv = np.array(args.rv)
                 else: errorcode('error', 'alpha takes only 1 or 4 values!')
             else:
                 # Default of zero RV amplitude
-                args.rv = [0, 0, 0, 0]
-
+                args.rv = np.array([0, 0, 0, 0, 0])
             
 
     
     def run_pyechelle(self, imgtype, fitstype):
         """
         Module to generate spectra with PyEchelle.
-        """        
+        """
+        
         for i in range(1, self.fetch_nimg(imgtype)+1):
             errorcode('message', f'\nSimulating {imgtype} with PyEchelle')
                 
@@ -380,22 +383,27 @@ class marvelsim(object):
                 self.sim.set_sources([ThAr(), ThAr(), ThAr(), ThAr(), Etalon(d=6, n_photons=1e5)])
 
             if imgtype == 'science':
-                # Set primary and secondary mirror size [m]
-                self.sim.set_telescope(Telescope(0.8, 0.1))
-                # Set stellar target spectra
+                # Set stellar target spectra + Etalon
                 self.sim.set_sources([Phoenix(t_eff=args.teff[0], log_g=args.logg[0], z=args.z[0], alpha=args.alpha[0], magnitude=args.mag[0]),
                                       Phoenix(t_eff=args.teff[1], log_g=args.logg[1], z=args.z[1], alpha=args.alpha[1], magnitude=args.mag[1]),
                                       Phoenix(t_eff=args.teff[2], log_g=args.logg[2], z=args.z[2], alpha=args.alpha[2], magnitude=args.mag[2]),
                                       Phoenix(t_eff=args.teff[3], log_g=args.logg[3], z=args.z[3], alpha=args.alpha[3], magnitude=args.mag[3]),
                                       Etalon(d=6, n_photons=1e5)])
+
                 # Activate atmospheric transmission for target(s)
                 self.sim.set_atmospheres([True, True, True, True, False])
-                # Set radial velocity of stellar target(s)
-                self.sim.set_radial_velocities([args.rv[0][i-1], args.rv[1][i-1], args.rv[2][i-1], args.rv[3][i-1], 0.])
 
-            # Add bias level
-            
-            
+                # Set radial velocity of stellar target(s) + Etalon
+                if np.ndim(args.rv) == 1:
+                    # Select value for one target
+                    args.rv = [args.rv[0], args.rv[1], args.rv[2], args.rv[3], 0.]
+                else:
+                    # Dataset: Check for 1 common RV signal or 4 different RVs
+                    if len(args.rv)==1: args.rv = [args.rv[i-1], args.rv[i-1], args.rv[i-1], args.rv[i-1], 0.]
+                    elif len(args.rv)==4: args.rv = [args.rv[0][i-1], args.rv[1][i-1], args.rv[2][i-1], args.rv[3][i-1], 0.]
+                    else: errorcode('error', 'RV data file need 1 or 4 columns!')
+                self.sim.set_radial_velocities(args.rv)
+
             # Set exposure times
             exptime = self.fetch_exptime(imgtype)
             self.sim.set_exposure_time(exptime)
@@ -412,7 +420,6 @@ class marvelsim(object):
     #--------------------------------------------#
     #                    PYXEL                   #  
     #--------------------------------------------#
-
 
     def init_pyxel(self):
         """
