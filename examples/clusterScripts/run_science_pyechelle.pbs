@@ -21,5 +21,4 @@ export OUTDIR
 source $POETRY
 
 # Run star spectrum
-python $SIMDIR/marvelsim.py --science --time 300 --mag 10.0 --teff 5800 --logg 4.5 --z 0.0 --alpha 0.0 --data rv_data.txt --cuda --zip -o $OUTDIR
-
+python $SIMDIR/marvelsim.py -s --time 300 --mag 10.0 --teff 5800 --logg 4.5 --z 0.0 --alpha 0.0 --data rv_data.txt --cuda --zip -o $OUTDIR
