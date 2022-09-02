@@ -4,8 +4,7 @@
 <html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8" />
-  <meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
-
+  
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
   <title>Troubleshooting &mdash; MARVELsim 0.1.0 documentation</title>
@@ -98,7 +97,6 @@
 <li class="toctree-l1"><a class="reference internal" href="performance.html">Performance</a></li>
 <li class="toctree-l1"><a class="reference internal" href="extra.html">Extra examples</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Troubleshooting</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#pyxel-s-output-path">Pyxel’s output path</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#cluster-complications">Cluster complications</a></li>
 </ul>
 </li>
@@ -174,23 +172,16 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <section id="troubleshooting">
+  <div class="section" id="troubleshooting">
 <h1>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permalink to this headline">¶</a></h1>
 <p>Please report bugs and issue via a GitHub issues through the <a class="reference external" href="https://github.com/nicholasjannsen/MARVELsim">MARVELsim repository</a>.</p>
-<section id="pyxel-s-output-path">
-<h2>Pyxel’s output path<a class="headerlink" href="#pyxel-s-output-path" title="Permalink to this headline">¶</a></h2>
-<ul class="simple">
-<li><p>Note that while working in a python prompt/environment, Pyxel currently has a bug for overwriting the output file directory stated in the input YAML file. This means that the user needs to manually specify the output path within <code class="docutils literal notranslate"><span class="pre">MARVELsim/inputfiles/inputfile_marvel.yaml</span></code> (see <code class="docutils literal notranslate"><span class="pre">exposure:outputs:output_folder</span></code>). Otherwise the default <code class="docutils literal notranslate"><span class="pre">MARVELsim/output</span></code> folder will be used. If you try to save data</p></li>
-<li><p>The output directory is particular important to set correctly when running simulations on a cluster. Notice that <code class="docutils literal notranslate"><span class="pre">OUTDIR</span></code> within your job script and the <code class="docutils literal notranslate"><span class="pre">ouput_folder</span></code> within the input file <code class="docutils literal notranslate"><span class="pre">inputfiles/inputfile_marvelsim.yaml</span></code> need to match each othe. Furthermore both paths needs to absolute paths, hence, do not use symbolic links like <code class="docutils literal notranslate"><span class="pre">$DATA</span></code>.</p></li>
-</ul>
-</section>
-<section id="cluster-complications">
+<div class="section" id="cluster-complications">
 <h2>Cluster complications<a class="headerlink" href="#cluster-complications" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li><p>When saving files on a computing cluster you may experience that the symbolic link like <code class="docutils literal notranslate"><span class="pre">$DATA</span></code>, <code class="docutils literal notranslate"><span class="pre">$SCRATCH</span></code>, etc. are not globally accessable to the node-cores for which the simulations are taking place, even if these paths are being exported as part of your job scripts. E.g. on the VSC cluster the <strong>scratch</strong> file location (called <code class="docutils literal notranslate"><span class="pre">VSC_SCRATCH</span></code>) are not recognized on the compute nodes and hence here we need to use the abosule path <code class="docutils literal notranslate"><span class="pre">/scratch/path/to/marvelsim/output</span></code>.</p></li>
 </ul>
-</section>
-</section>
+</div>
+</div>
 
 
            </div>

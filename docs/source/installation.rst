@@ -5,7 +5,7 @@ In this tutorial we cover how to setup an Python environment that allows you qui
 
 .. important::
 
-   We recommend to follow the installation instructions below and using `Poetry <https://python-poetry.org/>`_ to install MARVELsim. While using Python 3.8 and Poetry you will get a direct freeze of the software which successfully will build across any platform.
+   We recommend to follow the installation instructions below while using `Poetry <https://python-poetry.org/>`_ to install MARVELsim. While using Python 3.8 and Poetry you will get a direct freeze of the software which successfully will build across any platform.
 
    
 1. Downlod from source
