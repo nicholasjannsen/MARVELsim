@@ -11,7 +11,7 @@ In order to speed up the simulations we here demonstrate how to run MARVELsim on
    * Copy one of the job script examples within ``MARVELsim/examples/clusterScripts``
    * Adjust the job script details: resources, paths/names, input parameters, etc.
    * Adjust the paths ``POETRY``, ``SIMDIR``, and ``OUTDIR``
-
+   * Submit the simulations to the cluster que (e.g. with ``qsub`` on the VSC)
 ..
   * If using science mode, consider using a :ref:`workflow <performance_workflow>`
 

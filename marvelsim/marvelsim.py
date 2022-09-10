@@ -58,25 +58,31 @@ class marvelsim(object):
         # CCD PARAMETERS
         
         # Image dimentions
+        self.bit = 65536
         self.dim = 10560
         
         # Default readout mode
         if args.readmode is None: self.readmode = 'fast'
         else: self.readmode = args.readmode
         
-        # Gain [e/ADU] and Readout speed [kHz]
-        if self.readmode in {'fast', 'fastmax'}:
-            self.gain  = 9.4
-            self.speed = 50
-        elif self.readmode in {'slow', 'slowmax'}:
-            self.gain  = 3.0
-            self.speed = 1000
+        # Properties for readout modes
+        if self.readmode in {'slow', 'slowmax'}:
+            self.speed   = 1000         # [kHz]
+            self.gain_ac = 3.0          # [e/ADU]
+            self.gain_dc = 21.9e-6      # [V/ADU]
+        elif self.readmode in {'fast', 'fastmax'}:
+            self.speed   = 50           # [kHz]
+            self.gain_ac = 9.4          # [e/ADU]
+            self.gain_dc = 65.8e-6      # [V/ADU]
         else:
             errorcode('error', f'Invalid readout mode: {args.readmode}')
 
+        # ADC input range
+        self.adc_range = [0, self.gain_dc*self.bit]  # [V]
+
         # Bias offset and bias level
-        self.bias       = 1000                        # [ADU]
-        self.bias_level = int(self.bias * self.gain)  # [e-]
+        self.bias       = 1000                           # [ADU]
+        self.bias_level = int(self.bias * self.gain_ac)  # [e-]
 
         # Read noise RMS [e-]
         if   self.readmode == 'fast':    self.read_noise = 2.5  # Nominal fast-readout [e-]
@@ -458,6 +464,9 @@ class marvelsim(object):
         self.pyxel_path = self.outdir / self.pyxel_dir
         self.pyxel_file = self.pyxel_path / 'detector_image_array_1.fits'
         self.exposure.outputs.output_dir = self.pyxel_path
+
+        # Set ADC range for readout mode
+        self.detector.characteristics.adc_voltage_range = self.adc_range
         
         # Finito!
         return self.pyxel_path
@@ -524,7 +533,7 @@ class marvelsim(object):
             
             # Add fits header
             print('Adding fits-header')
-            add_fitsheader(filepath, fitstype, exptime, self.readmode, self.bias, self.gain, self.speed)
+            add_fitsheader(filepath, fitstype, exptime, self.readmode, self.bias, self.gain_ac, self.speed)
             # Give full read/write permission
             os.system(f'chmod 755 {filepath}')
             
@@ -554,7 +563,7 @@ class marvelsim(object):
         os.system(f'mv {self.pyxel_file} {filepath}')
         # Add fits header
         print('Adding fits-header')
-        add_fitsheader(filepath, fitstype, exptime, self.readmode, self.bias, self.gain, self.speed)
+        add_fitsheader(filepath, fitstype, exptime, self.readmode, self.bias, self.gain_ac, self.speed)
         # Give full read/write permission
         os.system(f'chmod 755 {filepath}')
         # Compress file

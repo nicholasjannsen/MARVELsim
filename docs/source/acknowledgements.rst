@@ -3,7 +3,7 @@ Acknowledgements
 
 If you use or refer to this code please acknowledge:
 
-* `Jannsen et al., 2022, SPIE, 12186-67 <https://spie.org/astronomical-telescopes-instrumentation/presentation/MARVEL-extracting-high-precision-radial-velocities-of-exoplanet-hosts/12186-67>`_
+* `Jannsen et al., 2022, SPIE, 12186-67 <https://www.spiedigitallibrary.org/conference-proceedings-of-spie/12186/2630748/MARVEL-extracting-high-precision-radial-velocities-of-exoplanet-hosts/10.1117/12.2630748.short?SSO=1>`_
 
 Please also consider acknowledging the following papers: 
   
