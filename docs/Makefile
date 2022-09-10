@@ -9,6 +9,7 @@ SOURCEDIR     = source
 BUILDDIR      = build
 
 # NOTE: USE THIS WHEN PUSHING TO GITHUB!
+# cp source/index.rst .
 # SOURCEDIR     = .
 # BUILDDIR      = _build
 
