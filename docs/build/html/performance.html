@@ -37,6 +37,7 @@
         <script src="_static/jquery.js"></script>
         <script src="_static/underscore.js"></script>
         <script src="_static/doctools.js"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
@@ -94,7 +95,12 @@
 <li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Performance</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Performance</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#vsc-information">VSC information</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#job-script-calibration-mode">Job script - Calibration mode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#job-script-science-mode">Job script - Science mode</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="extra.html">Extra examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="troubleshooting.html">Troubleshooting</a></li>
 <li class="toctree-l1"><a class="reference internal" href="acknowledgements.html">Acknowledgements</a></li>
@@ -170,60 +176,99 @@
            <div itemprop="articleBody">
             
   <div class="section" id="performance">
-<span id="id1"></span><h1>Performance<a class="headerlink" href="#performance" title="Permalink to this headline">¶</a></h1>
-<p>In order to speed up the simulations in order obtain a set of calibrated data or a time series of stellar spectra with RV variations, we here demonstrate how to run MARVELsim on a High Performace Computing (HPC) facility. We note that MARVELsim is specifically designed to run with CUDA NVIDIA hardware which typically is available for GPU nodes on most computing clusters. Since PyEchelle are the bottleneck for running large simulations using CUDA or running the simulations on multiple CPUs has a dramatic decrease of the computational time. We specifically refer to <a class="reference external" href="https://stuermer.gitlab.io/pyechelle/benchmark.html">PyEchelle’s documentation on performance</a> for more information.</p>
-<p>We will use the Vlaams Supercomputing Centre (VSC) as example on how to create a job script that runs with GPUs. We likewise provide two job script examples in the <code class="docutils literal notranslate"><span class="pre">MARVELsim/hpc</span></code> folder for your convenience. The first (<code class="docutils literal notranslate"><span class="pre">run_calibs.pbs</span></code>) shows a typical job script for running a full set of calibrated data:</p>
+<h1>Performance<a class="headerlink" href="#performance" title="Permalink to this headline">¶</a></h1>
+<p>In order to speed up the simulations we here demonstrate how to run MARVELsim on a High Performace Computing (HPC) facility. Generally, since PyEchelle is the natural bottleneck w.r.t. computation time, MARVELsim takes advantage of PyEchelle’s user friendly interface to run simulations on GPUs or normal CPUs. As this dramatically decrease the run time, we strongly recommend to checkout <a class="reference external" href="https://stuermer.gitlab.io/pyechelle/benchmark.html">PyEchelle’s documentation on performance</a> for a deeper understanding of what’s going on under the hood in what follows.</p>
+<div class="admonition-step-by-step-guide admonition">
+<p class="admonition-title">Step-by-step guide</p>
+<p>We will use the <a class="reference external" href="https://www.vscentrum.be/getaccess">Vlaams Supercomputer Centrum (VSC)</a> as example on how run the calibration and science mode of MARVELsim. Follow these steps to run simulations on the VSC:</p>
+<ul class="simple">
+<li><p>If using science mode, generate a RV time series using <code class="docutils literal notranslate"><span class="pre">rv-generator.py</span></code></p></li>
+<li><p>Copy one of the job script examples within <code class="docutils literal notranslate"><span class="pre">MARVELsim/examples/clusterScripts</span></code></p></li>
+<li><p>Adjust the job script details: resources, paths/names, input parameters, etc.</p></li>
+<li><p>Adjust the paths <code class="docutils literal notranslate"><span class="pre">POETRY</span></code>, <code class="docutils literal notranslate"><span class="pre">SIMDIR</span></code>, and <code class="docutils literal notranslate"><span class="pre">OUTDIR</span></code></p></li>
+<li><p>Submit the simulations to the cluster que (e.g. with <code class="docutils literal notranslate"><span class="pre">qsub</span></code> on the VSC)</p></li>
+</ul>
+</div>
+<hr><div class="section" id="vsc-information">
+<h2>VSC information<a class="headerlink" href="#vsc-information" title="Permalink to this headline">¶</a></h2>
+<p>Since MARVELsim is being developed by the KU Leuven team we here provide further information for future users with access to the <a class="reference external" href="https://www.vscentrum.be/getaccess">Vlaams Supercomputer Centrum (VSC)</a>:</p>
+<p>To get started using the VSC infrastrutrue we recommend reading:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><a class="reference external" href="https://vlaams-supercomputing-centrum-vscdocumentation.readthedocs-hosted.com/en/latest/leuven/genius_quick_start.html#submit-to-genius-gpu-node">Genius quickstart guide</a></p></li>
+<li><p><a class="reference external" href="https://vlaams-supercomputing-centrum-vscdocumentation.readthedocs-hosted.com/en/latest/leuven/tier2_hardware/genius_hardware.html">Genius hardware</a></p></li>
+</ul>
+</div></blockquote>
+<p>For the VSC (Genius), further notice should be taken to:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Notice that adding more GPU nodes will not speed up the computations, however, some cluster do provide more GPUs which will decrease the run time.</p></li>
+<li><p>We recommend to debug and test the computational resources needed for your jobs adding <code class="docutils literal notranslate"><span class="pre">#PBS</span> <span class="pre">-l</span> <span class="pre">qos=debugging</span></code> to the PSB details in the scripts shown above.</p></li>
+<li><p>We note that in the following examples, the resources w.r.t. skylake GPU nodes are the maximum and, hence, the computation times on the VSC stated the following are at their minimum.</p></li>
+</ul>
+</div></blockquote>
+<hr></div>
+<div class="section" id="job-script-calibration-mode">
+<span id="performance-calibs"></span><h2>Job script - Calibration mode<a class="headerlink" href="#job-script-calibration-mode" title="Permalink to this headline">¶</a></h2>
+<p>The first example (<code class="docutils literal notranslate"><span class="pre">run_calibs.pbs</span></code>) shows a typical job script for running a full set of calibrated data:</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/bin/bash</span>
 
 <span class="c1">#PBS -N output</span>
-<span class="c1">#PBS -A &lt;account_name&gt;</span>
+<span class="c1">#PBS -A &lt;account&gt;</span>
 <span class="c1">#PBS -l nodes=1:ppn=36:gpus=4:skylake</span>
 <span class="c1">#PBS -l partition=gpu</span>
 <span class="c1">#PBS -l pmem=2gb</span>
-<span class="c1">#PBS -l walltime=03:00:00</span>
+<span class="c1">#PBS -l walltime=10:00:00</span>
 
 <span class="nb">cd</span> <span class="nv">$PBS_O_WORKDIR</span>
 
-<span class="nv">PYTHONPATH</span><span class="o">=</span><span class="nv">$VSC_DATA</span>/MARVELsim/marvelsim/bin/python
-<span class="nb">export</span> PYTHONPATH
-<span class="nv">SIMDIR</span><span class="o">=</span><span class="nv">$VSC_DATA</span>/MARVELsim
+<span class="nv">POETRY</span><span class="o">=</span><span class="nv">$VSC_DATA</span>/poetry/virtualenvs/marvelsim-3qcQCF7a-py3.8/bin/activate
+<span class="nb">export</span> POETRY
+<span class="nv">SIMDIR</span><span class="o">=</span><span class="nv">$VSC_DATA</span>/MARVELsim/marvelsim
 <span class="nb">export</span> SIMDIR
+<span class="nv">OUTDIR</span><span class="o">=</span>/scratch/leuven/341/vsc34166/marvelsim/output
+<span class="nb">export</span> OUTDIR
 
-<span class="c1"># Activate environment</span>
-<span class="nb">source</span> marvelsim/bin/activate
+<span class="c1"># Activate poetry shell</span>
+<span class="nb">source</span> <span class="nv">$POETRY</span>
 
-<span class="c1"># Run MARVELsim</span>
-<span class="nb">cd</span> <span class="nv">$SIMDIR</span>
-python simulator-marvel.py --calibs --cuda --zip -o <span class="nv">$SIMDIR</span>/output
+<span class="c1"># Run calibration mode</span>
+python <span class="nv">$SIMDIR</span>/marvelsim.py --calibs --cuda --zip -o <span class="nv">$OUTDIR</span>
 </pre></div>
 </div>
-<p>Illustrated here we request a single node with 4 GPUs using each using 9 CPU claves (hence 36 in total) to execute the job. We request 2 GB of memory RAM to be on the safe side since a single 10,560 x 10,560 pixel full frame image occupy 851 Mb. Notice that it is possible to compress each image on the fly by enabling the flag <code class="docutils literal notranslate"><span class="pre">zip</span></code> as done in this example. Typical deflation rates per image are around 80%, hence, it is highly recommended to invoke this flag for faster data transfer after end job. For the job script show above the total run time (walltime) was 2 hours and 40 minutes.</p>
+<p>Similar to the example given in the <a class="reference internal" href="tutorial.html#tutorial-calibration"><span class="std std-ref">tutorial</span></a>, we here use the off-the-shelf methodology of producing a set of calibrated data by simply invoking the flag <code class="docutils literal notranslate"><span class="pre">--calibs</span></code>. Furthermore we activate the flag <code class="docutils literal notranslate"><span class="pre">--cuda</span></code> and request a single node with 4 GPUs each using 9 CPU slaves (hence 36 in total) to execute the job. We request 2 GB of memory RAM to be on the safe side since a single <span class="math notranslate nohighlight">\(10,560 \times 10,560 \, \text{pixel}\)</span> full frame image occupy 851 Mb. In order to activate your Poetry shell the absolute path needs to be exported globally.</p>
+<p>If <code class="docutils literal notranslate"><span class="pre">poetry</span> <span class="pre">shell</span></code> is activated you can simply type <code class="docutils literal notranslate"><span class="pre">which</span> <span class="pre">python</span></code> to get the absolute path needed to add to the above variable <code class="docutils literal notranslate"><span class="pre">POETRY</span></code>. We here save the output data to the <strong>scratch</strong> file location in order avoid overflowing our memory storage on the <strong>data</strong> storage. Notice that it is possible to compress each image on the fly by enabling the flag <code class="docutils literal notranslate"><span class="pre">--zip</span></code> as done in this example. Typical deflation rates per image are around 80%, hence, it is highly recommended to invoke this flag for faster data transfer after end job. For the job script shown above the total run time (a.k.a. walltime) was 2 hours and 40 minutes.</p>
+<hr></div>
+<div class="section" id="job-script-science-mode">
+<span id="performance-science"></span><h2>Job script - Science mode<a class="headerlink" href="#job-script-science-mode" title="Permalink to this headline">¶</a></h2>
 <p>The following example (<code class="docutils literal notranslate"><span class="pre">run_science.pbs</span></code>) shows a job script for running 300 stellar spectra using a generated RV time series called <code class="docutils literal notranslate"><span class="pre">rv_data.txt</span></code>:</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/bin/bash</span>
 
 <span class="c1">#PBS -N output</span>
-<span class="c1">#PBS -A &lt;account/project&gt;</span>
+<span class="c1">#PBS -A &lt;account&gt;</span>
 <span class="c1">#PBS -l nodes=1:ppn=36:gpus=4:skylake</span>
 <span class="c1">#PBS -l partition=gpu</span>
 <span class="c1">#PBS -l pmem=2gb</span>
-<span class="c1">#PBS -l walltime=40:00:00</span>
+<span class="c1">#PBS -l walltime=12:00:00</span>
 
 <span class="nb">cd</span> <span class="nv">$PBS_O_WORKDIR</span>
 
-<span class="nv">PYTHONPATH</span><span class="o">=</span><span class="nv">$VSC_DATA</span>/MARVELsim/marvelsim/bin/python
-<span class="nb">export</span> PYTHONPATH
-<span class="nv">SIMDIR</span><span class="o">=</span><span class="nv">$VSC_DATA</span>/MARVELsim
+<span class="nv">POETRY</span><span class="o">=</span><span class="nv">$VSC_DATA</span>/poetry/virtualenvs/marvelsim-3qcQCF7a-py3.8/bin/activate
+<span class="nb">export</span> POETRY
+<span class="nv">SIMDIR</span><span class="o">=</span><span class="nv">$VSC_DATA</span>/MARVELsim/marvelsim
 <span class="nb">export</span> SIMDIR
+<span class="nv">OUTDIR</span><span class="o">=</span>/scratch/leuven/341/vsc34166/marvelsim/output
+<span class="nb">export</span> OUTDIR
 
-<span class="c1"># Activate environment</span>
-<span class="nb">source</span> marvelsim/bin/activate
+<span class="c1"># Activate poetry shell</span>
+<span class="nb">source</span> <span class="nv">$POETRY</span>
 
-<span class="c1"># Run MARVELsim</span>
-<span class="nb">cd</span> <span class="nv">$SIMDIR</span>
-python simulator-marvel.py --time <span class="m">900</span> --mag <span class="m">10</span>.0 --teff <span class="m">5800</span> --logg <span class="m">4</span>.5 --z <span class="m">0</span>.0 --alpha <span class="m">0</span>.0 --data rv_data.txt --cuda --zip -o <span class="nv">$SIMDIR</span>/output
+<span class="c1"># Run science mode</span>
+python <span class="nv">$SIMDIR</span>/marvelsim.py --science --time <span class="m">900</span> --mag <span class="m">10</span>.0 --teff <span class="m">5800</span> --logg <span class="m">4</span>.5 --z <span class="m">0</span>.0 --alpha <span class="m">0</span>.0 --data rv_data.txt --cuda --zip -o <span class="nv">$OUTPUT</span>
 </pre></div>
 </div>
-<p>Compared to the previous job script we here use the same computational resources, however, with the exception of increasing the walltime. Notice that adding more nodes will not speed up the computations, however, some cluster do provide more GPUs which will decrease the run time. We recommend to debug and test the computational resources needed for your jobs adding <code class="docutils literal notranslate"><span class="pre">#PBS</span> <span class="pre">-l</span> <span class="pre">qos=debugging</span></code> to the PSB details in the scripts shown above.</p>
+<p>Akin to the previous job script we here use the same computational resources, however, with the exception of increasing the walltime and the flag <code class="docutils literal notranslate"><span class="pre">--science</span></code>. Notice that adding more nodes will not speed up the computations, however, some cluster do provide more GPUs which will decrease the run time. We recommend to debug and test the computational resources needed for your jobs adding <code class="docutils literal notranslate"><span class="pre">#PBS</span> <span class="pre">-l</span> <span class="pre">qos=debugging</span></code> to the PSB details in the scripts shown above and run a single simulation.</p>
+</div>
 </div>
 
 

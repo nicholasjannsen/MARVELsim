@@ -3,13 +3,21 @@ Overview
 
 This documentation is an easy guide how to sucessfully generate realistic MARVEL data products. The simulations are build from two popular main modules named `PyEchelle <https://stuermer.gitlab.io/pyechelle/index.html>`_ and `Pyxel <https://esa.gitlab.io/pyxel/>`_. `PyEchelle <https://stuermer.gitlab.io/pyechelle/index.html>`_ is a Python based fast generic spectrum simulator that is used to generate each object or calibration spectrum, whereas `Pyxel <https://esa.gitlab.io/pyxel/>`_ is a general imaging detector simulation framework in Python that is used to efficiently add-on all necessary CCDs effects.
 	 
-.. image:: marvel_spectrum.png
+.. figure:: figures/marvel_spectrum.png
    :align: center
    :width: 700
-
-The above figure (with curtesy of this `paper <https://arxiv.org/pdf/2012.08121.pdf>`_) outlines the echelle spectrum of the MARVEL spectrograph for a potential object spectrum fed to fiber 2-5 and with Etalon fed to fiber 1. 
-
 	   
+   This figure (with curtesy of this `paper <https://arxiv.org/pdf/2012.08121.pdf>`_) outlines the echelle spectrum of the MARVEL spectrograph for a potential object spectrum fed to fiber 2-5 and with Etalon fed to fiber 1. 
+
+
+
+.. raw:: html
+
+   <hr>
+
+
+
+   
 More information
 ----------------
 

@@ -96,7 +96,10 @@
 <li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a></li>
 <li class="toctree-l1"><a class="reference internal" href="performance.html">Performance</a></li>
 <li class="toctree-l1"><a class="reference internal" href="extra.html">Extra examples</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Troubleshooting</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Troubleshooting</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#cluster-complications">Cluster complications</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="acknowledgements.html">Acknowledgements</a></li>
 </ul>
 
@@ -172,6 +175,12 @@
   <div class="section" id="troubleshooting">
 <h1>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permalink to this headline">¶</a></h1>
 <p>Please report bugs and issue via a GitHub issues through the <a class="reference external" href="https://github.com/nicholasjannsen/MARVELsim">MARVELsim repository</a>.</p>
+<div class="section" id="cluster-complications">
+<h2>Cluster complications<a class="headerlink" href="#cluster-complications" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>When saving files on a computing cluster you may experience that the symbolic link like <code class="docutils literal notranslate"><span class="pre">$DATA</span></code>, <code class="docutils literal notranslate"><span class="pre">$SCRATCH</span></code>, etc. are not globally accessable to the node-cores for which the simulations are taking place, even if these paths are being exported as part of your job scripts. E.g. on the VSC cluster the <strong>scratch</strong> file location (called <code class="docutils literal notranslate"><span class="pre">VSC_SCRATCH</span></code>) are not recognized on the compute nodes and hence here we need to use the abosule path <code class="docutils literal notranslate"><span class="pre">/scratch/path/to/marvelsim/output</span></code>.</p></li>
+</ul>
+</div>
 </div>
 
 

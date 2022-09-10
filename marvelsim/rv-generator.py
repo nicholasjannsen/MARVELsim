@@ -142,8 +142,10 @@ class RV(object):
             header = 'index, time, rv'
             np.savetxt(args.outputfile, np.transpose([index, self.t, self.RV]),
                        fmt=fmt, header=header, comments='', delimiter=',')
-
-
+            # Save as feather instead
+            #import pandas as pd
+            #df = pd.DataFrame(np.transpose([self.t, self.RV]), columns=['time', 'rv0'])
+            #df.to_feather(args.outputfile)
 
 
 

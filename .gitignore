@@ -10,8 +10,10 @@
 *.#*
 
 # Folders
+output/
 models/
 hpc/server/
+
 
 # Make exceptions
 !inputfiles/proton_L2_solarMax_11mm_Shielding.txt
