@@ -28,11 +28,11 @@ def errorcode(API, message):
 
 
 
-def add_fitsheader(filename, obsmode, exptime,
+def add_fitsheader(filepath, filename, obsmode, exptime,
                    readmode, speed, gain_ac, bias,
                    readsen, gain_amp, adc_range):
     # Load and open file
-    hdul = fits.open(filename)
+    hdul = fits.open(filepath)
     hdr = hdul[0].header
     # Get software versions
     marvelsim_version = pkg_resources.get_distribution('MARVELsim').version

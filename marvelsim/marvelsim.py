@@ -13,6 +13,7 @@ Computing (HPC) this makes it easy to simulate a time series of spectra.
 """
 
 import os
+import glob
 import yaml
 import pyxel
 import shutil
@@ -60,6 +61,10 @@ class marvelsim(object):
         # Image dimentions
         self.bit = 65536
         self.dim = 10560
+
+        # Resolution mode
+        # TODO only high (H) for now -> future use ultr-high (U)
+        self.resmode = 'H'
         
         # Default readout mode
         if args.readmode is None: self.readmode = 'slow'
@@ -131,12 +136,19 @@ class marvelsim(object):
         if args.rv    is None: args.rv    = [0.]
 
         # Control number of calibration images
-        if args.nbias is None: args.nbias = 10
-        if args.ndark is None: args.ndark = 5
-        if args.nflat is None: args.nflat = 5
-        if args.nthar is None: args.nthar = 5
-        if args.nwave is None: args.nwave = 5
-        #if args.nthne is None: args.nthne = 5
+        if args.calibs:
+            if args.nbias is None: args.nbias = 10
+            if args.ndark is None: args.ndark = 5
+            if args.nflat is None: args.nflat = 5
+            if args.nthar is None: args.nthar = 5
+            if args.nwave is None: args.nwave = 5
+            #if args.nthne is None: args.nthne = 5
+        else:
+            if args.nbias is None: args.nbias = 1
+            if args.ndark is None: args.ndark = 1
+            if args.nflat is None: args.nflat = 1
+            if args.nthar is None: args.nthar = 1
+            if args.nwave is None: args.nwave = 1
 
         # Control exposure time of calibration images [s]
         if args.tdark is None: args.tdark = 900
@@ -151,12 +163,12 @@ class marvelsim(object):
         """
         Module fetch the number of exposure of image type.
         """
-        if imgtype == 'bias':    nimg = args.nbias
-        if imgtype == 'dark':    nimg = args.ndark
-        if imgtype == 'flat':    nimg = args.nflat
-        if imgtype == 'thar':    nimg = args.nthar
-        if imgtype == 'wave':    nimg = args.nwave
-        if imgtype == 'science': nimg = self.nscie
+        if imgtype == 'BBBBB': nimg = args.nbias
+        if imgtype == 'DDDDD': nimg = args.ndark
+        if imgtype == 'FFFFF': nimg = args.nflat
+        if imgtype == 'TTTTT': nimg = args.nthar
+        if imgtype == 'ETTTT': nimg = args.nwave
+        if imgtype == 'SSSSS': nimg = self.nscie
         # Finito!
         return nimg
 
@@ -166,15 +178,28 @@ class marvelsim(object):
         """
         Module fetch the exposure time of image type.
         """
-        if imgtype == 'bias':    exptime = 0
-        if imgtype == 'dark':    exptime = args.tdark
-        if imgtype == 'flat':    exptime = args.tflat
-        if imgtype == 'thar':    exptime = args.tthar
-        if imgtype == 'wave':    exptime = args.twave
-        if imgtype == 'science': exptime = args.time
+        if imgtype == 'BBBBB': exptime = 0.001
+        if imgtype == 'DDDDD': exptime = args.tdark
+        if imgtype == 'FFFFF': exptime = args.tflat
+        if imgtype == 'TTTTT': exptime = args.tthar
+        if imgtype == 'ETTTT': exptime = args.twave
+        if imgtype == 'SSSSS': exptime = args.time
         # Finito!
         return exptime
 
+
+
+    def fetch_filename(self, imgtype, resmode, exptime):
+        """
+        Module fetch the exposure time of image type.
+        """
+        now  = datetime.datetime.now()
+        date = f'{now.strftime("%Y")}{now.strftime("%m")}{now.strftime("%d")}'
+        time = datetime.datetime.now().strftime("%H%M%S")
+        filename = f'{date}T{time}_{imgtype}_{resmode}_'+f'{int(exptime)}'.zfill(4)+'.fits'
+        # Finito!
+        return filename
+    
     
     
     def compress_data(self, filename, filepath):
@@ -197,7 +222,7 @@ class marvelsim(object):
     #                 BIAS IMAGES                #  
     #--------------------------------------------#
         
-    def run_bias(self, imgtype, fitstype):
+    def run_bias(self, imgtype):
         """
         Module to generate both bias and dark data arrays.
         Dark arrays are here identical to bias arrays but darks will be
@@ -206,7 +231,8 @@ class marvelsim(object):
         for i in range(1, self.fetch_nimg(imgtype)+1):
             errorcode('message', f'\nSimulating {imgtype} with Numpy')
             # Setup paths
-            filename = f'{imgtype}_'+f'{i}'.zfill(4)+'.fits'
+            exptime  = self.fetch_exptime(imgtype)
+            filename = self.fetch_filename(imgtype, self.resmode, exptime)
             filepath = self.outdir / filename
             # Create data array
             bias = self.rng.normal(self.bias_level, self.read_noise, size=(self.dim, self.dim)).astype(int)
@@ -280,7 +306,7 @@ class marvelsim(object):
             
 
     
-    def run_pyechelle(self, imgtype, fitstype):
+    def run_pyechelle(self, imgtype):
         """
         Module to generate spectra with PyEchelle.
         """
@@ -290,25 +316,26 @@ class marvelsim(object):
         self.sim.set_exposure_time(exptime)
 
         # Adjust etalon intensity
-        n_etalon = 0.75e5 / exptime
+        if int(exptime) == 0: n_etalon = 1e5
+        else: n_etalon = 0.75e5 / exptime
 
         # Run loop over each exposure
-        for i in range(1, self.fetch_nimg(imgtype)+1):
+        for i in range(self.fetch_nimg(imgtype)):
             errorcode('message', f'\nSimulating {imgtype} with PyEchelle')
-
-            # PyEchelle in Python needs to be re-initialized
-            self.init_pyechelle()
             
-            if imgtype == 'flat':
+            # PyEchelle in Python needs to be re-initialized
+            #self.init_pyechelle()
+
+            if imgtype == 'FFFFF':
                 self.sim.set_sources(Constant(intensity=0.01))
             
-            if imgtype == 'thar':
+            if imgtype == 'TTTTT':
                 self.sim.set_sources(ThAr())
                 
-            if imgtype == 'wave':
+            if imgtype == 'ETTTT':
                 self.sim.set_sources([Etalon(d=6, n_photons=n_etalon), ThAr(), ThAr(), ThAr(), ThAr()])
 
-            if imgtype == 'science':
+            if imgtype == 'SSSSS':
                 # Set etalon + star(s)
                 self.sim.set_sources([Etalon(d=6, n_photons=n_etalon),
                                       Phoenix(t_eff=args.teff[0], log_g=args.logg[0], z=args.z[0], alpha=args.alpha[0], magnitude=args.mag[0]),
@@ -325,16 +352,16 @@ class marvelsim(object):
                     args.rv = [0., args.rv[0], args.rv[1], args.rv[2], args.rv[3]]
                 else:
                     # Dataset: Check for 1 common RV signal or 4 different RVs
-                    if args.rv.shape[1]==1:   args.rv = [0., args.rv[i-1],    args.rv[i-1],    args.rv[i-1],   args.rv[i-1]]
+                    if args.rv.shape[1]==1:   args.rv = [0., args.rv[i-1],    args.rv[i-1],    args.rv[i-1],    args.rv[i-1]]
                     elif args.rv.shape[1]==4: args.rv = [0., args.rv[0][i-1], args.rv[1][i-1], args.rv[2][i-1], args.rv[3][i-1]]
-                    else: errorcode('error', 'RV data file need 1 or 4 columns!')
+                    else: errorcode('error', 'RV data file need 1 or 4 columns of RVs!')
                 self.sim.set_radial_velocities(args.rv)
 
             # Set outputfile location
-            filename = f'{imgtype}_'+f'{i}'.zfill(4)+'.fits'
+            filename = self.fetch_filename(imgtype, self.resmode, exptime)
             filepath = self.outdir / filename
             self.sim.set_output(filepath, overwrite=True)
-            
+
             # Run simulation
             self.sim.run()
 
@@ -374,6 +401,7 @@ class marvelsim(object):
         # Set output directory for pyxel
         # NOTE the folder "pyxel_dir" cannot be avoided at the moment..
         # and nor is it possible to rename the pyxel output files..
+        # This is our workaround:
         output_dir = str(self.exposure.outputs.output_dir)
         self.pyxel_dir  = output_dir.split('/')[-1]
         self.pyxel_path = self.outdir / self.pyxel_dir
@@ -394,7 +422,7 @@ class marvelsim(object):
         Module to draw cosmic rays from a Poisson distibution scaled to the exposure time.
         """
         # Make sure cosmics are being added
-        if imgtype == 'bias':
+        if imgtype == 'BBBBB':
             self.pipeline.photon_generation.cosmix.enabled = False
         else:
             self.pipeline.photon_generation.cosmix.enabled = True
@@ -418,26 +446,25 @@ class marvelsim(object):
 
 
     
-    def run_pyxel(self, imgtype, fitstype):
+    def run_pyxel(self, imgtype):
         """
         Module to add CCD effects spectra with Pyxel.
         """
 
-        for i in range(1, self.fetch_nimg(imgtype)+1):
+        for i in range(self.fetch_nimg(imgtype)):
             errorcode('message', f'\nSimulating {imgtype} with Pyxel')
 
-            # Fetch and set filename
-            filename = f'{imgtype}_' + f'{i}'.zfill(4) + '.fits'
-            filepath = self.outdir / filename
-            self.pipeline.charge_generation.load_charge.arguments.filename = filepath
-            
             # Set exposure time and time scale (to be identical)
-            # NOTE bias needs a texp=1s since Pyxel makes a scaling to 
             exptime = self.fetch_exptime(imgtype)
-            if exptime == 0: exptime = 1
+            if int(exptime) == 0: exptime = self.fetch_exptime('BBBBB')
             self.exposure.readout.times = [exptime]
             self.pipeline.charge_generation.load_charge.arguments.time_scale = exptime            
-            
+
+            # Fetch and set filename
+            filename = glob.glob(str(self.outdir) + f'/*{imgtype}*.fits')[i]
+            filepath = self.outdir / filename
+            self.pipeline.charge_generation.load_charge.arguments.filename = filepath
+                        
             # Enable cosmic rays
             self.enable_cosmics(imgtype)
             
@@ -449,7 +476,7 @@ class marvelsim(object):
             
             # Add fits header
             print('Adding fits-header')
-            add_fitsheader(filepath, fitstype, exptime,
+            add_fitsheader(filepath, filename, imgtype, exptime,
                            self.readmode, self.speed, self.gain_ac, self.bias, 
                            self.readsen, self.gain_amp, self.adc_range)
             # Give full read/write permission
@@ -461,7 +488,7 @@ class marvelsim(object):
 
 
                 
-    def run_pyxel_cpu(self, imgtype, fitstype):
+    def run_pyxel_cpu(self, imgtype):
         """
         Module to add CCD effects spectra with Pyxel.
         """
@@ -481,7 +508,7 @@ class marvelsim(object):
         os.system(f'mv {self.pyxel_file} {filepath}')
         # Add fits header
         print('Adding fits-header')
-        add_fitsheader(filepath, fitstype, exptime, self.readmode, self.bias, self.gain_ac, self.speed)
+        add_fitsheader(filepath, imgtype, exptime, self.readmode, self.bias, self.gain_ac, self.speed)
         # Give full read/write permission
         os.system(f'chmod 755 {filepath}')
         # Compress file
@@ -501,7 +528,8 @@ parser = argparse.ArgumentParser(epilog=__doc__,
 parser.add_argument('-o', '--outdir', metavar='PATH', type=str, help='Output directory to store simulations')
 
 obs_group = parser.add_argument_group('OBSERVATION')
-obs_group.add_argument('-t', '--time', metavar='SEC', type=float, help='Exposure time of stellar observation [s]')
+obs_group.add_argument('-t', '--time',  metavar='SEC',   type=float, help='Exposure time of stellar observation [s]')
+obs_group.add_argument('-f', '--frame', metavar='XXXXX', type=str,   help='Frame to be simulated (e.g. ETTTT)')
 
 sci_group = parser.add_argument_group('SCIENCE MODE')
 sci_group.add_argument('-s', '--science', action='store_true', help='Flag to simulate stellar spectra')
@@ -542,42 +570,52 @@ m = marvelsim()
 m.init_pyechelle()
 pyxel_path = m.init_pyxel()
 
-if args.calibs:
+if args.frame is not None:
+
+    if args.frame == 'BBBBB' or args.frame == 'DDDDD':
+        m.run_bias(args.frame)
+        m.run_pyxel(args.frame)
+    else:
+        m.run_pyechelle(args.frame)
+        m.run_pyxel(args.frame)
+
+elif args.calibs:
     # Create bias and darks fits with Numpy
-    m.run_bias('bias', 'BIAS')
-    m.run_bias('dark', 'DARK')
+    m.run_bias('BBBBB')
+    m.run_bias('DDDDD')
     # Run pyechelle
-    m.run_pyechelle('flat', 'FLAT')
-    m.run_pyechelle('thar', 'THAR')
-    m.run_pyechelle('wave', 'WAVE')
+    m.run_pyechelle('FFFFF')
+    m.run_pyechelle('TTTTT')
+    m.run_pyechelle('ETTTT')
     # Run Pyxel
-    m.run_pyxel('bias', 'BIAS')
-    m.run_pyxel('dark', 'DARK')
-    m.run_pyxel('flat', 'FLAT')
-    m.run_pyxel('thar', 'THAR')
-    m.run_pyxel('wave', 'WAVE')
-    os.rmdir(pyxel_path)
+    m.run_pyxel('BBBBB')
+    m.run_pyxel('DDDDD')
+    m.run_pyxel('FFFFF')
+    m.run_pyxel('TTTTT')
+    m.run_pyxel('ETTTT')
+    #os.rmdir(pyxel_path)
     
 else:
 
     # Run pyechelle and Pyxel together
     if args.science:
-        m.run_pyechelle('science', 'SCIENCE')
-        m.run_pyxel('science', 'SCIENCE')
-        os.rmdir(pyxel_path)
+        m.run_pyechelle('ESSSS')
+        m.run_pyxel('ESSSS')
+        #os.rmdir(pyxel_path)
 
     # Run pyechelle alone with either CUDA or CPUs 
     elif args.cuda or args.cpu:
-        m.run_pyechelle('science', 'SCIENCE')
+        m.run_pyechelle('ESSSS')
 
     # Run pyxel alone with CPUs
     elif args.dex:
-        m.run_pyxel_cpu('science', 'SCIENCE')
-        os.rmdir(pyxel_path)
+        m.run_pyxel_cpu('ESSSS')
+        #os.rmdir(pyxel_path)
 
     else:
         errorcode('error', 'Not valid setup for science mode! Use --science if attended')
 
 # Final execution time
+os.rmdir(pyxel_path)
 toc = datetime.datetime.now()
 print(f"\nMARVEL simulations took {toc - tic}")
