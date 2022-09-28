@@ -5,13 +5,15 @@
 # from the environment for the first two.
 SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
-SOURCEDIR     = source
-BUILDDIR      = build
+#SOURCEDIR     = source
+#BUILDDIR      = build
 
 # NOTE: USE THIS WHEN PUSHING TO GITHUB!
 # cp source/index.rst .
 # SOURCEDIR     = .
 # BUILDDIR      = _build
+SOURCEDIR     = .
+BUILDDIR      = _build
 
 
 # Put it first so that "make" without argument is like "make help".
