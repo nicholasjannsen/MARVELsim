@@ -1,0 +1,281 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Tutorial &mdash; MARVELsim 0.1.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/fonts.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> MARVELsim
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">Tutorial</a><ul>
+<li><a class="reference internal" href="#calibration-mode">Calibration mode</a></li>
+<li><a class="reference internal" href="#science-mode">Science mode</a></li>
+<li><a class="reference internal" href="#rv-time-series">RV time series</a></li>
+</ul>
+</li>
+</ul>
+</div>
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">MARVELsim</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+<div class="git-ribbon">
+  <a href="http://github.com/SwissDataScienceCenter" rel="me">Join us on GitHub</a>
+</div>
+
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Tutorial</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/source/tutorial.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="tutorial">
+<h1>Tutorial<a class="headerlink" href="#tutorial" title="Permalink to this headline">¶</a></h1>
+<p>At the root of the MARVELsim repository two scripts called <code class="docutils literal notranslate"><span class="pre">marvelsim.py</span></code> and <code class="docutils literal notranslate"><span class="pre">rv-generator.py</span></code> are made availble for the user in the <code class="docutils literal notranslate"><span class="pre">marvelsim/</span></code> directory. The former is the main script we will use to simulate the MARVEL spectra. We will in the following distinguish between the usage of the <strong>science mode</strong> and <strong>calibration mode</strong> of this software. To acquire an overview of the usage simply type:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>python marvelsim.py -h
+</pre></div>
+</div>
+<p>Intuitively the science mode should be used when simulating a Radial Velocity (RV) time series for which a cross-dispersion displacement in the simulated spectra is generated by the presence of an exoplanet orbiting its stellar host. We will ellaborate on how to perform such simulations in the following, but notice that the <code class="docutils literal notranslate"><span class="pre">rv-generator.py</span></code> is a small generic script to generate the RV time series as input for <code class="docutils literal notranslate"><span class="pre">marvelsim.py</span></code>.</p>
+<p>The calibration mode of <code class="docutils literal notranslate"><span class="pre">marvelsim.py</span></code> is also known as <em>afternoon calibrations</em> as these calibrated spectral images are usually conducted during the afternoon prior to the nightly observations. We start explaining the generation of calibration spectra, then object spectra, and lastly how to generate RV time series.</p>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p>For more explicit examples on how to use either PyEchelle and Pyxel independently, have a look at the section <a class="reference internal" href="extra.html#extra-examples"><span class="std std-ref">extra examples</span></a>.</p>
+</div>
+<hr><div class="section" id="calibration-mode">
+<span id="tutorial-calibration"></span><h2>Calibration mode<a class="headerlink" href="#calibration-mode" title="Permalink to this headline">¶</a></h2>
+<p>The script <code class="docutils literal notranslate"><span class="pre">marvelsim.py</span></code> makes it very easy to produce a batch of calibration data similar to what in the future will be produced in the afternoon, so-called afternoon calibrations. A batch of calibrated data consist of:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>10 bias images</p></li>
+<li><p>5 spectral flats (fiber 1-5)</p></li>
+<li><p>5 ThAr arc spectra (fiber 1-5)</p></li>
+<li><p>5 ThNe arc spectra (fiber 1-5)</p></li>
+<li><p>5 Etalon (fiber 1) + ThAr (fiber 2-5)</p></li>
+</ul>
+</div></blockquote>
+<p>The calibrated data are simply generated by adding the calibration flag and parsing the output directory to the simulator:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>python marvelsim.py --calibs -o &lt;/path/to/output/&gt;
+</pre></div>
+</div>
+<p>As seen in the help-function printed to bash, you can easily alter the number of exposures and exposure time for each type of calibrated data.</p>
+<hr></div>
+<div class="section" id="science-mode">
+<span id="tutorial-science"></span><h2>Science mode<a class="headerlink" href="#science-mode" title="Permalink to this headline">¶</a></h2>
+<p>Like the calibration mode of <code class="docutils literal notranslate"><span class="pre">marvelsim.py</span></code>, the science mode is likewise very user frindly. In the following we show two usage examples simulating a single spectrum of a Sun-like star, with and without a RV signal:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>python marvelsim.py --time <span class="m">300</span> --mag <span class="m">10</span>.0 --teff <span class="m">5800</span> --logg <span class="m">4</span>.5 --z <span class="m">0</span>.0 --alpha <span class="m">0</span>.0 -o &lt;/path/to/outdir&gt;
+python marvelsim.py --time <span class="m">300</span> --mag <span class="m">10</span>.0 --teff <span class="m">5800</span> --logg <span class="m">4</span>.5 --z <span class="m">0</span>.0 --alpha <span class="m">0</span>.0 --rv <span class="m">5</span>.5 -o &lt;/path/to/outdir&gt;
+</pre></div>
+</div>
+<p>Typically you want to simulate a larger batch of simulations comprising a RV time series of spectra. In the following we explain how to generate such a RV time series as input for <code class="docutils literal notranslate"><span class="pre">marvelsim.py</span></code> and later how you can <a class="reference internal" href="performance.html"><span class="doc">lunch simulations with parallel computing</span></a>.</p>
+<hr></div>
+<div class="section" id="rv-time-series">
+<span id="tutorial-rv-script"></span><h2>RV time series<a class="headerlink" href="#rv-time-series" title="Permalink to this headline">¶</a></h2>
+<p>Within the <code class="docutils literal notranslate"><span class="pre">marvelsim/</span></code> directory a script to generate noise-less RV amplitude time series exists. Again to get an overview of the parsed arguments simply type:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>python rv-generator.py -h
+</pre></div>
+</div>
+<p>This small utility explores the python library <a class="reference external" href="https://radvel.readthedocs.io/en/latest/">RadVel</a> for calculating the true anomaly for a given set of input time point over the observed duration. The modelling of the RV time series are then calculated using the expression for the observed RV signal (Eq. 65) given by <a class="reference external" href="https://arxiv.org/pdf/1009.1738.pdf">Murray &amp; Correria (2010)</a>. Seen in the figure below, we here show an example of generating the RV time series for a single Earth-like planet with a short circular and eccentric orbital period, respectively:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>python rv-generator.py -tdur <span class="m">50</span> -rs <span class="m">1</span> -ms <span class="m">1</span> -rp <span class="m">1</span> -mp <span class="m">1</span> -t0 <span class="m">0</span> -p <span class="m">10</span> -i <span class="m">90</span> -w <span class="m">90</span> -e <span class="m">0</span>.0
+python rv-generator.py -tdur <span class="m">50</span> -rs <span class="m">1</span> -ms <span class="m">1</span> -rp <span class="m">1</span> -mp <span class="m">1</span> -t0 <span class="m">0</span> -p <span class="m">10</span> -i <span class="m">90</span> -w <span class="m">90</span> -e <span class="m">0</span>.5
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="../_images/rv_model_circular.png"><img alt="../_images/rv_model_circular.png" class="align-center" src="../_images/rv_model_circular.png" style="width: 800px;" /></a>
+<a class="reference internal image-reference" href="../_images/rv_model_eccentric.png"><img alt="../_images/rv_model_eccentric.png" class="align-center" src="../_images/rv_model_eccentric.png" style="width: 800px;" /></a>
+<p>The script can also create models of multi-planet systems. As an example we here show how to model the K6V spectral type star <a class="reference external" href="https://academic.oup.com/mnras/article-abstract/505/4/4684/6280967">TOI-1260</a> hosting two (transiting) mini-Neptunes on (assumed) circular orbits:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>python rv-generator.py -tdur <span class="m">50</span> -rs <span class="m">0</span>.67 -ms <span class="m">0</span>.69 -rp <span class="m">2</span>.33 <span class="m">2</span>.82 -mp <span class="m">8</span>.6 <span class="m">11</span>.8 -t0 <span class="m">10</span> <span class="m">20</span> -p <span class="m">3</span>.13 <span class="m">7</span>.49 -i <span class="m">90</span> <span class="m">90</span> -w <span class="m">0</span> <span class="m">90</span> -e <span class="m">0</span> <span class="m">0</span>
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="../_images/rv_model_multiple.png"><img alt="../_images/rv_model_multiple.png" class="align-center" src="../_images/rv_model_multiple.png" style="width: 800px;" /></a>
+<div class="admonition-note admonition">
+<p class="admonition-title">Note</p>
+<p>Notice that the current version of <code class="docutils literal notranslate"><span class="pre">rv-generator.py</span></code> simply schedule an observation for each consecutive night separted exactly one day apart. In the future it will be possible to select the observational compaign through tighter constraints.</p>
+</div>
+<div class="admonition attention">
+<p class="admonition-title">Attention</p>
+<p>Be warned that the current multi-planet model is very simplistic and do not take into account of the gravitational interactions between the planets. Indeed such interactions perturbes the reflex motion of the stellar host.</p>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2022, KU Leuven.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
