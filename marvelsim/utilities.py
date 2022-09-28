@@ -28,7 +28,9 @@ def errorcode(API, message):
 
 
 
-def add_fitsheader(filename, obsmode, exptime, readmode, bias, gain, speed):
+def add_fitsheader(filename, obsmode, exptime,
+                   readmode, speed, gain_ac, bias,
+                   readsen, gain_amp, adc_range):
     # Load and open file
     hdul = fits.open(filename)
     hdr = hdul[0].header
@@ -38,6 +40,11 @@ def add_fitsheader(filename, obsmode, exptime, readmode, bias, gain, speed):
     # Add headers (pyxel version is added automatically)
     hdr.append(('PYECHE_V', f'{pyechelle_version}', 'PyEchelle version'), end=True)
     hdr.append(('MARVEL_V', f'{marvelsim_version}', 'MARVELsim version'), end=True)
+    hdr.append(('FILENAME', f'{filename}', 'Origina'), end=True)
+    hdr.append(('OBSMODE',  f'{obsmode}', 'Observing mode'), end=True)
+    hdr.append(('IMAGETYP', f'{obsmode}', 'Image type'), end=True)
+    hdr.append(('EXPTYPE',  f'{obsmode}', 'Exposure type'), end=True)
+    #------------------------
     hdr.append(('ORIGIN', 'Instituut voor Sterrenkunde, KU Leuven', 'Institution'), end=True)
     hdr.append(('OBSERVAT', 'LaPalma', 'Observatory name'), end=True)
     hdr.append(('TELESCOP', 'MARVEL', 'Telescope name'), end=True)
@@ -50,11 +57,7 @@ def add_fitsheader(filename, obsmode, exptime, readmode, bias, gain, speed):
     hdr.append(('FIBMODE', 'High-Res', 'Fibre mode'), end=True)
     hdr.append(('CREATOR', 'revision_20201117', 'Version of data acquisition system'), end=True)
     hdr.append(('HDRVERS', '20151026', 'Version of FITS header'), end=True)
-    hdr.append(('FILENAME', f'{filename}', 'Origina'), end=True)
     hdr.append(('UNSEQ', '995604', 'Unique sequence number'), end=True)
-    hdr.append(('OBSMODE', f'{obsmode}', 'Observing mode'), end=True)
-    hdr.append(('IMAGETYP', f'{obsmode}', 'Image type'), end=True)
-    hdr.append(('EXPTYPE', f'{obsmode}', 'Exposure type'), end=True)
     hdr.append(('COMMENTS', '', 'Free comments by the observer'), end=True)
     hdr.append(('DATE-OBS', '2021-03-09T17:19:37.034931', 'Start of observation'), end=True)
     hdr.append(('DATE-END', '2021-03-09T17:19:37.034167', 'End of observation'), end=True)
@@ -84,10 +87,15 @@ def add_fitsheader(filename, obsmode, exptime, readmode, bias, gain, speed):
     hdr.append(('PCIFILE', 'None', 'PCI card setup file'), end=True)
     hdr.append(('TIMFILE', '/home/mocs/mocs/config/mocs/marvel/tim-MARVEL-20130205-sp_idle.lod', ''), end=True)
     hdr.append(('UTILFILE', 'None', 'Utility board setup file'), end=True)
+    #------------------------
     hdr.append(('READMODE', f'{readmode}', 'Detector readout mode'), end=True)
     hdr.append(('DETSPEED', f'{speed}', '[kHz] Controller readout speed'), end=True)
-    hdr.append(('DETGAIN',  f'{gain}', '[e-/ADU] Detector gain'), end=True)
+    hdr.append(('DETGAIN',  f'{gain_ac}', '[e-/ADU] Detector gain'), end=True)
     hdr.append(('DETBIAS',  f'{bias}', '[ADU] Expected bias level'), end=True)
+    hdr.append(('READSEN',  f'{readsen}', '[V/e-] Charge readout sensitivity'), end=True)
+    hdr.append(('GAINAMP',  f'{gain_amp}', '[V/V] Pre-amplifier gain'), end=True)
+    hdr.append(('ADCRANGE', f'{adc_range}', '[V] Output DC level'), end=True)
+    #------------------------
     hdr.append(('BINX', '1', 'Binning factor in x'), end=True)
     hdr.append(('BINY', '1', 'Binning factor in y'), end=True)
     hdr.append(('DTM1_1', '1', 'Binning factor in x'), end=True)

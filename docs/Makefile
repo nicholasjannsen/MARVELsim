@@ -9,6 +9,9 @@ SPHINXBUILD   = sphinx-build
 #BUILDDIR      = build
 
 # NOTE: USE THIS WHEN PUSHING TO GITHUB!
+# cp source/index.rst .
+# SOURCEDIR     = .
+# BUILDDIR      = _build
 SOURCEDIR     = .
 BUILDDIR      = _build
 
