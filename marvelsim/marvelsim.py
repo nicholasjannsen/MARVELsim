@@ -122,7 +122,7 @@ class marvelsim(object):
 
         # Create output path if it doesn't exist
         self.outdir.mkdir(parents=True, exist_ok=True)
-
+            
         # Make sure not to overwrite rv
         self.rv = args.rv
         
@@ -157,7 +157,7 @@ class marvelsim(object):
         if args.twave is None: args.twave = 15
         #if args.tthne is None: args.tthne = 30
         
-    
+
         
     def fetch_nimg(self, imgtype):
         """
@@ -168,7 +168,7 @@ class marvelsim(object):
         if imgtype == 'FFFFF': nimg = args.nflat
         if imgtype == 'TTTTT': nimg = args.nthar
         if imgtype == 'ETTTT': nimg = args.nwave
-        if imgtype == 'SSSSS': nimg = self.nscie
+        if imgtype == 'ESSSS': nimg = self.nscie
         # Finito!
         return nimg
 
@@ -183,7 +183,7 @@ class marvelsim(object):
         if imgtype == 'FFFFF': exptime = args.tflat
         if imgtype == 'TTTTT': exptime = args.tthar
         if imgtype == 'ETTTT': exptime = args.twave
-        if imgtype == 'SSSSS': exptime = args.time
+        if imgtype == 'ESSSS': exptime = args.time
         # Finito!
         return exptime
 
@@ -335,7 +335,7 @@ class marvelsim(object):
             if imgtype == 'ETTTT':
                 self.sim.set_sources([Etalon(d=6, n_photons=n_etalon), ThAr(), ThAr(), ThAr(), ThAr()])
 
-            if imgtype == 'SSSSS':
+            if imgtype == 'ESSSS':
                 # Set etalon + star(s)
                 self.sim.set_sources([Etalon(d=6, n_photons=n_etalon),
                                       Phoenix(t_eff=args.teff[0], log_g=args.logg[0], z=args.z[0], alpha=args.alpha[0], magnitude=args.mag[0]),
@@ -451,20 +451,26 @@ class marvelsim(object):
         Module to add CCD effects spectra with Pyxel.
         """
 
-        for i in range(self.fetch_nimg(imgtype)):
+        # Create a new folder XXXXX to seperate files
+        imgdir = self.outdir / imgtype
+        nimg   = self.fetch_nimg(imgtype)
+        if nimg > 0: imgdir.mkdir(parents=True, exist_ok=True)
+
+        # Loop over each image
+        for i in range(nimg):
             errorcode('message', f'\nSimulating {imgtype} with Pyxel')
 
             # Set exposure time and time scale (to be identical)
+            # NOTE Pyxel do not handle 0s -> Set correct time in case user sets 0s
             exptime = self.fetch_exptime(imgtype)
             if int(exptime) == 0: exptime = self.fetch_exptime('BBBBB')
             self.exposure.readout.times = [exptime]
             self.pipeline.charge_generation.load_charge.arguments.time_scale = exptime            
 
             # Fetch and set filename
-            filename = glob.glob(str(self.outdir) + f'/*{imgtype}*.fits')[i]
-            filepath = self.outdir / filename
+            filepath = Path(glob.glob(str(self.outdir) + f'/*{imgtype}*.fits')[i])
             self.pipeline.charge_generation.load_charge.arguments.filename = filepath
-                        
+
             # Enable cosmic rays
             self.enable_cosmics(imgtype)
             
@@ -472,8 +478,10 @@ class marvelsim(object):
             pyxel.exposure_mode(exposure=self.exposure, detector=self.detector, pipeline=self.pipeline)
             # Swap files -> Remove PyEchelle file and replace with Pyxel file
             os.remove(filepath)
+            filename = filepath.name
+            filepath = imgdir / filename
             os.system(f'mv {self.pyxel_file} {filepath}')
-            
+
             # Add fits header
             print('Adding fits-header')
             add_fitsheader(filepath, filename, imgtype, exptime,
@@ -481,7 +489,7 @@ class marvelsim(object):
                            self.readsen, self.gain_amp, self.adc_range)
             # Give full read/write permission
             os.system(f'chmod 755 {filepath}')
-            
+
             # Compress file
             if args.zip:
                 self.compress_data(filename, filepath)

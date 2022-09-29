@@ -3,6 +3,19 @@
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+
+## Version 0.1.2 / In progress..
+
+### Added
+
+* Flag `-f` or `--frame` to quickly simulate one single calibration image
+
+### Changed
+
+* Output filename convention now similar to MAROON-X
+
+
+
 ## Version 0.1.1 / 2022-06-01
 
 ### Added
@@ -26,6 +39,8 @@ All notable changes to this project will be documented in this file. The format 
 
 * Froze PyEchelle v. 0.3.1 and numba v. 0.55.1 in ``pyproject.toml`` due to cluster specfic NVIDIA drives
 * Bugfix of package ``zipfile` to correctly deflating files and not only store them
+
+
 
 ## Version 0.1.0 / 2021-06-01
 

@@ -140,4 +140,4 @@ def add_fitsheader(filepath, filename, obsmode, exptime,
     hdr.append(('BSCALE', '1', ''), end=True)
     hdr.append(('BZERO', '32768', ''), end=True)
     # Write new file with header
-    fits.writeto(filename, hdul[0].data, hdr, overwrite=True)
+    fits.writeto(filepath, hdul[0].data, hdr, overwrite=True)
