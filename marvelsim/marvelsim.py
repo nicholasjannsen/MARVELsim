@@ -169,6 +169,7 @@ class marvelsim(object):
         if imgtype == 'TTTTT': nimg = args.nthar
         if imgtype == 'ETTTT': nimg = args.nwave
         if imgtype == 'ESSSS': nimg = self.nscie
+        if imgtype == 'TSSSS': nimg = self.nscie
         # Finito!
         return nimg
 
@@ -184,6 +185,7 @@ class marvelsim(object):
         if imgtype == 'TTTTT': exptime = args.tthar
         if imgtype == 'ETTTT': exptime = args.twave
         if imgtype == 'ESSSS': exptime = args.time
+        if imgtype == 'TSSSS': exptime = args.time
         # Finito!
         return exptime
 
@@ -343,6 +345,15 @@ class marvelsim(object):
                                       Phoenix(t_eff=args.teff[2], log_g=args.logg[2], z=args.z[2], alpha=args.alpha[2], magnitude=args.mag[2]),
                                       Phoenix(t_eff=args.teff[3], log_g=args.logg[3], z=args.z[3], alpha=args.alpha[3], magnitude=args.mag[3])])
 
+            if imgtype == 'TSSSS':
+                # Set etalon + star(s)
+                self.sim.set_sources([ThAr(),
+                                      Phoenix(t_eff=args.teff[0], log_g=args.logg[0], z=args.z[0], alpha=args.alpha[0], magnitude=args.mag[0]),
+                                      Phoenix(t_eff=args.teff[1], log_g=args.logg[1], z=args.z[1], alpha=args.alpha[1], magnitude=args.mag[1]),
+                                      Phoenix(t_eff=args.teff[2], log_g=args.logg[2], z=args.z[2], alpha=args.alpha[2], magnitude=args.mag[2]),
+                                      Phoenix(t_eff=args.teff[3], log_g=args.logg[3], z=args.z[3], alpha=args.alpha[3], magnitude=args.mag[3])])
+
+                
                 # Activate atmospheric transmission for target(s)
                 self.sim.set_atmospheres([False, True, True, True, True])
 
@@ -607,8 +618,8 @@ else:
 
     # Run pyechelle and Pyxel together
     if args.science:
-        m.run_pyechelle('ESSSS')
-        m.run_pyxel('ESSSS')
+        m.run_pyechelle('TSSSS')
+        m.run_pyxel('TSSSS')
         #os.rmdir(pyxel_path)
 
     # Run pyechelle alone with either CUDA or CPUs 
