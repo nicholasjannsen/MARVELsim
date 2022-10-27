@@ -598,6 +598,9 @@ pyxel_path = m.init_pyxel()
 
 if args.frame is not None or args.debug is not None:
 
+    # Set imgtype correctly
+    if args.debug: args.frame = args.debug
+    
     # Run bias or dark with numpy
     if args.frame == 'BBBBB' or args.frame == 'DDDDD':
         m.run_bias(args.frame)
