@@ -487,8 +487,12 @@ class marvelsim(object):
             
             # Run pyxel
             pyxel.exposure_mode(exposure=self.exposure, detector=self.detector, pipeline=self.pipeline)
-            # Swap files -> Remove PyEchelle file and replace with Pyxel file
-            os.remove(filepath)
+
+            # Remove pyEchelle file not debug
+            if not args.debug:
+                os.remove(filepath)
+
+            # Rename Pyxel-PyEchelle file to the old PyEchelle file name
             filename = filepath.name
             filepath = imgdir / filename
             os.system(f'mv {self.pyxel_file} {filepath}')
@@ -549,6 +553,7 @@ parser.add_argument('-o', '--outdir', metavar='PATH', type=str, help='Output dir
 obs_group = parser.add_argument_group('OBSERVATION')
 obs_group.add_argument('-t', '--time',  metavar='SEC',   type=float, help='Exposure time of stellar observation [s]')
 obs_group.add_argument('-f', '--frame', metavar='XXXXX', type=str,   help='Frame to be simulated (e.g. ETTTT)')
+obs_group.add_argument('-d', '--debug', metavar='XXXXX', type=str,   help='Debug mode saving also the PyEchelle frame (e.g. ETTTT)')
 
 sci_group = parser.add_argument_group('SCIENCE MODE')
 sci_group.add_argument('-s', '--science', action='store_true', help='Flag to simulate stellar spectra')
@@ -589,15 +594,22 @@ m = marvelsim()
 m.init_pyechelle()
 pyxel_path = m.init_pyxel()
 
-if args.frame is not None:
+# Simulate a single frame
 
+if args.frame is not None or args.debug is not None:
+
+    # Run bias or dark with numpy
     if args.frame == 'BBBBB' or args.frame == 'DDDDD':
         m.run_bias(args.frame)
         m.run_pyxel(args.frame)
+        
+    # Run everything else with PyEchelle and Pyxel
     else:
         m.run_pyechelle(args.frame)
         m.run_pyxel(args.frame)
 
+# Simulate a set of calibrated spectra
+        
 elif args.calibs:
     # Create bias and darks fits with Numpy
     m.run_bias('BBBBB')
@@ -612,7 +624,8 @@ elif args.calibs:
     m.run_pyxel('FFFFF')
     m.run_pyxel('TTTTT')
     m.run_pyxel('ETTTT')
-    #os.rmdir(pyxel_path)
+
+# Simulate science spectra
     
 else:
 
@@ -620,7 +633,6 @@ else:
     if args.science:
         m.run_pyechelle('TSSSS')
         m.run_pyxel('TSSSS')
-        #os.rmdir(pyxel_path)
 
     # Run pyechelle alone with either CUDA or CPUs 
     elif args.cuda or args.cpu:
