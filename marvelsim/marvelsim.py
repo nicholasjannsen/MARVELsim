@@ -12,20 +12,22 @@ spectra including a RV signal. Used in combination with High Performance
 Computing (HPC) this makes it easy to simulate a time series of spectra.
 """
 
+# Defaults
 import os
 import glob
-import yaml
-import pyxel
 import shutil
 import zipfile
+import warnings
 import datetime
 import argparse
 import subprocess
+
+# External
+import yaml
 import numpy as np
 import matplotlib.pyplot as plt
 from astropy.io import fits
 from pathlib import Path
-from utilities import errorcode, add_fitsheader
 
 # PyEchelle
 from pyechelle.simulator import Simulator
@@ -34,23 +36,27 @@ from pyechelle.spectrograph import ZEMAX
 from pyechelle.telescope import Telescope
 from pyechelle.CCD import CCD
 
+# Pyxel
+import pyxel
+
+# MARVELsim
+from utilities import errorcode, add_fitsheader
+
 # Turn off warnings
-import warnings
 warnings.filterwarnings("ignore")
 
 # Monitor script speed
 tic = datetime.datetime.now()
 
 #==============================================================#
-#                      PYECHELLE + PYXEL                       #
+#                        MARVELsim CLASS                       #          
 #==============================================================#
 
 class marvelsim(object):
     """
-    This class has the purpose
+    Class to control all functions related to the MARVELsim software.
     """
     
-    # INITILIZE THE CLASS:
     def __init__(self):
         """
         Constructor of the class.
@@ -323,9 +329,10 @@ class marvelsim(object):
         self.sim.set_exposure_time(exptime)
 
         # Adjust etalon intensity
-        if int(exptime) == 0: n_etalon = 1e5
-        else: n_etalon = 0.75e5 / exptime
-
+        n_etalon = 3e5
+        if not int(exptime) == 0: 
+            n_etalon /= exptime
+            
         # Run loop over each exposure
         for i in range(self.fetch_nimg(imgtype)):
             errorcode('message', f'\nSimulating {imgtype} with PyEchelle')
@@ -494,7 +501,7 @@ class marvelsim(object):
             pyxel.exposure_mode(exposure=self.exposure, detector=self.detector, pipeline=self.pipeline)
 
             # Remove pyEchelle file not debug
-            if not args.debug:
+            if args.debug is None:
                 os.remove(filepath)
 
             # Rename Pyxel-PyEchelle file to the old PyEchelle file name
