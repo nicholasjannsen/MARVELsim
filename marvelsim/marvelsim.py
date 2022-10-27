@@ -163,13 +163,18 @@ class marvelsim(object):
         """
         Module fetch the number of exposure of image type.
         """
+        try: self.nexp
+        except: self.nexp = 1
+        else: pass
+        
         if imgtype == 'BBBBB': nimg = args.nbias
         if imgtype == 'DDDDD': nimg = args.ndark
         if imgtype == 'FFFFF': nimg = args.nflat
         if imgtype == 'TTTTT': nimg = args.nthar
         if imgtype == 'ETTTT': nimg = args.nwave
-        if imgtype == 'ESSSS': nimg = self.nscie
-        if imgtype == 'TSSSS': nimg = self.nscie
+        if imgtype == 'ESSSS': nimg = self.nexp
+        if imgtype == 'TSSSS': nimg = self.nexp
+
         # Finito!
         return nimg
 
@@ -267,7 +272,7 @@ class marvelsim(object):
             self.sim.set_cuda(True, self.seed)
 
         # Check for multiple target stars
-        if args.science:
+        if args.science or args.debug=="ESSSS":
             if len(args.mag) == 1: args.mag = np.ones(4) * args.mag
             elif len(args.mag) == 4: pass
             else: errorcode('error', 'mag takes only 1 or 4 values!')
@@ -297,16 +302,16 @@ class marvelsim(object):
                 except: errorcode('error', r'File do not exist: {args.data}')
                 else: args.rv = data[:,2:]
                 # Number of exposures
-                self.nscie = len(args.rv)
+                self.nexp = len(args.rv)
             else:
                 # Multiple targets, single CPU
                 if len(args.rv) == 1: args.rv = np.ones(4) * args.rv
                 elif len(args.rv) == 4: args.rv = np.array(args.rv)
                 else: errorcode('error', 'alpha takes only 1 or 4 values!')
                 # Only one exposure
-                self.nscie = 1
-            
+                self.nexp = 1
 
+                
     
     def run_pyechelle(self, imgtype):
         """
