@@ -52,7 +52,7 @@ tic = datetime.datetime.now()
 #                        MARVELsim CLASS                       #          
 #==============================================================#
 
-class marvelsim(object):
+class MARVELsim(object):
     """
     Class to control all functions related to the MARVELsim software.
     """
@@ -180,7 +180,8 @@ class marvelsim(object):
         if imgtype == 'ETTTT': nimg = args.nwave
         if imgtype == 'ESSSS': nimg = self.nexp
         if imgtype == 'TSSSS': nimg = self.nexp
-
+        else: nimg = 1
+        
         # Finito!
         return nimg
 
@@ -190,13 +191,15 @@ class marvelsim(object):
         """
         Module fetch the exposure time of image type.
         """
-        if imgtype == 'BBBBB': exptime = 0.001
-        if imgtype == 'DDDDD': exptime = args.tdark
-        if imgtype == 'FFFFF': exptime = args.tflat
-        if imgtype == 'TTTTT': exptime = args.tthar
-        if imgtype == 'ETTTT': exptime = args.twave
-        if imgtype == 'ESSSS': exptime = args.time
-        if imgtype == 'TSSSS': exptime = args.time
+        if   imgtype == 'BBBBB': exptime = 0.001
+        elif imgtype == 'DDDDD': exptime = args.tdark
+        elif imgtype == 'FFFFF': exptime = args.tflat
+        elif imgtype == 'TTTTT': exptime = args.tthar
+        elif imgtype == 'ETTTT': exptime = args.twave
+        elif imgtype == 'ESSSS': exptime = args.time
+        elif imgtype == 'TSSSS': exptime = args.time
+        else: exptime = 1
+        
         # Finito!
         return exptime
 
@@ -332,59 +335,65 @@ class marvelsim(object):
         n_etalon = 3e5
         if not int(exptime) == 0: 
             n_etalon /= exptime
+
+        # Resolve the input for each fiber
+        fiber = []
+        atmos = [False, False, False, False, False]
+        for j in range(5):
+            if   imgtype[j] == "D": fiber.append(Constant(intensity=0.0))
+            elif imgtype[j] == "F": fiber.append(Constant(intensity=0.01))
+            elif imgtype[j] == "T": fiber.append(ThAr())
+            elif imgtype[j] == "E": fiber.append(Etalon(d=6, n_photons=n_etalon))
+            elif imgtype[j] == "S":
+                fiber.append(Phoenix(t_eff=args.teff[0],
+                                     log_g=args.logg[0],
+                                     z=args.z[0],
+                                     alpha=args.alpha[0],
+                                     magnitude=args.mag[0]))
+                # Add atmosphere
+                atmos[j] = True
+
+
+        # Activate fibers
+                
+        # Activate atmospheric transmission for target(s)
+        self.sim.set_atmospheres(atmos)
+    
+        
+        print(fiber); exit()
             
         # Run loop over each exposure
+        
         for i in range(self.fetch_nimg(imgtype)):
             errorcode('message', f'\nSimulating {imgtype} with PyEchelle')
-            
-            # PyEchelle in Python needs to be re-initialized
-            #self.init_pyechelle()
-
-            if imgtype == 'FFFFF':
-                self.sim.set_sources(Constant(intensity=0.01))
-            
-            if imgtype == 'TTTTT':
-                self.sim.set_sources(ThAr())
-                
-            if imgtype == 'ETTTT':
-                self.sim.set_sources([Etalon(d=6, n_photons=n_etalon), ThAr(), ThAr(), ThAr(), ThAr()])
-
-            if imgtype == 'ESSSS':
-                # Set etalon + star(s)
-                self.sim.set_sources([Etalon(d=6, n_photons=n_etalon),
-                                      Phoenix(t_eff=args.teff[0], log_g=args.logg[0], z=args.z[0], alpha=args.alpha[0], magnitude=args.mag[0]),
-                                      Phoenix(t_eff=args.teff[1], log_g=args.logg[1], z=args.z[1], alpha=args.alpha[1], magnitude=args.mag[1]),
-                                      Phoenix(t_eff=args.teff[2], log_g=args.logg[2], z=args.z[2], alpha=args.alpha[2], magnitude=args.mag[2]),
-                                      Phoenix(t_eff=args.teff[3], log_g=args.logg[3], z=args.z[3], alpha=args.alpha[3], magnitude=args.mag[3])])
-
-            if imgtype == 'TSSSS':
-                # Set etalon + star(s)
-                self.sim.set_sources([ThAr(),
-                                      Phoenix(t_eff=args.teff[0], log_g=args.logg[0], z=args.z[0], alpha=args.alpha[0], magnitude=args.mag[0]),
-                                      Phoenix(t_eff=args.teff[1], log_g=args.logg[1], z=args.z[1], alpha=args.alpha[1], magnitude=args.mag[1]),
-                                      Phoenix(t_eff=args.teff[2], log_g=args.logg[2], z=args.z[2], alpha=args.alpha[2], magnitude=args.mag[2]),
-                                      Phoenix(t_eff=args.teff[3], log_g=args.logg[3], z=args.z[3], alpha=args.alpha[3], magnitude=args.mag[3])])
-
-                
-                # Activate atmospheric transmission for target(s)
-                self.sim.set_atmospheres([False, True, True, True, True])
-
-                # Set radial velocity of stellar target(s) + Etalon
-                if np.ndim(args.rv) == 1:
+        
+                print(fiber); exit()
+        
+                # Set radial velocity of stellar target(s)
+                if args.rv.shape[1] != atmos.sum():
+                    errorcode('error', 'RV input needs to match the number of targets!')
+                    
+                elif np.ndim(args.rv) == 1:
                     # Select value for one target
                     args.rv = [0., args.rv[0], args.rv[1], args.rv[2], args.rv[3]]
+                    
                 else:
                     # Dataset: Check for 1 common RV signal or 4 different RVs
-                    if args.rv.shape[1]==1:   args.rv = [0., args.rv[i-1],    args.rv[i-1],    args.rv[i-1],    args.rv[i-1]]
-                    elif args.rv.shape[1]==4: args.rv = [0., args.rv[0][i-1], args.rv[1][i-1], args.rv[2][i-1], args.rv[3][i-1]]
-                    else: errorcode('error', 'RV data file need 1 or 4 columns of RVs!')
+                    if args.rv.shape[1]==1:
+                        args.rv = [0., args.rv[i-1], args.rv[i-1], args.rv[i-1], args.rv[i-1]]
+                    elif args.rv.shape[1]==4:
+                        args.rv = [0., args.rv[0][i-1], args.rv[1][i-1], args.rv[2][i-1], args.rv[3][i-1]]
+                    else:
+                        errorcode('error', 'RV data file need 1 or 4 columns of RVs!')
+
+                # Set RV input
                 self.sim.set_radial_velocities(args.rv)
 
             # Set outputfile location
             filename = self.fetch_filename(imgtype, self.resmode, exptime)
             filepath = self.outdir / filename
             self.sim.set_output(filepath, overwrite=True)
-
+            print(args.rv); exit()
             # Run simulation
             self.sim.run()
 
@@ -555,113 +564,125 @@ class marvelsim(object):
 #               PARSING COMMAND-LINE ARGUMENTS                 #
 #==============================================================#
 
-software = '\nThe MARVEL Spectroscopy Simulator -> MARVELsim'
-parser = argparse.ArgumentParser(epilog=__doc__,
-                                 formatter_class=argparse.RawDescriptionHelpFormatter,
-                                 description=errorcode('software', software))
-
-parser.add_argument('-o', '--outdir', metavar='PATH', type=str, help='Output directory to store simulations')
-
-obs_group = parser.add_argument_group('OBSERVATION')
-obs_group.add_argument('-t', '--time',  metavar='SEC',   type=float, help='Exposure time of stellar observation [s]')
-obs_group.add_argument('-f', '--frame', metavar='XXXXX', type=str,   help='Frame to be simulated (e.g. ETTTT)')
-obs_group.add_argument('-d', '--debug', metavar='XXXXX', type=str,   help='Debug mode saving also the PyEchelle frame (e.g. ETTTT)')
-
-sci_group = parser.add_argument_group('SCIENCE MODE')
-sci_group.add_argument('-s', '--science', action='store_true', help='Flag to simulate stellar spectra')
-sci_group.add_argument('--mag',   nargs='*', type=float, help='Johnson-Cousin V passband magnitude (max 4 values)')
-sci_group.add_argument('--teff',  nargs='*', type=int,   help='Stellar effective temperature [K] (max 4 values)')
-sci_group.add_argument('--logg',  nargs='*', type=float, help='Stellar surface gravity [relative log10] (max 4 values)')
-sci_group.add_argument('--z',     nargs='*', type=float, help='Stellar metallicity [Fe/H] (max 4 values)')
-sci_group.add_argument('--alpha', nargs='*', type=float, help='Stellar Alpha element abundance [alpha/H] (max 4 values)')
-sci_group.add_argument('--rv',    nargs='*', type=float, help='Radial Velocity shift of star(s) due to exoplanet [m/s] (max 4 values)')
-
-cal_group = parser.add_argument_group('CALIBRATION MODE')
-cal_group.add_argument('-c', '--calibs', action='store_true', help='Flag to simulate calibration data')
-cal_group.add_argument('--nbias', metavar='NUM', type=int, help='Number of Bias exposures (default: 10)')
-cal_group.add_argument('--ndark', metavar='NUM', type=int, help='Number of Dark exposures (default: 10)')
-cal_group.add_argument('--nthar', metavar='NUM', type=int, help='Number of ThAr exposures (default:  5)')
-cal_group.add_argument('--nflat', metavar='NUM', type=int, help='Number of Flat exposures (default:  5)')
-cal_group.add_argument('--nwave', metavar='NUM', type=int, help='Number of Etalon + ThAr  (default:  5)')
-cal_group.add_argument('--tdark', metavar='SEC', type=float, help='Exposure time of Dark (default: 300 s)')
-cal_group.add_argument('--tflat', metavar='SEC', type=float, help='Exposure time of Flat (default:   5 s)')
-cal_group.add_argument('--tthar', metavar='SEC', type=float, help='Exposure time of ThAr (default:  30 s)')
-cal_group.add_argument('--twave', metavar='SEC', type=float, help='Exptime Etalon + ThAr (default:  30 s)')
-
-ccd_group = parser.add_argument_group('CCD DETECTOR')
-ccd_group.add_argument('--readmode', metavar='NAME', type=str, help='Readout mode: fast, fastmax, slow, slowmax (default: fast)')
-ccd_group.add_argument('--seed',     metavar='INT',  type=int, help='Random number seed to bootstrap/reproduce results (default: random)')
-
-hpc_group = parser.add_argument_group('PERFORMANCE')
-hpc_group.add_argument('--data', metavar='PATH', type=str, help='Path RV file created by "rv-generator.py"')
-hpc_group.add_argument('--dex',  metavar='NAME', type=int, help='Pyxel parallisation: index for running Pyxel on CPUs')
-hpc_group.add_argument('--cpu',  metavar='INT',  type=str, help='PyEchelle parallisation: Number of CPUs for order-wise parallelisation')
-hpc_group.add_argument('--cuda', action='store_true',      help='PyEchelle parallisation: Flag to use CUDA NVIDIA hardware for raytracing (makes cpu flag obsolete')
-hpc_group.add_argument('--zip',  action='store_true',      help='Flag to zip output files.')
-
-args = parser.parse_args()
-
-# Create instance of class
-m = marvelsim()
-m.init_pyechelle()
-pyxel_path = m.init_pyxel()
-
-# Simulate a single frame
-
-if args.frame is not None or args.debug is not None:
-
-    # Set imgtype correctly
-    if args.debug: args.frame = args.debug
+if __name__ == "__main__":
     
-    # Run bias or dark with numpy
-    if args.frame == 'BBBBB' or args.frame == 'DDDDD':
-        m.run_bias(args.frame)
-        m.run_pyxel(args.frame)
+    software = '\nThe MARVEL Simulator -> MARVELsim'
+    parser = argparse.ArgumentParser(epilog=__doc__,
+                                     formatter_class=argparse.RawDescriptionHelpFormatter,
+                                     description=errorcode('software', software))
+
+    parser.add_argument('-o', '--outdir', metavar='PATH', type=str, help='Output directory to store simulations')
+
+    obs_group = parser.add_argument_group('OBSERVATION')
+    obs_group.add_argument('-t', '--time',  metavar='SEC',   type=float, help='Exposure time of stellar observation [s]')
+    obs_group.add_argument('-f', '--frame', metavar='XXXXX', type=str,   help='Frame to be simulated (e.g. ETTTT)')
+    obs_group.add_argument('-d', '--debug', metavar='XXXXX', type=str,   help='Debug mode saving also the PyEchelle frame (e.g. ETTTT)')
+
+    sci_group = parser.add_argument_group('SCIENCE MODE')
+    sci_group.add_argument('-s', '--science', action='store_true', help='Flag to simulate stellar spectra')
+    sci_group.add_argument('--mag',   nargs='*', type=float, help='Johnson-Cousin V passband magnitude (max 4 values)')
+    sci_group.add_argument('--teff',  nargs='*', type=int,   help='Stellar effective temperature [K] (max 4 values)')
+    sci_group.add_argument('--logg',  nargs='*', type=float, help='Stellar surface gravity [relative log10] (max 4 values)')
+    sci_group.add_argument('--z',     nargs='*', type=float, help='Stellar metallicity [Fe/H] (max 4 values)')
+    sci_group.add_argument('--alpha', nargs='*', type=float, help='Stellar Alpha element abundance [alpha/H] (max 4 values)')
+    sci_group.add_argument('--rv',    nargs='*', type=float, help='Radial Velocity shift of star(s) due to exoplanet [m/s] (max 4 values)')
+
+    cal_group = parser.add_argument_group('CALIBRATION MODE')
+    cal_group.add_argument('-c', '--calibs', action='store_true', help='Flag to simulate calibration data')
+    cal_group.add_argument('--nbias', metavar='NUM', type=int, help='Number of Bias exposures (default: 10)')
+    cal_group.add_argument('--ndark', metavar='NUM', type=int, help='Number of Dark exposures (default: 10)')
+    cal_group.add_argument('--nthar', metavar='NUM', type=int, help='Number of ThAr exposures (default:  5)')
+    cal_group.add_argument('--nflat', metavar='NUM', type=int, help='Number of Flat exposures (default:  5)')
+    cal_group.add_argument('--nwave', metavar='NUM', type=int, help='Number of Etalon + ThAr  (default:  5)')
+    cal_group.add_argument('--tdark', metavar='SEC', type=float, help='Exposure time of Dark (default: 300 s)')
+    cal_group.add_argument('--tflat', metavar='SEC', type=float, help='Exposure time of Flat (default:   5 s)')
+    cal_group.add_argument('--tthar', metavar='SEC', type=float, help='Exposure time of ThAr (default:  30 s)')
+    cal_group.add_argument('--twave', metavar='SEC', type=float, help='Exptime Etalon + ThAr (default:  30 s)')
+
+    ccd_group = parser.add_argument_group('CCD DETECTOR')
+    ccd_group.add_argument('--readmode', metavar='NAME', type=str, help='Readout mode: fast, fastmax, slow, slowmax (default: fast)')
+    ccd_group.add_argument('--seed',     metavar='INT',  type=int, help='Random number seed to bootstrap/reproduce results (default: random)')
+
+    hpc_group = parser.add_argument_group('PERFORMANCE')
+    hpc_group.add_argument('--data', metavar='PATH', type=str, help='Path RV file created by "rv-generator.py"')
+    hpc_group.add_argument('--dex',  metavar='NAME', type=int, help='Pyxel parallisation: index for running Pyxel on CPUs')
+    hpc_group.add_argument('--cpu',  metavar='INT',  type=str, help='PyEchelle parallisation: Number of CPUs for order-wise parallelisation')
+    hpc_group.add_argument('--cuda', action='store_true',      help='PyEchelle parallisation: Flag to use CUDA NVIDIA hardware for raytracing (makes cpu flag obsolete')
+    hpc_group.add_argument('--zip',  action='store_true',      help='Flag to zip output files.')
+
+    # Parse arguments
+    args = parser.parse_args()
+
+    # Create instance of class
+    m = MARVELsim()
+    m.init_pyechelle()
+    pyxel_path = m.init_pyxel()
+
+    # Simulate a single frame
+
+    if args.frame is not None or args.debug is not None:
+
+        # Set imgtype correctly
+        if args.debug: args.frame = args.debug
+
+        # Run bias or dark with numpy
+        if args.frame == 'BBBBB' or args.frame == 'DDDDD':
+            m.run_bias(args.frame)
+            m.run_pyxel(args.frame)
+
+        # Run everything else with PyEchelle and Pyxel
+        else:
+
+            # Check if user has given
+            m.run_pyechelle(args.frame)
+            m.run_pyxel(args.frame)
+
+    # Simulate a set of calibrated spectra
+
+    elif args.calibs:
         
-    # Run everything else with PyEchelle and Pyxel
-    else:
-        m.run_pyechelle(args.frame)
-        m.run_pyxel(args.frame)
+        # Create bias and darks fits with Numpy
+        m.run_bias('BBBBB')
+        m.run_bias('DDDDD')
 
-# Simulate a set of calibrated spectra
-        
-elif args.calibs:
-    # Create bias and darks fits with Numpy
-    m.run_bias('BBBBB')
-    m.run_bias('DDDDD')
-    # Run pyechelle
-    m.run_pyechelle('FFFFF')
-    m.run_pyechelle('TTTTT')
-    m.run_pyechelle('ETTTT')
-    # Run Pyxel
-    m.run_pyxel('BBBBB')
-    m.run_pyxel('DDDDD')
-    m.run_pyxel('FFFFF')
-    m.run_pyxel('TTTTT')
-    m.run_pyxel('ETTTT')
+        # Run pyechelle
+        m.run_pyechelle('FFFFF')
+        m.run_pyechelle('TTTTT')
+        m.run_pyechelle('ETTTT')
 
-# Simulate science spectra
-    
-else:
+        # Run Pyxel
+        m.run_pyxel('BBBBB')
+        m.run_pyxel('DDDDD')
+        m.run_pyxel('FFFFF')
+        m.run_pyxel('TTTTT')
+        m.run_pyxel('ETTTT')
 
-    # Run pyechelle and Pyxel together
-    if args.science:
-        m.run_pyechelle('TSSSS')
-        m.run_pyxel('TSSSS')
-
-    # Run pyechelle alone with either CUDA or CPUs 
-    elif args.cuda or args.cpu:
-        m.run_pyechelle('ESSSS')
-
-    # Run pyxel alone with CPUs
-    elif args.dex:
-        m.run_pyxel_cpu('ESSSS')
-        #os.rmdir(pyxel_path)
+    # Simulate science spectra
 
     else:
-        errorcode('error', 'Not valid setup for science mode! Use --science if attended')
 
-# Final execution time
-os.rmdir(pyxel_path)
-toc = datetime.datetime.now()
-print(f"\nMARVEL simulations took {toc - tic}")
+        # Run pyechelle and Pyxel together
+        if args.science:
+            m.run_pyechelle('TSSSS')
+            m.run_pyxel('TSSSS')
+
+        # Run pyechelle alone with either CUDA or CPUs 
+        elif args.cuda or args.cpu:
+            m.run_pyechelle('ESSSS')
+
+        # Run pyxel alone with CPUs
+        elif args.dex:
+            m.run_pyxel_cpu('ESSSS')
+            #os.rmdir(pyxel_path)
+
+        else:
+            errorcode('error', 'Not valid setup for science mode! Use --science if attended')
+
+    # Remove the pyxel folder
+    os.rmdir(pyxel_path)
+            
+    # Final execution time
+    toc = datetime.datetime.now()
+    print(f"\nMARVEL simulations took {toc - tic}")
+
+

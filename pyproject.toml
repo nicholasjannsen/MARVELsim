@@ -7,6 +7,7 @@ authors = ["Nicholas Jannsen <nicholas.jannsen@kuleuven.be>"]
 [tool.poetry.dependencies]
 python = ">=3.8,<3.10"
 pyechelle = "^0.3.1"
+numpy = "1.20"
 numba = ">=0.55.1, <0.55.2"
 pyxel-sim = "^1.0.0"
 colorama = "^0.4.4"

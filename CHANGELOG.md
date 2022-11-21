@@ -8,11 +8,17 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Added
 
-* Flag `-f` or `--frame` to quickly simulate one single calibration image
+* Flag `-f` or `--frame` to quickly simulate one single spectrum
+* Flag `-d` or `--debug` to safe the PyEchelle spectrum in order to debug
+
 
 ### Changed
 
 * Output filename convention now similar to MAROON-X
+
+### Bugfix
+
+* Current Numpy v. 1.20.1 is not compatible with numba!
 
 
 
