@@ -316,7 +316,7 @@ class MARVELsim(object):
                 # Multiple targets, single CPU
                 if len(args.rv) == 1: args.rv = np.ones(4) * args.rv
                 elif len(args.rv) == 4: args.rv = np.array(args.rv)
-                else: errorcode('error', 'alpha takes only 1 or 4 values!')
+                else: errorcode('error', 'rv takes only 1 or 4 values in science mode!')
                 # Only one exposure
                 self.nexp = 1
 
@@ -337,63 +337,69 @@ class MARVELsim(object):
             n_etalon /= exptime
 
         # Resolve the input for each fiber
-        fiber = []
-        atmos = [False, False, False, False, False]
+        sources = []
+        atmos = np.array([False, False, False, False, False])
         for j in range(5):
-            if   imgtype[j] == "D": fiber.append(Constant(intensity=0.0))
-            elif imgtype[j] == "F": fiber.append(Constant(intensity=0.01))
-            elif imgtype[j] == "T": fiber.append(ThAr())
-            elif imgtype[j] == "E": fiber.append(Etalon(d=6, n_photons=n_etalon))
+            if   imgtype[j] == "D": sources.append(Constant(intensity=0.0))
+            elif imgtype[j] == "F": sources.append(Constant(intensity=0.01))
+            elif imgtype[j] == "T": sources.append(ThAr())
+            elif imgtype[j] == "E": sources.append(Etalon(d=6, n_photons=n_etalon))
             elif imgtype[j] == "S":
-                fiber.append(Phoenix(t_eff=args.teff[0],
-                                     log_g=args.logg[0],
-                                     z=args.z[0],
-                                     alpha=args.alpha[0],
-                                     magnitude=args.mag[0]))
+                sources.append(Phoenix(t_eff=args.teff[0],
+                                       log_g=args.logg[0],
+                                       z=args.z[0],
+                                       alpha=args.alpha[0],
+                                       magnitude=args.mag[0]))
                 # Add atmosphere
                 atmos[j] = True
 
-
-        # Activate fibers
-                
+        # Set source input to fibers
+        self.sim.set_sources(sources)
+        
         # Activate atmospheric transmission for target(s)
         self.sim.set_atmospheres(atmos)
-    
-        
-        print(fiber); exit()
-            
+
         # Run loop over each exposure
         
         for i in range(self.fetch_nimg(imgtype)):
             errorcode('message', f'\nSimulating {imgtype} with PyEchelle')
         
-                print(fiber); exit()
-        
-                # Set radial velocity of stellar target(s)
-                if args.rv.shape[1] != atmos.sum():
-                    errorcode('error', 'RV input needs to match the number of targets!')
-                    
-                elif np.ndim(args.rv) == 1:
-                    # Select value for one target
-                    args.rv = [0., args.rv[0], args.rv[1], args.rv[2], args.rv[3]]
-                    
-                else:
-                    # Dataset: Check for 1 common RV signal or 4 different RVs
-                    if args.rv.shape[1]==1:
-                        args.rv = [0., args.rv[i-1], args.rv[i-1], args.rv[i-1], args.rv[i-1]]
-                    elif args.rv.shape[1]==4:
-                        args.rv = [0., args.rv[0][i-1], args.rv[1][i-1], args.rv[2][i-1], args.rv[3][i-1]]
-                    else:
-                        errorcode('error', 'RV data file need 1 or 4 columns of RVs!')
+            # Set radial velocity of stellar target(s)
+            # When RV time series is parsed
 
-                # Set RV input
-                self.sim.set_radial_velocities(args.rv)
+            if np.ndim(args.rv) == 1:
+                
+                # One value or zero values parsed
+                if len(args.rv) == 1:
+                    rv = args.rv[0] * atmos.astype(int)
+
+                # If more values are parsed
+                elif len(args.rv) == atmos.sum():
+                    rv = np.zeros(5)
+                    dex = np.where(atmos == True)[0]
+                    for n in range(len(args.rv)):
+                        rv[dex[n]] = args.rv[n]
+
+                else:
+                    errorcode('error', 'RV input needs to match the number of targets!')
+                print(rv); exit()
+            else:                
+                # Dataset: Check for 1 common RV signal or 4 different RVs
+                if args.rv.shape[1]==1:
+                    rv = [0., args.rv[i-1], args.rv[i-1], args.rv[i-1], args.rv[i-1]]
+                elif args.rv.shape[1]==4:
+                    rv = [0., args.rv[0][i-1], args.rv[1][i-1], args.rv[2][i-1], args.rv[3][i-1]]
+                else:
+                    errorcode('error', 'RV data file need 1 or 4 columns of RVs!')
+
+            # Set RV input
+            self.sim.set_radial_velocities(rv)
 
             # Set outputfile location
             filename = self.fetch_filename(imgtype, self.resmode, exptime)
             filepath = self.outdir / filename
             self.sim.set_output(filepath, overwrite=True)
-            print(args.rv); exit()
+
             # Run simulation
             self.sim.run()
 
@@ -663,8 +669,8 @@ if __name__ == "__main__":
 
         # Run pyechelle and Pyxel together
         if args.science:
-            m.run_pyechelle('TSSSS')
-            m.run_pyxel('TSSSS')
+            m.run_pyechelle('ESSSS')
+            m.run_pyxel('ESSSS')
 
         # Run pyechelle alone with either CUDA or CPUs 
         elif args.cuda or args.cpu:
