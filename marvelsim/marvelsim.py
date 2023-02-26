@@ -382,7 +382,7 @@ class MARVELsim(object):
 
                 else:
                     errorcode('error', 'RV input needs to match the number of targets!')
-                print(rv); exit()
+
             else:                
                 # Dataset: Check for 1 common RV signal or 4 different RVs
                 if args.rv.shape[1]==1:
