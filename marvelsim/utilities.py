@@ -5,6 +5,7 @@ Placeholder for all the small utilities in this repo.
 """
 
 import pkg_resources
+import numpy as np
 from astropy.io import fits
 from colorama import Fore, Style
 
@@ -140,4 +141,5 @@ def add_fitsheader(filepath, filename, obsmode, exptime,
     hdr.append(('BSCALE', '1', ''), end=True)
     hdr.append(('BZERO', '32768', ''), end=True)
     # Write new file with header
-    fits.writeto(filepath, hdul[0].data, hdr, overwrite=True)
+    frame = hdul[0].data
+    fits.writeto(filepath, frame.astype(np.int16), hdr, overwrite=True)

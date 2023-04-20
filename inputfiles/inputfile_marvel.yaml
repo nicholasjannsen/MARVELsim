@@ -128,19 +128,20 @@ pipeline:
   # pixel -> pixel
   charge_transfer:
 
-    # CTI trails
+    # Charge transfer distortion (CTM)
     - name: cdm
       func: pyxel.models.charge_transfer.cdm
-      enabled: false
+      enabled: true
       arguments:
         direction: parallel
         trap_release_times: [0.1, 1.]
         trap_densities: [0.307, 0.175]
         sigma: [1.e-15, 1.e-15] 
-        beta: 0.3
+        beta: 1.0
         max_electron_volume: 1.62e-10   # [cm^2]
-        transfer_period: 9.4722e-04     # [s]
+        transfer_period: 9.4722e-02     # [s]
         charge_injection: false
+
 
 
   # pixel -> signal

@@ -158,7 +158,7 @@ class MARVELsim(object):
 
         # Control exposure time of calibration images [s]
         if args.tdark is None: args.tdark = 900
-        if args.tflat is None: args.tflat = 4
+        if args.tflat is None: args.tflat = 1.5
         if args.tthar is None: args.tthar = 15
         if args.twave is None: args.twave = 15
         #if args.tthne is None: args.tthne = 30
@@ -251,11 +251,10 @@ class MARVELsim(object):
             filename = self.fetch_filename(imgtype, self.resmode, exptime)
             filepath = self.outdir / filename
             # Create data array
-            bias = self.rng.normal(self.bias_level, self.read_noise, size=(self.dim, self.dim)).astype(int)
+            bias = self.rng.normal(self.bias_level, self.read_noise, size=(self.dim, self.dim)).astype(np.int16)
             # Save to fits file
             hdul = fits.HDUList([fits.PrimaryHDU(bias)])
             hdul.writeto(filepath)
-
 
     #--------------------------------------------#
     #                  PYECHELLE                 #  
