@@ -12,11 +12,20 @@ numba = ">=0.55.1, <0.55.2"
 pyxel-sim = "^1.0.0"
 colorama = "^0.4.4"
 celerite = "^0.4.2"
-radvel = "^1.4.9"
 pyarrow = "^9.0.0"
 docutils = "0.16"
-renku-sphinx-theme = "^0.2.2"
 Flask = "^2.2.2"
+
+[tool.poetry.group.docs]
+optional = true
+[tool.poetry.group.docs.dependencies]
+Sphinx = "^4.5.0"
+renku-sphinx-theme = "^0.2.2"
+
+[tool.poetry.group.rv]
+optional = true
+[tool.poetry.group.rv.dependencies]
+radvel = "^1.4.9"
 
 [tool.poetry.dev-dependencies]
 
