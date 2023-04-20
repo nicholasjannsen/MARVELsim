@@ -158,7 +158,7 @@ class marvelsim(object):
 
         # Control exposure time of calibration images [s]
         if args.tdark is None: args.tdark = 900
-        if args.tflat is None: args.tflat = 4
+        if args.tflat is None: args.tflat = 1.5
         if args.tthar is None: args.tthar = 15
         if args.twave is None: args.twave = 15
         #if args.tthne is None: args.tthne = 30
