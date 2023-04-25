@@ -173,15 +173,15 @@ class MARVELsim(object):
         except: self.nexp = 1
         else: pass
         
-        if imgtype == 'BBBBB': nimg = args.nbias
-        if imgtype == 'DDDDD': nimg = args.ndark
-        if imgtype == 'FFFFF': nimg = args.nflat
-        if imgtype == 'TTTTT': nimg = args.nthar
-        if imgtype == 'ETTTT': nimg = args.nwave
-        if imgtype == 'ESSSS': nimg = self.nexp
-        if imgtype == 'TSSSS': nimg = self.nexp
+        if   imgtype == 'BBBBB': nimg = args.nbias
+        elif imgtype == 'DDDDD': nimg = args.ndark
+        elif imgtype == 'FFFFF': nimg = args.nflat
+        elif imgtype == 'TTTTT': nimg = args.nthar
+        elif imgtype == 'ETTTT': nimg = args.nwave
+        elif imgtype == 'ESSSS': nimg = self.nexp
+        elif imgtype == 'TSSSS': nimg = self.nexp
         else: nimg = 1
-        
+
         # Finito!
         return nimg
 
@@ -325,7 +325,7 @@ class MARVELsim(object):
         """
         Module to generate spectra with PyEchelle.
         """
-        
+
         # Set exposure times
         exptime = self.fetch_exptime(imgtype)
         self.sim.set_exposure_time(exptime)
