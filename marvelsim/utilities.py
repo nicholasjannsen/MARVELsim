@@ -142,4 +142,4 @@ def add_fitsheader(filepath, filename, obsmode, exptime,
     hdr.append(('BZERO', '32768', ''), end=True)
     # Write new file with header
     frame = hdul[0].data
-    fits.writeto(filepath, frame.astype(np.int16), hdr, overwrite=True)
+    fits.writeto(filepath, frame.astype(np.int32), hdr, overwrite=True)
