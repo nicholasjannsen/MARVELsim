@@ -15,6 +15,7 @@ celerite = "^0.4.2"
 pyarrow = "^9.0.0"
 docutils = "0.16"
 Flask = "^2.2.2"
+photutils = "^1.7.0"
 
 [tool.poetry.group.docs]
 optional = true
