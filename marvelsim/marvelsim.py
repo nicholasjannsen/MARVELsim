@@ -251,7 +251,8 @@ class MARVELsim(object):
             filename = self.fetch_filename(imgtype, self.resmode, exptime)
             filepath = self.outdir / filename
             # Create data array
-            bias = self.rng.normal(self.bias_level, self.read_noise, size=(self.dim, self.dim)).astype(np.int16)
+            bias = self.rng.normal(self.bias_level, self.read_noise,
+                                   size=(self.dim, self.dim)).astype(np.int16)
             # Save to fits file
             hdul = fits.HDUList([fits.PrimaryHDU(bias)])
             hdul.writeto(filepath)
@@ -411,6 +412,7 @@ class MARVELsim(object):
         """
         Module to initialise Pyxel.
         """
+        
         # We copy and alter the YAML file to correct the "output_folder" location
         # Define orginal YAML file and the copy output YAML file
         ifile = self.cwd / "../inputfiles/inputfile_marvel.yaml"
@@ -458,6 +460,7 @@ class MARVELsim(object):
         """
         Module to draw cosmic rays from a Poisson distibution scaled to the exposure time.
         """
+        
         # Make sure cosmics are being added
         if imgtype == 'BBBBB':
             self.pipeline.photon_generation.cosmix.enabled = False
@@ -511,8 +514,10 @@ class MARVELsim(object):
             # Enable cosmic rays
             self.enable_cosmics(imgtype)
             
-            # Run pyxel
-            pyxel.exposure_mode(exposure=self.exposure, detector=self.detector, pipeline=self.pipeline)
+            # # Run pyxel
+            pyxel.exposure_mode(exposure=self.exposure,
+                                detector=self.detector,
+                                pipeline=self.pipeline)
 
             # Remove pyEchelle file not debug
             if args.debug is None:

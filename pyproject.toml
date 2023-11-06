@@ -7,15 +7,19 @@ authors = ["Nicholas Jannsen <nicholas.jannsen@kuleuven.be>"]
 [tool.poetry.dependencies]
 python = ">=3.8,<3.10"
 pyechelle = "^0.3.1"
+pyxel-sim = "^1.0.0"
 numpy = "1.20"
 numba = ">=0.55.1, <0.55.2"
-pyxel-sim = "^1.0.0"
 colorama = "^0.4.4"
 celerite = "^0.4.2"
 pyarrow = "^9.0.0"
 docutils = "0.16"
 Flask = "^2.2.2"
 photutils = "^1.7.0"
+# NOTE: jupyter is extremely slow if not jupyter-client and tornado are the versions from below!
+notebook = ">=6.4.6,<6.4.7"
+jupyter-client = "7.3.2"
+tornado = "6.1.0"
 
 [tool.poetry.group.docs]
 optional = true
